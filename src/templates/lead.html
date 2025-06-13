@@ -1,0 +1,20 @@
+{% extends "layout.html" %}
+{% block styles %}
+ <!-- REQUIRED: jQuery UI CSS for Datepicker styling -->
+  <link rel="stylesheet" href="https://ajax.googleapis.com/ajax/libs/jqueryui/1.12.1/themes/smoothness/jquery-ui.css">
+{% endblock %}
+{% block content %}
+
+<table id="gridLeads" class="table table-striped table-bordered">
+</table>
+<div id="pager"></div>
+
+{% endblock %}
+{% block scripts %}
+<!-- REQUIRED: jQuery UI JS for Datepicker functionality -->
+<script src="https://ajax.googleapis.com/ajax/libs/jqueryui/1.12.1/jquery-ui.min.js"></script>
+<script>
+  "use strict";
+ loadLeads()
+</script>
+{% endblock %}

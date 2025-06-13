@@ -1,0 +1,490 @@
+"use strict";
+$(document).ready(function () {
+  $('#login-trigger').click(function () {
+    $(this).next('#login-content').slideToggle();
+    $(this).toggleClass('active');
+
+    if ($(this).hasClass('active')) $(this).find('span').html('&#x25B2;')
+    else $(this).find('span').html('&#x25BC;')
+  })
+});
+
+function init_jqGrid(gridId, pageId, getUrl, createUrl, editUrl,
+  colModel, caption, subGrid, func_loadcomplete,
+  func_onSelectRow, func_subGridRowExpanded) {
+  $("#" + gridId).jqGrid({
+    url: getUrl,
+    editurl: editUrl,
+    datatype: "json",
+    mtype: 'GET',
+    colModel: colModel,
+    searching: {
+      searchOnEnter: true,
+      defaultSearch: "bw"
+    },
+    caption: caption,
+    autowidth: true,
+    loadonce: true,
+    rownumbers: true,
+    viewrecords: true,
+    height: 250,
+    rowNum: 100,
+    pager: "#" + pageId,
+    subGrid: subGrid,
+    subGridRowExpanded: function (subgrid_id, id) {
+      if (typeof func_subGridRowExpanded === "function") {
+        func_subGridRowExpanded(subgrid_id, id);
+      }
+    },
+    loadComplete: function (data) {
+      if (typeof func_loadcomplete === "function") {
+        func_loadcomplete(data, createUrl, editUrl);
+      }
+    },
+    onSelectRow: function (id) {
+      if (typeof func_onSelectRow === "function") {
+        func_onSelectRow(id);
+      }
+    }
+  });
+}
+
+var lastsel;
+function loadUsers() {
+  var colModel = [
+    {
+      name: 'id',
+      index: 'id',
+      key: true,
+      hidden: true
+    },
+    { label: 'Name', name: 'fullname', width: 150, editable: true },
+    { label: 'Email', name: 'email', width: 100, editable: true },
+    { label: 'Active', name: 'active', width: 70, editable: true, template: "booleanCheckbox" },
+    { label: 'Date created', name: 'created_at', width: 100, editable: false, align: 'center', formatter: 'date' },
+    { label: 'Date updated', name: 'updated_at', width: 100, editable: false, align: 'center', formatter: 'date' }
+  ];
+
+  init_jqGrid('gridUser', 'pager', '/api/user', '', '/api/user/edit',
+    colModel, 'Uses Management', false, function (data) { user_loadComplete(data) },
+    function (id) { user_onSelectRow(id) }, function (subgrid_id, id) { })
+}
+
+function loadCustomers() {
+  const colModel = [
+    {
+      name: 'id',
+      index: 'id',
+      key: true,
+      hidden: true
+    },
+    { label: 'Frist Name', name: 'firstName', width: 150, editable: true, editrules: { required: true }, editoptions: { dataEvents: [createAutoCorrectEvent()] } },
+    { label: 'Last Name', name: 'lastName', width: 150, editable: true, editrules: { required: true }, editoptions: { dataEvents: [createAutoCorrectEvent()] } },
+    { label: 'Email', name: 'email', width: 100, editable: true, editrules: { required: true }, editoptions: { dataEvents: [createAutoCorrectMailEvent()] } },
+    { label: 'Mobile', name: 'mobile', width: 100, editable: true },
+    { label: 'Date created', name: 'created_at', width: 100, editable: false, align: 'center', formatter: 'date' },
+    { label: 'Date updated', name: 'updated_at', width: 100, editable: false, align: 'center', formatter: 'date' }
+  ];
+
+  init_jqGrid('gridCustomers', 'pager', '/api/customers', '/api/customer/new', '/api/customer/edit',
+    colModel, 'Customers Registration', false, function (data) { customer_loadComplete(data, '/api/customer/new', '/api/customer/edit') },
+    function (id) { }, function (subgrid_id, id) { })
+}
+
+function loadLeads() {
+  const colModel = [
+    {
+      name: 'id',
+      index: 'id',
+      key: true,
+      hidden: true
+    },
+    { label: 'Frist Name', name: 'firstName', width: 150, editable: true, editrules: { required: true }, editoptions: { dataEvents: [createAutoCorrectEvent()] } },
+    { label: 'Last Name', name: 'lastName', width: 150, editable: true, editrules: { required: true }, editoptions: { dataEvents: [createAutoCorrectEvent()] } },
+    { label: 'Email', name: 'email', width: 100, editable: true, editrules: { required: true }, editoptions: { dataEvents: [createAutoCorrectMailEvent()] } },
+    { label: 'Source', name: 'source', width: 100, editable: true },
+    { label: 'Status', name: 'status', width: 100, editable: true },
+    { label: 'Date created', name: 'created_at', width: 100, editable: false, align: 'center', formatter: 'date' },
+    { label: 'Date updated', name: 'updated_at', width: 100, editable: false, align: 'center', formatter: 'date' }
+  ];
+
+  init_jqGrid('gridLeads', 'pager', '/api/leads', '/api/lead/new', '/api/lead/edit',
+    colModel, 'Leads Management', true, function (data) { leads_loadComplete(data, '/api/lead/new', '/api/lead/edit') },
+    function (id) { }, function (subgrid_id, id) { lead_subGridRowExpanded(subgrid_id, id) })
+}
+
+function leads_loadComplete(datas, createUrl = null, editUrl = null) {
+  fetch('/api/userRoles', {
+    headers: {
+      'Accept': 'application/json'
+    }
+  }).then(resp => resp.json()
+  ).then(data => {
+    $("#gridLeads").navGrid("#pager",
+      {
+        edit: data.isAdminRole,
+        add: false, //data.isAdminRole,
+        del: false,
+        search: true,
+        refresh: true,
+        view: true,
+        position: "left",
+        cloneToTop: true
+      },
+      {
+        // edit options
+        url: editUrl, //'/api/customer/edit',
+        closeAfterEdit: true,
+        reloadAfterSubmit: true,
+        errorTextFormat: function (response) {
+          const json = JSON.parse(response.responseText);
+          return json.message || "An error occurred";
+        },
+        afterSubmit: function (response, postdata) {
+          var $self = $(this), p = $self.jqGrid("getGridParam");
+          p.datatype = "json";
+          $self.trigger("reloadGrid", { page: p.page, current: true });
+          return [true, '']; // no error
+        }
+      },
+      {
+        // Add options
+        url: createUrl, //'/api/customer/new',
+        closeAfterAdd: true,
+        reloadAfterSubmit: true,
+        errorTextFormat: function (response) {
+          const json = JSON.parse(response.responseText);
+          return json.message || "An error occurred";
+        },
+        afterSubmit: function (response, postdata) {
+          var $self = $(this), p = $self.jqGrid("getGridParam");
+          p.datatype = "json";
+          $self.trigger("reloadGrid", { page: p.page, current: true });
+          return [true, '']; // no error
+        }
+      }
+    );
+  })
+}
+
+function lead_subGridRowExpanded(subgrid_id, leadId) {
+  var subgrid_table_id = subgrid_id + "_opportunity";
+  var pager_id = "p_" + subgrid_table_id;
+  $("#" + subgrid_id).html("<table id='" + subgrid_table_id + "'></table><div id='" + pager_id + "' class='scroll'></div>");
+  $("#" + subgrid_table_id).jqGrid({
+    url: '/api/opportunities/' + leadId,
+    datatype: "json",
+    colModel: [
+      { name: 'id', key: true, hidden: true },
+      { name: 'lead_id', key: false, hidden: true },
+      { name: 'current_stage', label: 'Current Stage', editable: true },
+      { name: 'expected_value', label: 'Expected Value', editable: true },
+      {name: 'closure_date', label: 'Closure Date', editable: true, editrules: { date: true }, datefmt:'yyyy-mm-dd', 
+        editoptions: {
+          dataInit: function (element) {
+            $(element).datepicker({
+              dateFormat: 'yy-mm-dd',
+              showOn: 'focus', 
+              changeMonth: true, 
+              changeYear: true
+            });
+          }
+        }
+      },
+      { name: 'converted', label: 'Converted', editable: true , 
+        formatter: "checkbox",
+        edittype: "checkbox",align: "center"}
+    ],
+    pager: pager_id,
+    multiselect: false,
+    height: "100%",
+    caption: "Opportunities",
+    createeditor: function (row, cellvalue, editor) {
+      editor.datepicker(); // initializing jQuery datepicker
+    }
+  });
+
+$("#" + subgrid_table_id).navGrid("#" + pager_id,
+    { edit: false, add: false, del: false, search: false, refresh: false },
+    {},{}
+  )
+  $("#" + subgrid_table_id).jqGrid('inlineNav', "#" + pager_id, {
+    edit: true, 
+    add: true,  
+    del: false,  
+    cancel: true, 
+    save: true, 
+    addParams: {
+      addRowPage: 'last', // Add the new row to the last page (or 'first', 'current')
+      position: 'last',   // Position the new row at the end of the grid (or 'first')
+      addRowParams: {
+            keys: true,
+            url: `/api/${leadId}/opportunities/new`,
+            mtype: 'POST',
+            onSuccess: function(response) {
+              var $self = $(this), p = $self.jqGrid("getGridParam");
+              p.datatype = "json";
+              $self.trigger("reloadGrid", { page: p.page, current: true });
+              return [true, '']; // No error
+            },
+      },
+      editParams: { 
+          keys: true,
+          url: `/api/opportunities/edit`,
+          mtype: 'POST',
+          onSuccess: function(response) {
+            var $self = $(this), p = $self.jqGrid("getGridParam");
+            p.datatype = "json";
+            $self.trigger("reloadGrid", { page: p.page, current: true });
+            return [true, '']; // No error
+          },
+       },
+      // This callback fires AFTER the new empty row is inserted and put into edit mode.
+      addRowCallback: function (rowid, response) {
+        // Find the input field for 'closure_date' in the newly added row
+        var closureDateInput = $('#' + rowid + '_closure_date');
+        if (closureDateInput.length) {
+          // Initialize the Datepicker on this specific input
+          closureDateInput.datepicker({
+            dateFormat: 'yy-mm-dd',
+            showOn: 'focus',
+            changeMonth: true,
+            changeYear: true
+          });
+        }
+      },
+    },
+   },
+);
+
+  $("#" + subgrid_table_id).navButtonAdd("#" + pager_id, {
+    buttonicon: "ui-icon-circle-plus",
+    title: "Add to Customer",
+    caption: "",
+    position: "last",
+    onClickButton: function () {
+      var ids = $("#" + subgrid_table_id).jqGrid('getGridParam', 'selarrrow');
+      $.post('/api/lead/new/customer', {
+        leadId: leadId
+      }, function () {
+        $("#" + subgrid_table_id).trigger("reloadGrid");
+      });
+    }
+  });
+
+}
+
+
+function customer_loadComplete(datas, createUrl = null, editUrl = null) {
+  fetch('/api/userRoles', {
+    headers: {
+      'Accept': 'application/json'
+    }
+  }).then(resp => resp.json()
+  ).then(data => {
+    $("#gridCustomers").navGrid("#pager",
+      {
+        edit: data.isAdminRole,
+        add: data.isAdminRole,
+        del: false,
+        search: true,
+        refresh: true,
+        view: true,
+        position: "left",
+        cloneToTop: true
+      },
+      {
+        // edit options
+        url: editUrl, //'/api/customer/edit',
+        closeAfterEdit: true,
+        reloadAfterSubmit: true,
+        errorTextFormat: function (response) {
+          const json = JSON.parse(response.responseText);
+          return json.message || "An error occurred";
+        },
+        afterSubmit: function (response, postdata) {
+          var $self = $(this), p = $self.jqGrid("getGridParam");
+          p.datatype = "json";
+          $self.trigger("reloadGrid", { page: p.page, current: true });
+          return [true, '']; // no error
+        }
+      },
+      {
+        // Add options
+        url: createUrl, //'/api/customer/new',
+        closeAfterAdd: true,
+        reloadAfterSubmit: true,
+        errorTextFormat: function (response) {
+          const json = JSON.parse(response.responseText);
+          return json.message || "An error occurred";
+        },
+        afterSubmit: function (response, postdata) {
+          var $self = $(this), p = $self.jqGrid("getGridParam");
+          p.datatype = "json";
+          $self.trigger("reloadGrid", { page: p.page, current: true });
+          return [true, '']; // no error
+        }
+      }
+    );
+  })
+}
+
+function user_loadComplete(data) {
+  $("#gridUser").navGrid("#pager",
+    { edit: false, add: false, del: false, search: false, refresh: true },
+    {
+      // edit options
+      closeAfterEdit: true,
+      recreateForm: true
+    }
+  );
+}
+
+function user_onSelectRow(id) {
+  if (id) {
+    jQuery('#gridUser').jqGrid('restoreRow', lastsel);
+    jQuery('#gridUser').jqGrid('editRow', id, true);
+    lastsel = id;
+  }
+}
+
+function loadRoles() {
+  var colModel = [
+    {
+      name: 'id',
+      index: 'id',
+      key: true,
+      hidden: true
+    },
+    { label: 'Role', name: 'roleName', width: 150, editable: true },
+    { label: 'Description', name: 'description', width: 100, editable: true },
+    { label: 'Active', name: 'active', width: 70, editable: true, template: "booleanCheckbox" },
+    { label: 'Date created', name: 'created_at', width: 100, editable: false, align: 'center', formatter: 'date' },
+    { label: 'Date updated', name: 'updated_at', width: 100, editable: false, align: 'center', formatter: 'date' }
+  ];
+  init_jqGrid('gridRole', 'pager', '/api/roles', '/api/roles/create', '/api/roles/edit',
+    colModel, 'Roles Management', true, function (data) { role_loadComplete(data, '/api/roles/create', '/api/roles/edit') },
+    function (id) { }, function (subgrid_id, id) { roles_subGridRowExpanded(subgrid_id, id) })
+}
+
+function role_loadComplete(data, createUrl = null, editUrl = null) {
+  $("#grid").navGrid("#pager",
+    { edit: true, add: true, del: false, search: false, refresh: true },
+    {
+      // Edit options
+      url: editUrl,
+      closeAfterEdit: true,
+      reloadAfterSubmit: true
+    },
+    {
+      // Add options
+      url: createUrl,
+      closeAfterAdd: true,
+      reloadAfterSubmit: true
+    }
+  );
+}
+
+function roles_subGridRowExpanded(subgrid_id, id) {
+  var subgrid_table_id = subgrid_id + "_t";
+  var pager_id = "p_" + subgrid_table_id;
+  $("#" + subgrid_id).html("<table id='" + subgrid_table_id + "'></table><div id='" + pager_id + "' class='scroll'></div>");
+  $("#" + subgrid_table_id).jqGrid({
+    url: '/api/roles/' + id + '/assignment',
+    datatype: "json",
+    colModel: [
+      { name: 'id', key: true, hidden: true },
+      { name: 'fullname', label: 'User Name' },
+      { name: 'email', label: 'Email' },
+      {
+        name: 'assigned',
+        label: 'Assigned',
+        formatter: "checkbox",
+        edittype: "checkbox",
+        align: "center"
+      }
+    ],
+    pager: pager_id,
+    multiselect: true,
+    height: "100%",
+    caption: "Users in Role",
+    loadComplete: function (data) {
+      let users = data;
+      users.forEach((user, idx) => {
+        if (user.assigned) {
+          $("#" + subgrid_table_id).jqGrid('setSelection', user.id);
+        }
+      });
+    }
+  });
+
+  $("#" + subgrid_table_id).navGrid("#" + pager_id, { edit: false, add: false, del: false, search: false, refresh: false })
+
+  $("#" + subgrid_table_id).navButtonAdd("#" + pager_id, {
+    buttonicon: "ui-icon-circle-plus",
+    title: "Assign",
+    caption: "Assign",
+    position: "last",
+    onClickButton: function () {
+      var ids = $("#" + subgrid_table_id).jqGrid('getGridParam', 'selarrrow');
+      $.post('/api/roles/' + id + '/assignment', {
+        user_ids: ids
+      }, function () {
+        $("#" + subgrid_table_id).trigger("reloadGrid");
+      });
+    }
+  });
+}
+
+function createAutoCorrectMailEvent() {
+  return {
+    type: 'blur',
+    fn: function (e) {
+      const input = $(e.target);
+      const mail = input.val();
+      Mailcheck.run({
+        email: mail,
+        suggested: function (suggestion) {
+          input.val(suggestion.full);
+        }
+      });
+    }
+  };
+}
+
+function createAutoCorrectEvent() {
+  return {
+    type: 'blur',
+    fn: function (e) {
+      const input = $(e.target);
+      const original = input.val();
+      checkGrammar(original).then(result => {
+        if (result.length > 0) {
+          let idx = Math.floor(Math.random() * (result.length - 0 + 1)) + 0;
+          const suggestion = result[idx].value;
+          input.val(suggestion);
+        }
+      });
+    }
+  };
+}
+
+async function checkGrammar(text) {
+  const res = await fetch("https://api.languagetool.org/v2/check", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/x-www-form-urlencoded"
+    }
+    ,
+    body: new URLSearchParams({
+      text: text,
+      language: "en-US"
+    })
+  });
+
+  const data = await res.json();
+  if (data.matches.length > 0)
+    return data.matches[0].replacements;
+
+  return []
+}

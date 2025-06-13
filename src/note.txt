@@ -1,0 +1,128 @@
+CREATE TABLE IF NOT EXISTS customers (
+    id TEXT PRIMARY KEY,
+    firstName TEXT NOT NULL,
+    lastName TEXT NOT NULL,
+    email TEXT NOT NULL UNIQUE, -- Added UNIQUE constraint for email
+    mobile TEXT,
+    phone TEXT, -- Added a general phone field
+    customerTypeId TEXT, -- Foreign key to customerType table
+    companyName TEXT, -- For B2B customers
+    notes TEXT,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (customerTypeId) REFERENCES customerType(id)
+);
+
+-- Table for Customer Categories/Types
+CREATE TABLE IF NOT EXISTS customerType (
+    id TEXT PRIMARY KEY,
+    typeName TEXT NOT NULL UNIQUE, -- Added UNIQUE constraint for typeName
+    description TEXT,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Table for Addresses (allowing multiple addresses per customer)
+CREATE TABLE IF NOT EXISTS addresses (
+    id TEXT PRIMARY KEY,
+    customerId TEXT NOT NULL,
+    addressLine1 TEXT NOT NULL,
+    addressLine2 TEXT,
+    city TEXT NOT NULL,
+    state TEXT,
+    postalCode TEXT NOT NULL,
+    country TEXT NOT NULL,
+    addressType TEXT NOT NULL, -- e.g., 'Billing', 'Shipping', 'Home', 'Work'
+    isPrimary BOOLEAN DEFAULT FALSE,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (customerId) REFERENCES customers(id)
+);
+
+-- Table for Interactions with Customers
+CREATE TABLE IF NOT EXISTS interactions (
+    id TEXT PRIMARY KEY,
+    customerId TEXT NOT NULL,
+    interactionType TEXT NOT NULL, -- e.g., 'Call', 'Email', 'Meeting', 'Note'
+    interactionDate TIMESTAMP NOT NULL,
+    summary TEXT,
+    details TEXT,
+    userId TEXT, -- Foreign key to the users table (who logged the interaction)
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (customerId) REFERENCES customers(id)
+    -- FOREIGN KEY (userId) REFERENCES users(id) -- Uncomment if you add users table
+);
+
+-- Table for Products or Services offered
+CREATE TABLE IF NOT EXISTS products (
+    id TEXT PRIMARY KEY,
+    name TEXT NOT NULL UNIQUE,
+    description TEXT,
+    price REAL NOT NULL,
+    sku TEXT UNIQUE,
+    category TEXT,
+    isActive BOOLEAN DEFAULT TRUE,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Table for Customer Orders
+CREATE TABLE IF NOT EXISTS orders (
+    id TEXT PRIMARY KEY,
+    customerId TEXT NOT NULL,
+    orderDate TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    totalAmount REAL NOT NULL,
+    status TEXT NOT NULL, -- e.g., 'Pending', 'Completed', 'Cancelled', 'Shipped'
+    shippingAddressId TEXT, -- Optional: Link to a specific address
+    billingAddressId TEXT,  -- Optional: Link to a specific address
+    paymentMethod TEXT,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (customerId) REFERENCES customers(id),
+    FOREIGN KEY (shippingAddressId) REFERENCES addresses(id),
+    FOREIGN KEY (billingAddressId) REFERENCES addresses(id)
+);
+
+-- Junction table for items within an order
+CREATE TABLE IF NOT EXISTS order_items (
+    id TEXT PRIMARY KEY,
+    orderId TEXT NOT NULL,
+    productId TEXT NOT NULL,
+    quantity INTEGER NOT NULL,
+    unitPrice REAL NOT NULL, -- Price at the time of purchase
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (orderId) REFERENCES orders(id),
+    FOREIGN KEY (productId) REFERENCES products(id)
+);
+
+
+1. leads table is filled first.
+
+This happens when someone expresses initial interest (e.g., fills out a form, downloads content, attends a webinar, is a referral).
+At this stage, they are just a prospect – you don't know if they're truly interested or a good fit yet.
+The salesperson's job is to qualify these leads.
+Once a salesperson (or an automated process) has "contact" with a lead AND determines they are a qualified prospect with genuine interest and a potential need for your product/service, they are typically converted into an opportunity.
+
+2. This is where your opportunities table comes in. An opportunity signifies an active sales deal in progress.
+The relevant data from the lead is often copied or linked to a new record in the opportunities table. The original lead record's status might be updated to "Converted" or "Qualified."
+Only after a successful sale (i.e., the deal associated with the opportunity is closed-won) is the person (or organization) added to the customers table.
+
+At this point, they transition from being a prospect (lead/opportunity) to a paying client.
+The data from the opportunity (and implicitly, the original lead) is used to create the customer record.
+The Full Flow (Lead -> Opportunity -> Customer):
+
+Lead: "Someone showed interest in us." (e.g., John Doe, email: john@example.com, source: Website Form).
+
+Stored in leads table.
+Opportunity: "John Doe is a qualified prospect, and we're actively trying to sell him our 'Enterprise Software Package'." (e.g., customer_id: John Doe's ID, current_stage: Prospecting, expected_value: $10,000, closure_date: 2025-07-30).
+
+Stored in opportunities table (and often linked back to the original lead ID).
+Customer: "John Doe bought our 'Enterprise Software Package'!" (e.g., id: John Doe's New Customer ID, firstName: John, lastName: Doe, email: john@example.com).
+
+3. Stored in customers table.
+All future interactions, support tickets, and new sales related to John will now be linked to his customer ID.
+In Summary:
+
+Your understanding is generally right that leads comes before customers. The opportunities table acts as the crucial middle step, representing the active sales pipeline where prospects are worked until they either buy (become a customer) or drop out.
