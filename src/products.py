@@ -10,6 +10,61 @@ def getProducts():
     products = [dict(p) for p in prods if p]
     return jsonify(products)
 
+@products.route('/api/products/lead/interested', defaults={'id': None} , methods=['GET'])
+@products.route('/api/products/lead/<id>/interested', methods=['GET'])
+def getProductsLeadInterested(id):
+    searchField = request.args.get('searchField')
+    searchString = request.args.get('searchString')
+    searchOper = request.args.get('searchOper')
+
+    prodsIntested = Db.getleadProdsInterested(id)
+    products = [dict(p) for p in prodsIntested if p]
+
+    if searchField and searchOper:
+        results  = []
+        match searchOper:
+            case 'eq':
+                results = list(filter(lambda p: str(p[searchField]) == searchString, products))
+            case 'ne':
+                results = list(filter(lambda p: str(p[searchField]) != searchString, products))
+            case 'bw':
+                results = list(filter(lambda p: str(p[searchField]).startswith(searchString), products))
+            case 'bn':
+                results = list(filter(lambda p: not str(p[searchField]).startswith(searchString), products))
+            case 'ew':
+                results = list(filter(lambda p: str(p[searchField]).endswith(searchString), products))
+            case 'en':
+                results = list(filter(lambda p: not str(p[searchField]).endswith(searchString), products))
+            case 'cn':
+                results = list(filter(lambda p: searchString in str(p[searchField]), products))
+            case 'nc':
+                results = list(filter(lambda p: searchString not in str(p[searchField]), products))
+            case 'nu': # is null case
+                results = list(filter(lambda p: str(p[searchField]) == None, products))
+            case _:
+                results = products
+    else:           
+        results = products
+
+    return jsonify(results)
+
+@products.route('/api/product/interested', methods=['POST'])
+def postPorductsInterested():
+    ids = request.form.getlist('ids[]')
+    leadId = request.form.get('leadId')
+
+    Db.deleteLeadProdsInterested(leadId)
+    
+    if ids and leadId:
+        for prodId in ids:
+           id = Db.createLeadProdsInterested(leadId,prodId)
+        if id:
+            return jsonify({ 'error': False, 'message': 'created' }),201
+        else:
+            return jsonify({ 'error': True, 'message': 'Failed' }),400
+    return jsonify({ 'error': True, 'message': 'Bad Request' }),400
+        
+
 @products.route('/api/product/new', methods=['POST'])
 def postProduct():
     name  = request.form.get('name')

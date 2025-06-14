@@ -47,6 +47,7 @@ def seed():
     Db.init_db()
     Db.seedAccount()
     Db.seedLeads()
+    Db.SeedProducts()
     print("Database seeded!")
  
 def register_commands(app):
@@ -62,7 +63,7 @@ def close_connection(exception):
 
 @app.before_request
 def before_request():
-    if request.endpoint in ['customer', 'lead', 'user', 'roles','newUser','users.register', 'users.signin','login','users.activateUser','static']:
+    if request.endpoint in ['customer', 'lead', 'product' ,'user', 'roles','newUser','users.register', 'users.signin','login','users.activateUser','static']:
         return
     try:
         verify_jwt_in_request()
@@ -94,6 +95,19 @@ def lead():
     }
     
     return render_template('lead.html',current_user = user)
+
+@app.route("/products", methods=['GET'])
+@jwt_required()
+def product():
+    current_user = get_jwt_identity() 
+    roles = get_jwt()["roles"] or [] 
+    isAdminRole = 'Admin' in roles
+    user = {
+        'name': current_user,
+        'isAdminRole': isAdminRole
+    }
+    
+    return render_template('product.html',current_user = user) 
 
 @app.route('/users', methods=['GET'])
 @role_required('Admin')

@@ -65,7 +65,7 @@ class Db:
                 name TEXT NOT NULL,
                 description TEXT,
                 price DECIMAL(10, 2),
-                sku TEXT UNIQUE,
+                sku TEXT,
                 category TEXT,
                 isActive BOOLEAN DEFAULT TRUE,
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
@@ -246,7 +246,6 @@ class Db:
                 customers = json.load(f)
                 for cust in customers:
                     Db.createCustomer(cust['first_name'], cust['last_name'], cust['email'], cust['mobile'])
-
     @staticmethod
     def seedLeads():
         leads = Db.getLeads()
@@ -256,6 +255,53 @@ class Db:
                 leads = json.load(f)
                 for lead in leads:
                     Db.createLead(lead['first_name'], lead['last_name'], lead['email'], lead['mobile'] ,'Unknown','Unknown')
+
+    @staticmethod
+    def SeedProducts():  
+        products = Db.getProducts()
+        if not products:  
+            data_path = os.path.join("static", "data", "MOCK_PRODS.json")
+            with open(data_path, "r") as f:
+                products = json.load(f)
+                for prod in products:
+                    Db.createProduct(prod['name'],prod['description'], prod['price'],prod['sku'],prod['category'],True)
+
+    @staticmethod
+    def getleadProdsInterested(id):
+        db = Db.get_db()
+        cursor = db.cursor()
+
+        cursor.execute(''' 
+                    SELECT p.id, p.name, p.price, p.description,
+                        CASE WHEN i.product_id IS NOT NULL THEN 1 ELSE 0 END AS interested  
+                    FROM products p  
+                    LEFT JOIN lead_prods_Interested i ON i.product_id = p.id and (i.lead_id = ? OR i.lead_id is NULL)
+
+        ''', (id,))
+
+        return cursor.fetchall()    
+
+    @staticmethod
+    def createLeadProdsInterested(leadId,productId):
+        id = str(uuid.uuid4())
+        db = Db.get_db()
+        cursor = db.cursor()
+        cursor.execute('DELETE FROM lead_prods_Interested WHERE lead_id = ?',(leadId,))
+
+        cursor.execute(''' 
+                        INSERT INTO lead_prods_Interested(id,lead_id,product_id) VALUES (?,?,?) 
+                       ''', (id,leadId,productId,))
+        db.commit()
+        return leadId
+
+    @staticmethod
+    def deleteLeadProdsInterested(leadId):
+        db = Db.get_db()
+        cursor = db.cursor()
+        cursor.execute('DELETE FROM lead_prods_Interested WHERE lead_id = ?',(leadId,))
+
+        db.commit()
+        return leadId 
 
     @staticmethod
     def getProducts():

@@ -91,6 +91,95 @@ function loadCustomers() {
     function (id) { }, function (subgrid_id, id) { cust_subGridRowExpanded(subgrid_id, id) })
 }
 
+function loadProducts(){
+   const colModel = [
+    {
+      name: 'id',
+      index: 'id',
+      key: true,
+      hidden: true
+    },
+    { label: 'Name', name: 'name', width: 100, editable: true  },
+    { label: 'Category', name: 'category', width: 100, editable: true  },
+    { label: 'Description', name: 'description', width: 100, editable: true  },
+    { label: 'Price', name: 'price', width: 100, editable: true  },
+    { label: 'Stock Keeping Unit', name: 'sku', width: 100, editable: true  }
+  ];
+
+  init_jqGrid('gridProducts', 'pager', '/api/products', '/api/product/new', '/api/product/edit',
+  colModel, 'Products', false, function (data) { },
+  function (id) { }, function (subgrid_id, id) {  })
+
+}
+
+function loadProdsInterest(){
+  $("#gridProdsInterest").jqGrid({
+    url: '/api/products/lead/interested',
+	  datatype: "json",
+    mtype: 'GET',
+   	colModel:[
+      {name: 'id', hidden:true ,key:true},
+   		{name:'name',label:'Name', width:150},
+   		{name:'description',label:'Description', width:180},
+   		{name:'price',label:'Price', width:80, align:"right"} //,
+   		//{name:'interested',label:'Interested', width:80, formatter: "checkbox", align:"center"}
+   	],
+    //loadonce:true,
+    searching: {
+      searchOnEnter: true,
+      defaultSearch: "bw"
+    },
+    autowidth:true,
+    height: 150,
+   	rowNum:200,
+   	pager: '#_pager',
+   	sortname: 'item',
+    sortorder: "asc",
+	  multiselect: true,
+	  caption:"Interested Products",
+    footerrow: true,
+    userDataOnFooter : true,
+    loadComplete: function (data) {
+      let sumAmoutPrice = 0;
+      data.forEach((product, idx) => {
+        if (product.interested) {
+          sumAmoutPrice += product.price;
+          $("#gridProdsInterest").jqGrid('setSelection', product.id);
+        }
+      });
+
+      $("#gridProdsInterest").jqGrid('footerData', 'set', {'description': 'Total'});
+      $("#gridProdsInterest").jqGrid('footerData', 'set', {'price': sumAmoutPrice});
+      
+    }
+}).navGrid('#_pager',{add:false,edit:false,del:false});
+
+$("#gridProdsInterest").navButtonAdd("#_pager", {
+    buttonicon: "ui-icon ui-icon-disk",
+    title: "Save",
+    caption: "",
+    position: "last",
+    onClickButton: function () {
+      var ids = $('#gridProdsInterest').jqGrid('getGridParam', 'selarrrow');
+      var cell_id = $('#gridLeads').jqGrid('getGridParam', 'selrow');
+      var leadId = $('#gridLeads').jqGrid('getCell', cell_id  ,'id');
+     
+      console.log(ids)
+      $.post('/api/product/interested', {
+        ids: ids,
+        leadId: leadId
+      }, function () {
+        // var $self = $(this), p = $self.jqGrid("getGridParam");
+        // p.datatype = "json";
+        // $self.trigger("reloadGrid", { page: p.page, current: true });
+         $("#gridProdsInterest").trigger("reloadGrid");
+      });
+    }
+  })
+
+
+}
+
 function loadLeads() {
   const colModel = [
     {
@@ -110,7 +199,17 @@ function loadLeads() {
 
   init_jqGrid('gridLeads', 'pager', '/api/leads', '/api/lead/new', '/api/lead/edit',
     colModel, 'Leads Management', true, function (data) { leads_loadComplete(data, '/api/lead/new', '/api/lead/edit') },
-    function (id) { }, function (subgrid_id, id) { lead_subGridRowExpanded(subgrid_id, id) })
+    function (id) { lead_onSelectRow(id) }, function (subgrid_id, id) { lead_subGridRowExpanded(subgrid_id, id) })
+}
+
+function lead_onSelectRow(ids) {
+   
+   // var $self = $("#gridProdsInterest"), p = $self.jqGrid("getGridParam");
+     $("#gridProdsInterest").jqGrid('setGridParam',{url:'/api/products/lead/'+ ids +'/interested'});
+    //  p.datatype = "json";
+    //  $self.trigger("reloadGrid", { page: p.page, current: true });
+    $("#gridProdsInterest").trigger("reloadGrid");
+
 }
 
 function leads_loadComplete(datas, createUrl = null, editUrl = null) {
@@ -201,7 +300,7 @@ function lead_subGridRowExpanded(subgrid_id, leadId) {
     pager: pager_id,
     multiselect: false,
     height: "100%",
-    caption: "Opportunities",
+    caption: "Sales",
     createeditor: function (row, cellvalue, editor) {
       editor.datepicker(); // initializing jQuery datepicker
     },
@@ -373,7 +472,7 @@ function customer_loadComplete(datas, createUrl = null, editUrl = null) {
     $("#gridCustomers").navGrid("#pager",
       {
         edit: data.isAdminRole,
-        add: data.isAdminRole,
+        add: false, //data.isAdminRole,
         del: false,
         search: true,
         refresh: true,
