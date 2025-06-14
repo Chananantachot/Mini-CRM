@@ -87,8 +87,8 @@ function loadCustomers() {
   ];
 
   init_jqGrid('gridCustomers', 'pager', '/api/customers', '/api/customer/new', '/api/customer/edit',
-    colModel, 'Customers Registration', false, function (data) { customer_loadComplete(data, '/api/customer/new', '/api/customer/edit') },
-    function (id) { }, function (subgrid_id, id) { })
+    colModel, 'Customers Registration', true, function (data) { customer_loadComplete(data, '/api/customer/new', '/api/customer/edit') },
+    function (id) { }, function (subgrid_id, id) { cust_subGridRowExpanded(subgrid_id,id) })
 }
 
 function loadLeads() {
@@ -173,6 +173,7 @@ function lead_subGridRowExpanded(subgrid_id, leadId) {
   $("#" + subgrid_id).html("<table id='" + subgrid_table_id + "'></table><div id='" + pager_id + "' class='scroll'></div>");
   $("#" + subgrid_table_id).jqGrid({
     url: '/api/opportunities/' + leadId,
+    editurl : `/api/${leadId}/opportunities/edit`, 
     datatype: "json",
     colModel: [
       { name: 'id', key: true, hidden: true },
@@ -201,6 +202,10 @@ function lead_subGridRowExpanded(subgrid_id, leadId) {
     caption: "Opportunities",
     createeditor: function (row, cellvalue, editor) {
       editor.datepicker(); // initializing jQuery datepicker
+    },
+    onSelectRow: function (id) {
+      var $self = $(this), param = $self.jqGrid("getGridParam");
+      param.editurl = `/api/${leadId}/opportunities/${id}edit`
     }
   });
 
@@ -230,7 +235,7 @@ $("#" + subgrid_table_id).navGrid("#" + pager_id,
       },
       editParams: { 
           keys: true,
-          url: `/api/opportunities/edit`,
+         // url: `/api/opportunities/edit`,
           mtype: 'POST',
           onSuccess: function(response) {
             var $self = $(this), p = $self.jqGrid("getGridParam");
@@ -274,6 +279,76 @@ $("#" + subgrid_table_id).navGrid("#" + pager_id,
 
 }
 
+
+function cust_subGridRowExpanded(subgrid_id, id) {
+  var subgrid_table_id = subgrid_id + "_address";
+  var pager_id = "p_" + subgrid_table_id;
+  $("#" + subgrid_id).html("<table id='" + subgrid_table_id + "'></table><div id='" + pager_id + "' class='scroll'></div>");
+  
+  $("#" + subgrid_table_id).jqGrid({
+    url: `/api/customer/${id}/address`,
+    editurl: `/api/customer/${id}/address/edit`,
+    datatype: "json",
+    colModel: [
+      { name: 'id', key: true, hidden: true },
+      { name: 'customerId', key: false, hidden: true },
+      { name: 'addressLine1', label: 'Line 1', width: 180 ,editable: true },
+      { name: 'addressLine2', label: 'Line 2', width: 180, editable: true },
+      { name: 'addressType', label: 'Type', width: 75, editable: true },
+      { name: 'city', label: 'City', width: 120, editable: true },
+      { name: 'state', label: 'State', width: 120, editable: true },
+      { name: 'country', label: 'Country', width: 100, editable: true },
+      { name: 'postalCode', label: 'Zip code' , width: 95, editable: true },
+      { name: 'isPrimary', label: 'Primary', width: 70, editable: true ,formatter: "checkbox",  edittype: "checkbox",align: "center"}
+    ],
+    pager: pager_id,
+    multiselect: false,
+    height: "100%",
+    caption: "Customer Address",
+    onSelectRow: function (addressId) {
+      var $self = $(this), param = $self.jqGrid("getGridParam");
+      param.editurl = `/api/customer/${id}/address/${addressId}/edit`;
+    }
+  });
+
+  $("#" + subgrid_table_id).navGrid("#" + pager_id,
+    { edit: false, add: false, del: false, search: false, refresh: false },
+    {},{}
+  )
+  $("#" + subgrid_table_id).jqGrid('inlineNav', "#" + pager_id, {
+    edit: true, 
+    add: true,  
+    del: false,  
+    cancel: true, 
+    save: true, 
+    addParams: {
+      addRowPage: 'last', 
+      position: 'last', 
+      addRowParams: {
+            keys: true,
+            url: `/api/customer/${id}/address/new`,
+            mtype: 'POST',
+            onSuccess: function(response) {
+              var $self = $(this), p = $self.jqGrid("getGridParam");
+              p.datatype = "json";
+              $self.trigger("reloadGrid", { page: p.page, current: true });
+              return [true, '']; // No error
+            },
+      },
+      editParams: { 
+          keys: true,
+          mtype: 'POST',
+          onSuccess: function(response) {
+            var $self = $(this), p = $self.jqGrid("getGridParam");
+            p.datatype = "json";
+            $self.trigger("reloadGrid", { page: p.page, current: true });
+            return [true, '']; // No error
+          },
+       },
+    },
+   },
+);
+}
 
 function customer_loadComplete(datas, createUrl = null, editUrl = null) {
   fetch('/api/userRoles', {

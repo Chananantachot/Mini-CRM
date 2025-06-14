@@ -258,6 +258,80 @@ class Db:
                     Db.createLead(lead['first_name'], lead['last_name'], lead['email'], lead['mobile'] ,'Unknown','Unknown')
 
     @staticmethod
+    def getCustomerAddress(id):
+        db = Db.get_db()
+        cursor = db.cursor()
+        cursor.execute('''SELECT id, customerId,
+                                addressLine1,addressLine2,
+                                city,state,postalCode,
+                                country,addressType,
+                                isPrimary
+                            FROM addresses
+                            WHERE customerId = ?
+                       ''',(id,)
+                       )
+        return cursor.fetchall()
+    
+    @staticmethod
+    def getCustomerAddressBy(id):
+        db = Db.get_db()
+        cursor = db.cursor()
+        cursor.execute('''SELECT id, customerId,
+                                addressLine1,addressLine2,
+                                city,state,postalCode,
+                                country,addressType,
+                                isPrimary
+                            FROM addresses
+                            WHERE id = ?
+                            ''',(id,))
+        return cursor.fetchone()
+
+    @staticmethod
+    def createCustomerAddress(customerId, addressLine1,addressLine2,
+                                city,state,postalCode,country,addressType,
+                                isPrimary):    
+        id = str(uuid.uuid4())
+        db = Db.get_db()
+        cursor = db.cursor()
+        cursor.execute(''' INSERT INTO addresses (id ,customerId, addressLine1,addressLine2,
+                                                    city,state,postalCode,country,addressType,
+                                                    isPrimary)
+                                                VALUES (?,?,?,?,?,?,?,?,?,?)
+                        ''', (id,customerId, addressLine1,addressLine2,city,state,postalCode,country,addressType,
+                                isPrimary,))
+        db.commit()
+        return id
+    
+    @staticmethod
+    def updateustomerAddress(id,customerId, addressLine1,addressLine2,
+                                city,state,postalCode,country,addressType,
+                                isPrimary):    
+        db = Db.get_db()
+        cursor = db.cursor()
+        cursor.execute(''' 
+                            UPDATE addresses SET customerId = ?,
+                                                    addressLine1 = ?,
+                                                    addressLine2 = ?,
+                                                    city = ?,
+                                                    state = ?,
+                                                    postalCode = ?,
+                                                    country = ?,
+                                                    addressType = ?,
+                                                    isPrimary =?
+                                WHERE id = ?
+                    ''', (id,customerId, addressLine1,addressLine2,city,state,postalCode,country,addressType,
+                                isPrimary,))
+        db.commit()
+        return id
+    
+    @staticmethod
+    def deleteCustomerAddress(id):
+        db = Db.get_db()
+        cursor = db.cursor()
+        cursor.execute(''' DELETE FROM addresses WHERE id = ? ''',(id,))
+        db.commit()
+
+    @staticmethod
     def getCustomers():
         db = Db.get_db()
         cursor = db.cursor()
@@ -296,7 +370,7 @@ class Db:
         cursor = db.cursor()
         cursor.execute('INSERT INTO customers (id, firstName,lastName,email,mobile) VALUES (?,?,?,?,?)', (id,firstName,lastName,email,mobile,))
 
-        cursor.execute('DELETE FROM leads WHERE id = id')
+        cursor.execute('DELETE FROM leads WHERE id = ?',(id,))
         db.commit()
         return id 
     
@@ -442,7 +516,6 @@ class Db:
         ''', (id,))
         return cursor.fetchone() 
 
-        
     @staticmethod
     def createLead(firstName,lastName, email, mobile,source,status):
         id = str(uuid.uuid4())
@@ -481,7 +554,6 @@ class Db:
                         (status,id,))
         db.commit()
         return id
-
 
     @staticmethod
     def getCurrentUsers():

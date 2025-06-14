@@ -31,11 +31,10 @@ def create(lead_id):
           return jsonify({ 'error': False, 'message': 'Created' }), 201  
     return jsonify({ 'error': True, 'message': 'Bad Request' }), 400   
 
-@opportunities.route('/api/opportunities/edit', methods=['POST'])
+@opportunities.route('/api/<lead_id>/opportunities/<id>/edit', methods=['POST'])
 @role_required('Admin')
-def edit():
-    id = request.form.get('id')
-    leadId = request.form.get('lead_id')
+def edit(id,lead_id):
+    leadId = lead_id
     current_stage = request.form.get('current_stage')
     expected_value = request.form.get('expected_value')
     closure_date = request.form.get('closure_date')

@@ -31,8 +31,8 @@ def convertLeadToCustomer():
             lead = dict(lead)
             id = Db.covertLeadToCustomer(lead['id'],lead['firstName'], lead['lastName'], lead['email'],lead['mobile'])
             if id:
-                jsonify({'error': False, 'message': 'Cretated.'}), 201
-            
+                return jsonify({'error': False, 'message': 'Cretated.'}), 201
+        return jsonify({'error': True, 'message': 'Not Found.'}), 404    
     return jsonify({'error': True, 'message': 'Failed.'}), 400
             
 @customers.route('/api/customer/new', methods=['POST'])
@@ -88,4 +88,49 @@ def putCustomer():
         
     return jsonify({'error': True, 'message': f'{firstName} {lastName} already exists.'}), 400     
         
-   
+@customers.route('/api/customer/<id>/address', methods=['GET'])
+def getAddress(id):
+    address = Db.getCustomerAddress(id)
+    address = [dict(a) for a in address if a]
+    return jsonify(address)
+
+@customers.route('/api/customer/<id>/address/new', methods=['POST'])
+def postAddress(id):
+    customerId = id
+    addressLine1 = request.form.get('addressLine1')
+    addressLine2 = request.form.get('addressLine2')
+    city = request.form.get('city')
+    state = request.form.get('state')
+    postalCode = request.form.get('postalCode')
+    country = request.form.get('country')
+    addressType = request.form.get('addressType')
+    isPrimary = request.form.get('isPrimary')
+    id = Db.createCustomerAddress(customerId,addressLine1,addressLine2,city,state,postalCode,country,addressType,isPrimary)
+    if id:
+        return jsonify({'error': False, 'message': 'Created.'}),201    
+    else:
+        return jsonify({'error': True, 'message': 'Bad Request'}),400
+
+@customers.route('/api/customer/<custId>/address/<id>/edit', methods=['POST'])
+def putAddress(custId,id):
+    customerId = custId
+    addressLine1 = request.form.get('addressLine1')
+    addressLine2 = request.form.get('addressLine2')
+    city = request.form.get('city')
+    state = request.form.get('state')
+    postalCode = request.form.get('postalCode')
+    country = request.form.get('country')
+    addressType = request.form.get('addressType')
+    isPrimary = request.form.get('isPrimary')
+    if id and addressLine1 and addressLine2 and postalCode and city and country:
+        address = Db.getCustomerAddressBy(id)
+        if address:
+            _id = Db.updateustomerAddress(id,customerId,addressLine1,addressLine2,city,state,postalCode,country,addressType,isPrimary)
+            if _id:
+                return jsonify({'error': False, 'message': 'Created.'}),201    
+            else:
+                return jsonify({'error': True, 'message': 'Bad Request'}),400        
+        return jsonify({'error': True, 'message': 'Not Found'}),404    
+    return jsonify({'error': True, 'message': 'Bad Request'}),400          
+
+ 
