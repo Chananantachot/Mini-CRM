@@ -258,6 +258,80 @@ class Db:
                     Db.createLead(lead['first_name'], lead['last_name'], lead['email'], lead['mobile'] ,'Unknown','Unknown')
 
     @staticmethod
+    def getProducts():
+        db = Db.get_db()
+        cursor = db.cursor()
+        cursor.execute(''' SELECT id,
+                                name,
+                                description,
+                                price,
+                                sku,
+                                category,
+                                isActive
+                           FROM products
+                ''')    
+        return cursor.fetchall()
+
+    @staticmethod
+    def getProduct(id):
+        db = Db.get_db()
+        cursor = db.cursor()
+        cursor.execute(''' SELECT id,
+                                name,
+                                description,
+                                price,
+                                sku,
+                                category,
+                                isActive
+                           FROM products
+                           WHERE id = ?
+                ''',(id,))    
+        return cursor.fetchone()
+    
+    @staticmethod
+    def getProductBy(sku):
+        db = Db.get_db()
+        cursor = db.cursor()
+        cursor.execute(''' SELECT id,
+                                name,
+                                description,
+                                price,
+                                sku,
+                                category,
+                                isActive
+                           FROM products
+                           WHERE sku = ?
+                ''',(sku,))    
+        return cursor.fetchone()
+    
+    @staticmethod
+    def createProduct(name, description, price,sku,category,isActive):
+        id = str(uuid.uuid4())
+        db = Db.get_db()
+        cursor = db.cursor()
+        cursor.execute(''' INSERT INTO products (id,name, description, price,sku,category,isActive)
+                           VALUES (?,?,?,?,?,?,?)
+                ''',(id,name, description, price,sku,category,isActive,))
+        db.commit()
+        return id
+
+    @staticmethod
+    def updateProduct(id ,name, description, price,sku,category,isActive):        
+        db = Db.get_db()
+        cursor = db.cursor()
+        cursor.execute(''' UPDATE products SET 
+                            name = ?, 
+                            description = ?, 
+                            price = ?,
+                            sku = ?,
+                            category = ?,
+                            isActive =?
+                         WHERE id = ?   
+                       ''',(name, description, price,sku,category,isActive,id,))
+        db.commit()
+        return id
+
+    @staticmethod
     def getCustomerAddress(id):
         db = Db.get_db()
         cursor = db.cursor()
@@ -319,8 +393,8 @@ class Db:
                                                     addressType = ?,
                                                     isPrimary =?
                                 WHERE id = ?
-                    ''', (id,customerId, addressLine1,addressLine2,city,state,postalCode,country,addressType,
-                                isPrimary,))
+                    ''', (customerId, addressLine1,addressLine2,city,state,postalCode,country,addressType,
+                                isPrimary,id,))
         db.commit()
         return id
     

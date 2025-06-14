@@ -178,10 +178,9 @@ function lead_subGridRowExpanded(subgrid_id, leadId) {
     colModel: [
       { name: 'id', key: true, hidden: true },
       { name: 'lead_id', key: false, hidden: true },
-      { name: 'current_stage', label: 'Current Stage', editable: true },
-      { name: 'expected_value', label: 'Expected Value', editable: true },
-      {
-        name: 'closure_date', label: 'Closure Date', editable: true, editrules: { date: true }, datefmt: 'yyyy-mm-dd',
+      { name: 'current_stage', label: 'Current Stage', editable: true , editrules: { required: true }},
+      { name: 'expected_value', label: 'Expected Value', editable: true , editrules: { required: true }},
+      { name: 'closure_date', label: 'Closure Date', editable: true, editrules: {required: true, date: true }, datefmt: 'yyyy-mm-dd',
         editoptions: {
           dataInit: function (element) {
             $(element).datepicker({
@@ -291,13 +290,13 @@ function cust_subGridRowExpanded(subgrid_id, id) {
     colModel: [
       { name: 'id', key: true, hidden: true },
       { name: 'customerId', key: false, hidden: true },
-      { name: 'addressLine1', label: 'Line 1', width: 180, editable: true },
+      { name: 'addressLine1', label: 'Line 1', width: 180, editable: true, editrules: { required: true } },
       { name: 'addressLine2', label: 'Line 2', width: 180, editable: true },
       { name: 'addressType', label: 'Type', width: 75, editable: true },
-      { name: 'city', label: 'City', width: 120, editable: true },
+      { name: 'city', label: 'City', width: 120, editable: true, editrules: { required: true } },
       { name: 'state', label: 'State', width: 120, editable: true },
-      { name: 'country', label: 'Country', width: 100, editable: true },
-      { name: 'postalCode', label: 'Zip code', width: 95, editable: true },
+      { name: 'country', label: 'Country', width: 100, editable: true , editrules: { required: true }},
+      { name: 'postalCode', label: 'Zip code', width: 95, editable: true , editrules: { required: true }},
       { name: 'isPrimary', label: 'Primary', width: 70, editable: true, formatter: "checkbox", edittype: "checkbox", align: "center" }
     ],
     pager: pager_id,
