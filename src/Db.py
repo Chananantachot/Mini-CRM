@@ -325,10 +325,10 @@ class Db:
         return id
     
     @staticmethod
-    def deleteCustomerAddress(id):
+    def deleteCustomerAddress(id, custId):
         db = Db.get_db()
         cursor = db.cursor()
-        cursor.execute(''' DELETE FROM addresses WHERE id = ? ''',(id,))
+        cursor.execute(''' DELETE FROM addresses WHERE id = ? AND customerId = ?''',(id,custId,))
         db.commit()
 
     @staticmethod

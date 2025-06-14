@@ -88,7 +88,7 @@ function loadCustomers() {
 
   init_jqGrid('gridCustomers', 'pager', '/api/customers', '/api/customer/new', '/api/customer/edit',
     colModel, 'Customers Registration', true, function (data) { customer_loadComplete(data, '/api/customer/new', '/api/customer/edit') },
-    function (id) { }, function (subgrid_id, id) { cust_subGridRowExpanded(subgrid_id,id) })
+    function (id) { }, function (subgrid_id, id) { cust_subGridRowExpanded(subgrid_id, id) })
 }
 
 function loadLeads() {
@@ -173,28 +173,31 @@ function lead_subGridRowExpanded(subgrid_id, leadId) {
   $("#" + subgrid_id).html("<table id='" + subgrid_table_id + "'></table><div id='" + pager_id + "' class='scroll'></div>");
   $("#" + subgrid_table_id).jqGrid({
     url: '/api/opportunities/' + leadId,
-    editurl : `/api/${leadId}/opportunities/edit`, 
+    editurl: `/api/${leadId}/opportunities/edit`,
     datatype: "json",
     colModel: [
       { name: 'id', key: true, hidden: true },
       { name: 'lead_id', key: false, hidden: true },
       { name: 'current_stage', label: 'Current Stage', editable: true },
       { name: 'expected_value', label: 'Expected Value', editable: true },
-      {name: 'closure_date', label: 'Closure Date', editable: true, editrules: { date: true }, datefmt:'yyyy-mm-dd', 
+      {
+        name: 'closure_date', label: 'Closure Date', editable: true, editrules: { date: true }, datefmt: 'yyyy-mm-dd',
         editoptions: {
           dataInit: function (element) {
             $(element).datepicker({
               dateFormat: 'yy-mm-dd',
-              showOn: 'focus', 
-              changeMonth: true, 
+              showOn: 'focus',
+              changeMonth: true,
               changeYear: true
             });
           }
         }
       },
-      { name: 'converted', label: 'Converted', editable: true , 
+      {
+        name: 'converted', label: 'Converted', editable: true,
         formatter: "checkbox",
-        edittype: "checkbox",align: "center"}
+        edittype: "checkbox", align: "center"
+      }
     ],
     pager: pager_id,
     multiselect: false,
@@ -209,41 +212,40 @@ function lead_subGridRowExpanded(subgrid_id, leadId) {
     }
   });
 
-$("#" + subgrid_table_id).navGrid("#" + pager_id,
+  $("#" + subgrid_table_id).navGrid("#" + pager_id,
     { edit: false, add: false, del: false, search: false, refresh: false },
-    {},{}
+    {}, {}
   )
   $("#" + subgrid_table_id).jqGrid('inlineNav', "#" + pager_id, {
-    edit: true, 
-    add: true,  
-    del: false,  
-    cancel: true, 
-    save: true, 
+    edit: true,
+    add: true,
+    del: false,
+    cancel: true,
+    save: true,
     addParams: {
       addRowPage: 'last', // Add the new row to the last page (or 'first', 'current')
       position: 'last',   // Position the new row at the end of the grid (or 'first')
       addRowParams: {
-            keys: true,
-            url: `/api/${leadId}/opportunities/new`,
-            mtype: 'POST',
-            onSuccess: function(response) {
-              var $self = $(this), p = $self.jqGrid("getGridParam");
-              p.datatype = "json";
-              $self.trigger("reloadGrid", { page: p.page, current: true });
-              return [true, '']; // No error
-            },
+        keys: true,
+        url: `/api/${leadId}/opportunities/new`,
+        mtype: 'POST',
+        onSuccess: function (response) {
+          var $self = $(this), p = $self.jqGrid("getGridParam");
+          p.datatype = "json";
+          $self.trigger("reloadGrid", { page: p.page, current: true });
+          return [true, '']; // No error
+        },
       },
-      editParams: { 
-          keys: true,
-         // url: `/api/opportunities/edit`,
-          mtype: 'POST',
-          onSuccess: function(response) {
-            var $self = $(this), p = $self.jqGrid("getGridParam");
-            p.datatype = "json";
-            $self.trigger("reloadGrid", { page: p.page, current: true });
-            return [true, '']; // No error
-          },
-       },
+      editParams: {
+        keys: true,
+        mtype: 'POST',
+        onSuccess: function (response) {
+          var $self = $(this), p = $self.jqGrid("getGridParam");
+          p.datatype = "json";
+          $self.trigger("reloadGrid", { page: p.page, current: true });
+          return [true, '']; // No error
+        },
+      },
       // This callback fires AFTER the new empty row is inserted and put into edit mode.
       addRowCallback: function (rowid, response) {
         // Find the input field for 'closure_date' in the newly added row
@@ -259,8 +261,7 @@ $("#" + subgrid_table_id).navGrid("#" + pager_id,
         }
       },
     },
-   },
-);
+  })
 
   $("#" + subgrid_table_id).navButtonAdd("#" + pager_id, {
     buttonicon: "ui-icon-circle-plus",
@@ -275,16 +276,14 @@ $("#" + subgrid_table_id).navGrid("#" + pager_id,
         $("#" + subgrid_table_id).trigger("reloadGrid");
       });
     }
-  });
-
+  })
 }
-
 
 function cust_subGridRowExpanded(subgrid_id, id) {
   var subgrid_table_id = subgrid_id + "_address";
   var pager_id = "p_" + subgrid_table_id;
   $("#" + subgrid_id).html("<table id='" + subgrid_table_id + "'></table><div id='" + pager_id + "' class='scroll'></div>");
-  
+
   $("#" + subgrid_table_id).jqGrid({
     url: `/api/customer/${id}/address`,
     editurl: `/api/customer/${id}/address/edit`,
@@ -292,62 +291,77 @@ function cust_subGridRowExpanded(subgrid_id, id) {
     colModel: [
       { name: 'id', key: true, hidden: true },
       { name: 'customerId', key: false, hidden: true },
-      { name: 'addressLine1', label: 'Line 1', width: 180 ,editable: true },
+      { name: 'addressLine1', label: 'Line 1', width: 180, editable: true },
       { name: 'addressLine2', label: 'Line 2', width: 180, editable: true },
       { name: 'addressType', label: 'Type', width: 75, editable: true },
       { name: 'city', label: 'City', width: 120, editable: true },
       { name: 'state', label: 'State', width: 120, editable: true },
       { name: 'country', label: 'Country', width: 100, editable: true },
-      { name: 'postalCode', label: 'Zip code' , width: 95, editable: true },
-      { name: 'isPrimary', label: 'Primary', width: 70, editable: true ,formatter: "checkbox",  edittype: "checkbox",align: "center"}
+      { name: 'postalCode', label: 'Zip code', width: 95, editable: true },
+      { name: 'isPrimary', label: 'Primary', width: 70, editable: true, formatter: "checkbox", edittype: "checkbox", align: "center" }
     ],
     pager: pager_id,
     multiselect: false,
     height: "100%",
-    caption: "Customer Address",
-    onSelectRow: function (addressId) {
-      var $self = $(this), param = $self.jqGrid("getGridParam");
-      param.editurl = `/api/customer/${id}/address/${addressId}/edit`;
-    }
+    caption: "Customer Address"
   });
 
   $("#" + subgrid_table_id).navGrid("#" + pager_id,
     { edit: false, add: false, del: false, search: false, refresh: false },
-    {},{}
+    {},
+    {},
+    {}
   )
+
   $("#" + subgrid_table_id).jqGrid('inlineNav', "#" + pager_id, {
-    edit: true, 
-    add: true,  
-    del: false,  
-    cancel: true, 
-    save: true, 
+    edit: true,
+    add: true,
+    del: true,
+    cancel: true,
+    save: true,
     addParams: {
-      addRowPage: 'last', 
-      position: 'last', 
+      addRowPage: 'last',
+      position: 'last',
       addRowParams: {
-            keys: true,
-            url: `/api/customer/${id}/address/new`,
-            mtype: 'POST',
-            onSuccess: function(response) {
-              var $self = $(this), p = $self.jqGrid("getGridParam");
-              p.datatype = "json";
-              $self.trigger("reloadGrid", { page: p.page, current: true });
-              return [true, '']; // No error
-            },
-      },
-      editParams: { 
-          keys: true,
-          mtype: 'POST',
-          onSuccess: function(response) {
-            var $self = $(this), p = $self.jqGrid("getGridParam");
-            p.datatype = "json";
-            $self.trigger("reloadGrid", { page: p.page, current: true });
-            return [true, '']; // No error
-          },
-       },
+        keys: true,
+        url: `/api/customer/${id}/address/new`,
+        mtype: 'POST',
+        onSuccess: function (response) {
+          var $self = $(this), p = $self.jqGrid("getGridParam");
+          p.datatype = "json";
+          $self.trigger("reloadGrid", { page: p.page, current: true });
+          return [true, '']; // No error
+        },
+      }
     },
-   },
-);
+    editParams: {
+      keys: true,
+      mtype: 'POST',
+      onSuccess: function (response) {
+        var $self = $(this), p = $self.jqGrid("getGridParam");
+        p.datatype = "json";
+        $self.trigger("reloadGrid", { page: p.page, current: true });
+        return [true, '']; // No error
+      },
+    }
+  })
+
+  $("#" + subgrid_table_id).navButtonAdd("#" + pager_id, {
+    buttonicon: "ui-icon ui-icon-trash",
+    title: "Delete",
+    caption: "",
+    position: "last",
+    onClickButton: function () {
+      var cell_id = $("#" + subgrid_table_id).jqGrid('getGridParam', 'selrow');
+      var addressId = $("#" + subgrid_table_id).jqGrid('getCell', cell_id  ,'id');
+      $.post('/api/customer/'+ id +'/address/delete', {
+        addressId: addressId
+      }, function () {
+        $("#" + subgrid_table_id).trigger("reloadGrid");
+      });
+    }
+  })
+
 }
 
 function customer_loadComplete(datas, createUrl = null, editUrl = null) {

@@ -1,6 +1,5 @@
-import uuid
 from flask import Blueprint, jsonify, redirect, request, url_for
-from flask_jwt_extended import get_jwt, jwt_required
+from flask_jwt_extended import jwt_required
 
 from Db import Db
 from decorators import role_required
@@ -111,8 +110,9 @@ def postAddress(id):
     else:
         return jsonify({'error': True, 'message': 'Bad Request'}),400
 
-@customers.route('/api/customer/<custId>/address/<id>/edit', methods=['POST'])
-def putAddress(custId,id):
+@customers.route('/api/customer/<custId>/address/edit', methods=['POST'])
+def putAddress(custId):
+    id = request.form.get('id')
     customerId = custId
     addressLine1 = request.form.get('addressLine1')
     addressLine2 = request.form.get('addressLine2')
@@ -133,4 +133,10 @@ def putAddress(custId,id):
         return jsonify({'error': True, 'message': 'Not Found'}),404    
     return jsonify({'error': True, 'message': 'Bad Request'}),400          
 
- 
+@customers.route('/api/customer/<custId>/address/delete', methods=['POST'])
+def deleteAddress(custId):
+    id = request.form.get('addressId')
+    if custId and id:
+        Db.deleteCustomerAddress(id,custId)
+        return jsonify({'error': False, 'message': 'Deleted.'}),200   
+    return jsonify({'error': True, 'message': 'Bad Request'}),400   
