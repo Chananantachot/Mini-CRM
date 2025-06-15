@@ -5,7 +5,7 @@ body {
   background-color: #f4f4f4;
 }
 
-  .ui-widget.ui-widget-content {
+.ui-widget.ui-widget-content {
     z-index: 1;
     /* position: relative; */
 }
@@ -202,23 +202,16 @@ span {
     display: flex;
     justify-content: center;
     width: 60%;
-    /* padding-top: 1rem; */
     margin-left: auto;
     margin-right: auto;   
   }
 
   .logo {
     display: block;
-    max-width: 80px;
+    max-width: 120px;
     height: auto;
     margin: auto;
   }
-  /* .logo-left {
-    max-width: 80px;  
-    margin-bottom: auto; 
-    vertical-align: middle;
-    margin-bottom: auto;
-  } */
 
   .nav-links {
     display: none;
@@ -278,6 +271,8 @@ span {
 .right-menu {
     font-size: small;
     gap: 14px;
+    padding-right: 20px;
+    margin-right: auto;
 }
 
 .navbar-text {

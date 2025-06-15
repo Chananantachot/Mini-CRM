@@ -1,27 +1,23 @@
 "use strict";
 $(document).ready(function () {
-  $('#login-trigger').click(function () {
-    $(this).next('#login-content').slideToggle();
-    $(this).toggleClass('active');
-
-    if ($(this).hasClass('active')) $(this).find('span').html('&#x25B2;')
-    else $(this).find('span').html('&#x25BC;')
-  })
+  $('.menu-btn').on('click', function () {
+    console.log('menu button clicked!')
+    $('.nav-links').toggleClass('active');
+  });
 
   $(window).on("resize", function () {
-    var tables = $("table"); 
-    for(var i =0; i < tables.length; i++){
+    var tables = $("table");
+    for (var i = 0; i < tables.length; i++) {
       let table = tables[i];
-      if (table.id){
+      if (table.id) {
         let id = "#" + table.id;
         var $grid = $(id),
-        newWidth = $grid.closest(".ui-jqgrid").parent().width();
+          newWidth = $grid.closest(".ui-jqgrid").parent().width();
         $grid.jqGrid("setGridWidth", newWidth, true);
       }
-    }   
+    }
+  })
 });
-
- });
 
 function init_jqGrid(gridId, pageId, getUrl, createUrl, editUrl,
   colModel, caption, subGrid, func_loadcomplete,
@@ -107,43 +103,43 @@ function loadCustomers() {
 
 function loadProducts() {
   $("#gridProducts").jqGrid({
-  url: '/api/products',
-	datatype: "json",
-	height: 350,
-	rowNum: 100,
-   	colModel:[
+    url: '/api/products',
+    datatype: "json",
+    height: 350,
+    rowNum: 100,
+    colModel: [
       {
         name: 'id',
         index: 'id',
         key: true,
         hidden: true
       },
-      { label: 'Category',index:'category', name: 'category', width: 90, editable: true },
-      { label: 'Name', index:'name',name: 'name', width: 110, editable: true },
-      { label: 'Description',index:'description', name: 'description', width: 150, editable: true },
+      { label: 'Category', index: 'category', name: 'category', width: 90, editable: true },
+      { label: 'Name', index: 'name', name: 'name', width: 110, editable: true },
+      { label: 'Description', index: 'description', name: 'description', width: 150, editable: true },
       // { label: 'Stock Keeping Unit', index:'sku', name: 'sku', width: 100, editable: true },   		
-   		{name:'price',label:"Price", index:'total', width:60,align:"right",sorttype:"float", formatter:"number", summaryType:'sum'}
-   	],
-    loadonce:true,
-   	pager: "#pager",
-    autowidth:true,
-   	viewrecords: true,
-   	sortname: 'price',
-   	grouping:true,
-   	groupingView : {
-   		groupField : ['category'],
-   		groupSummary : [true],
-   		groupColumnShow : [true],
-   		groupText : ['<b>{0}</b>'],
-   		groupCollapse : false,
-		groupOrder: ['asc']
-   	},
+      { name: 'price', label: "Price", index: 'total', width: 60, align: "right", sorttype: "float", formatter: "number", summaryType: 'sum' }
+    ],
+    loadonce: true,
+    pager: "#pager",
+    autowidth: true,
+    viewrecords: true,
+    sortname: 'price',
+    grouping: true,
+    groupingView: {
+      groupField: ['category'],
+      groupSummary: [true],
+      groupColumnShow: [true],
+      groupText: ['<b>{0}</b>'],
+      groupCollapse: false,
+      groupOrder: ['asc']
+    },
     searching: {
       searchOnEnter: true,
       defaultSearch: "bw"
     },
-   	caption: "Products"
-}).navGrid('#pager', { add: false, edit: false, del: false, search: true });
+    caption: "Products"
+  }).navGrid('#pager', { add: false, edit: false, del: false, search: true });
 }
 
 function loadProdsInterest() {
