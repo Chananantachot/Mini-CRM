@@ -7,6 +7,20 @@ $(document).ready(function () {
     if ($(this).hasClass('active')) $(this).find('span').html('&#x25B2;')
     else $(this).find('span').html('&#x25BC;')
   })
+
+  $(window).on("resize", function () {
+    var tables = $("table"); 
+    for(var i =0; i < tables.length; i++){
+      let table = tables[i];
+      if (table.id){
+        let id = "#" + table.id;
+        var $grid = $(id),
+        newWidth = $grid.closest(".ui-jqgrid").parent().width();
+        $grid.jqGrid("setGridWidth", newWidth, true);
+      }
+    }   
+});
+
  });
 
 function init_jqGrid(gridId, pageId, getUrl, createUrl, editUrl,
@@ -145,6 +159,7 @@ function loadProdsInterest() {
       //{name:'interested',label:'Interested', width:80, formatter: "checkbox", align:"center"}
     ],
     autowidth: true,
+    rownumbers: true,
     height: 150,
     rowNum: 200,
     pager: '#_pager',
