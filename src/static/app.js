@@ -7,7 +7,7 @@ $(document).ready(function () {
     if ($(this).hasClass('active')) $(this).find('span').html('&#x25B2;')
     else $(this).find('span').html('&#x25BC;')
   })
-});
+ });
 
 function init_jqGrid(gridId, pageId, getUrl, createUrl, editUrl,
   colModel, caption, subGrid, func_loadcomplete,
@@ -91,54 +91,69 @@ function loadCustomers() {
     function (id) { }, function (subgrid_id, id) { cust_subGridRowExpanded(subgrid_id, id) })
 }
 
-function loadProducts(){
-   const colModel = [
-    {
-      name: 'id',
-      index: 'id',
-      key: true,
-      hidden: true
-    },
-    { label: 'Name', name: 'name', width: 100, editable: true  },
-    { label: 'Category', name: 'category', width: 100, editable: true  },
-    { label: 'Description', name: 'description', width: 100, editable: true  },
-    { label: 'Price', name: 'price', width: 100, editable: true  },
-    { label: 'Stock Keeping Unit', name: 'sku', width: 100, editable: true  }
-  ];
-
-  init_jqGrid('gridProducts', 'pager', '/api/products', '/api/product/new', '/api/product/edit',
-  colModel, 'Products', false, function (data) { },
-  function (id) { }, function (subgrid_id, id) {  })
-
-}
-
-function loadProdsInterest(){
-  $("#gridProdsInterest").jqGrid({
-    url: '/api/products/lead/interested',
-	  datatype: "json",
-    mtype: 'GET',
+function loadProducts() {
+  $("#gridProducts").jqGrid({
+  url: '/api/products',
+	datatype: "json",
+	height: 350,
+	rowNum: 100,
    	colModel:[
-      {name: 'id', hidden:true ,key:true},
-   		{name:'name',label:'Name', width:150},
-   		{name:'description',label:'Description', width:180},
-   		{name:'price',label:'Price', width:80, align:"right"} //,
-   		//{name:'interested',label:'Interested', width:80, formatter: "checkbox", align:"center"}
+      {
+        name: 'id',
+        index: 'id',
+        key: true,
+        hidden: true
+      },
+      { label: 'Category',index:'category', name: 'category', width: 90, editable: true },
+      { label: 'Name', index:'name',name: 'name', width: 110, editable: true },
+      { label: 'Description',index:'description', name: 'description', width: 150, editable: true },
+      // { label: 'Stock Keeping Unit', index:'sku', name: 'sku', width: 100, editable: true },   		
+   		{name:'price',label:"Price", index:'total', width:60,align:"right",sorttype:"float", formatter:"number", summaryType:'sum'}
    	],
-    //loadonce:true,
+    loadonce:true,
+   	pager: "#pager",
+    autowidth:true,
+   	viewrecords: true,
+   	sortname: 'price',
+   	grouping:true,
+   	groupingView : {
+   		groupField : ['category'],
+   		groupSummary : [true],
+   		groupColumnShow : [true],
+   		groupText : ['<b>{0}</b>'],
+   		groupCollapse : false,
+		groupOrder: ['asc']
+   	},
     searching: {
       searchOnEnter: true,
       defaultSearch: "bw"
     },
-    autowidth:true,
+   	caption: "Products"
+}).navGrid('#pager', { add: false, edit: false, del: false, search: true });
+}
+
+function loadProdsInterest() {
+  $("#gridProdsInterest").jqGrid({
+    url: '/api/products/lead/interested',
+    datatype: "json",
+    mtype: 'GET',
+    colModel: [
+      { name: 'id', hidden: true, key: true },
+      { name: 'name', label: 'Name', width: 150 },
+      { name: 'description', label: 'Description', width: 180 },
+      { name: 'price', label: 'Price', width: 80, align: "right" } //,
+      //{name:'interested',label:'Interested', width:80, formatter: "checkbox", align:"center"}
+    ],
+    autowidth: true,
     height: 150,
-   	rowNum:200,
-   	pager: '#_pager',
-   	sortname: 'item',
+    rowNum: 200,
+    pager: '#_pager',
+    sortname: 'item',
     sortorder: "asc",
-	  multiselect: true,
-	  caption:"Interested Products",
+    multiselect: true,
+    caption: "Interested Products",
     footerrow: true,
-    userDataOnFooter : true,
+    userDataOnFooter: true,
     loadComplete: function (data) {
       let sumAmoutPrice = 0;
       data.forEach((product, idx) => {
@@ -147,14 +162,12 @@ function loadProdsInterest(){
           $("#gridProdsInterest").jqGrid('setSelection', product.id);
         }
       });
-
-      $("#gridProdsInterest").jqGrid('footerData', 'set', {'description': 'Total'});
-      $("#gridProdsInterest").jqGrid('footerData', 'set', {'price': sumAmoutPrice});
-      
+      $("#gridProdsInterest").jqGrid('footerData', 'set', { 'description': 'Total' });
+      $("#gridProdsInterest").jqGrid('footerData', 'set', { 'price': sumAmoutPrice });
     }
-}).navGrid('#_pager',{add:false,edit:false,del:false});
+  }).navGrid('#_pager', { add: false, edit: false, del: false });
 
-$("#gridProdsInterest").navButtonAdd("#_pager", {
+  $("#gridProdsInterest").navButtonAdd("#_pager", {
     buttonicon: "ui-icon ui-icon-disk",
     title: "Save",
     caption: "",
@@ -162,18 +175,16 @@ $("#gridProdsInterest").navButtonAdd("#_pager", {
     onClickButton: function () {
       var ids = $('#gridProdsInterest').jqGrid('getGridParam', 'selarrrow');
       var cell_id = $('#gridLeads').jqGrid('getGridParam', 'selrow');
-      var leadId = $('#gridLeads').jqGrid('getCell', cell_id  ,'id');
-     
+      var leadId = $('#gridLeads').jqGrid('getCell', cell_id, 'id');
+
       console.log(ids)
       $.post('/api/product/interested', {
         ids: ids,
         leadId: leadId
-      }, function () {
-        // var $self = $(this), p = $self.jqGrid("getGridParam");
-        // p.datatype = "json";
-        // $self.trigger("reloadGrid", { page: p.page, current: true });
-         $("#gridProdsInterest").trigger("reloadGrid");
-      });
+      },
+        function () {
+          $("#gridProdsInterest").trigger("reloadGrid");
+        });
     }
   })
 
@@ -203,13 +214,8 @@ function loadLeads() {
 }
 
 function lead_onSelectRow(ids) {
-   
-   // var $self = $("#gridProdsInterest"), p = $self.jqGrid("getGridParam");
-     $("#gridProdsInterest").jqGrid('setGridParam',{url:'/api/products/lead/'+ ids +'/interested'});
-    //  p.datatype = "json";
-    //  $self.trigger("reloadGrid", { page: p.page, current: true });
-    $("#gridProdsInterest").trigger("reloadGrid");
-
+  $("#gridProdsInterest").jqGrid('setGridParam', { url: '/api/products/lead/' + ids + '/interested' });
+  $("#gridProdsInterest").trigger("reloadGrid");
 }
 
 function leads_loadComplete(datas, createUrl = null, editUrl = null) {
@@ -277,9 +283,10 @@ function lead_subGridRowExpanded(subgrid_id, leadId) {
     colModel: [
       { name: 'id', key: true, hidden: true },
       { name: 'lead_id', key: false, hidden: true },
-      { name: 'current_stage', label: 'Current Stage', editable: true , editrules: { required: true }},
-      { name: 'expected_value', label: 'Expected Value', editable: true , editrules: { required: true }},
-      { name: 'closure_date', label: 'Closure Date', editable: true, editrules: {required: true, date: true }, datefmt: 'yyyy-mm-dd',
+      { name: 'current_stage', label: 'Current Stage', editable: true, editrules: { required: true } },
+      { name: 'expected_value', label: 'Expected Value', editable: true, editrules: { required: true } },
+      {
+        name: 'closure_date', label: 'Closure Date', editable: true, editrules: { required: true, date: true }, datefmt: 'yyyy-mm-dd',
         editoptions: {
           dataInit: function (element) {
             $(element).datepicker({
@@ -394,8 +401,8 @@ function cust_subGridRowExpanded(subgrid_id, id) {
       { name: 'addressType', label: 'Type', width: 75, editable: true },
       { name: 'city', label: 'City', width: 120, editable: true, editrules: { required: true } },
       { name: 'state', label: 'State', width: 120, editable: true },
-      { name: 'country', label: 'Country', width: 100, editable: true , editrules: { required: true }},
-      { name: 'postalCode', label: 'Zip code', width: 95, editable: true , editrules: { required: true }},
+      { name: 'country', label: 'Country', width: 100, editable: true, editrules: { required: true } },
+      { name: 'postalCode', label: 'Zip code', width: 95, editable: true, editrules: { required: true } },
       { name: 'isPrimary', label: 'Primary', width: 70, editable: true, formatter: "checkbox", edittype: "checkbox", align: "center" }
     ],
     pager: pager_id,
@@ -451,8 +458,8 @@ function cust_subGridRowExpanded(subgrid_id, id) {
     position: "last",
     onClickButton: function () {
       var cell_id = $("#" + subgrid_table_id).jqGrid('getGridParam', 'selrow');
-      var addressId = $("#" + subgrid_table_id).jqGrid('getCell', cell_id  ,'id');
-      $.post('/api/customer/'+ id +'/address/delete', {
+      var addressId = $("#" + subgrid_table_id).jqGrid('getCell', cell_id, 'id');
+      $.post('/api/customer/' + id + '/address/delete', {
         addressId: addressId
       }, function () {
         $("#" + subgrid_table_id).trigger("reloadGrid");

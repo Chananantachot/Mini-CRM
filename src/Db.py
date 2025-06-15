@@ -210,6 +210,10 @@ class Db:
 
     @staticmethod
     def seedAccount():
+        users = Db.getCurrentUsers()
+        if users:
+            return 
+        
         roleId = Db.seedRole()
 
         fullname = 'Administrator'

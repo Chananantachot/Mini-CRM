@@ -1,14 +1,65 @@
-from flask import Blueprint, jsonify,request
+from flask import Blueprint, Response, jsonify, make_response,request
+from flask_restful import Api, Resource
+import xml.etree.ElementTree as ET
 from Db import Db
 from decorators import role_required
 
 products = Blueprint('products', __name__, template_folder='templates')
+
+# --- Helper Function to Convert Python Dictionary/List to XML ---
+def dict_to_xml(tag, d):
+    """
+    Converts a dictionary or a list of dictionaries to an XML ElementTree element.
+    This is a recursive function to handle nested structures.
+
+    Args:
+        tag (str): The root tag name for the XML element.
+        d (dict or list): The data to convert.
+
+    Returns:
+        xml.etree.ElementTree.Element: The created XML element.
+    """
+    elem = ET.Element(tag)
+    if isinstance(d, dict):
+        for key, val in d.items():
+            if isinstance(val, (dict, list)):
+                # If value is a dictionary or list, recursively create a child element
+                elem.append(dict_to_xml(key, val))
+            else:
+                # Otherwise, set as text content of a child element
+                child = ET.SubElement(elem, key)
+                child.text = str(val)
+    elif isinstance(d, list):
+        # If it's a list, create multiple child elements with a generic name (e.g., 'item')
+        # You might want to customize this based on the list's content
+        for item in d:
+            elem.append(dict_to_xml("item", item)) # Using 'item' as a generic tag for list items
+    return elem
 
 @products.route('/api/products', methods=['GET'])
 def getProducts():
     prods = Db.getProducts()
     products = [dict(p) for p in prods if p]
     return jsonify(products)
+
+@products.route('/api/xml/products', methods=['GET'])
+def getXMLProducts():
+    prods = Db.getProducts()
+    products = [dict(p) for p in prods if p]
+     # Create the root element for the XML response
+    root = ET.Element("rows")
+
+    for product in products:
+    # Create a 'product' element for each item in the list
+        product_elem = dict_to_xml("row", product)
+        root.append(product_elem)
+   
+    # Convert the ElementTree to a string
+    xml_string = ET.tostring(root, encoding='utf-8', xml_declaration=True).decode('utf-8')
+
+    # Return the XML string with the appropriate Content-Type header
+    return Response(xml_string, mimetype='application/xml')
+
 
 @products.route('/api/products/lead/interested', defaults={'id': None} , methods=['GET'])
 @products.route('/api/products/lead/<id>/interested', methods=['GET'])
