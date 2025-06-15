@@ -1,5 +1,7 @@
-from flask import Blueprint, Response, jsonify, request
+import datetime
+from flask import Blueprint, Response, jsonify, make_response, request, url_for
 import xml.etree.ElementTree as ET
+from feedgenerator import Rss201rev2Feed
 from Db import Db
 from decorators import role_required
 
@@ -34,6 +36,63 @@ def dict_to_xml(tag, d):
         for item in d:
             elem.append(dict_to_xml("item", item)) # Using 'item' as a generic tag for list items
     return elem
+
+@products.route('/products/rs')
+def productsFeed():
+    prods = Db.getProducts()
+    products = [dict(p) for p in prods if p]
+    feed = Rss201rev2Feed(
+        title='Products',
+        link='https://mini-crm.xyz',
+        description='Our Products',
+    )
+
+    for prodcut in products:
+        feed.add_item(
+            title=prodcut['name'],
+            link=f'https://mini-crm.xyz/{prodcut['sku']}',
+            description=prodcut['description'],
+            pubdate=datetime.date.today(),
+            author_email='atip.cha22@gmail.com',
+            author_name="Chananantachot,ATIP ",
+            categories=prodcut['category']
+        )
+    
+    # Generate the raw RSS XML string
+    # ET.tostring provides a clean XML declaration.
+    raw_xml_string = feed.writeString('utf-8')
+
+    # Construct the URL for your XSLT stylesheet.
+    # url_for('static', filename='rss_style.xsl') will generate a URL like /static/rss_style.xsl
+    # You need to ensure your Flask app correctly serves static files.
+    xslt_url = url_for('static', filename='rss_style.xsl', _external=True) 
+
+    # _external=True for full URL if needed by client
+    # Insert the processing instruction right after the XML declaration
+    # The xml_declaration is <?xml version="1.0" encoding="utf-8"?>
+    # The processing instruction must come immediately after it.
+    xslt_processing_instruction = f'<?xml-stylesheet type="text/xsl" href="{xslt_url}"?>\n'
+
+    # Find the position to insert the PI (after the XML declaration)
+    # The XML declaration typically ends with '?>'
+    xml_declaration_end_index = raw_xml_string.find('?>')
+    if xml_declaration_end_index != -1:
+        # Insert the PI after the XML declaration and its newline
+        insert_index = xml_declaration_end_index + len('?>') + 1 # +1 for potential newline
+        modified_xml_string = raw_xml_string[:insert_index] + xslt_processing_instruction + raw_xml_string[insert_index:]
+    else:
+        # Fallback if XML declaration not found (unlikely for feedgen)
+        modified_xml_string = xslt_processing_instruction + raw_xml_string
+
+    response = make_response(modified_xml_string)
+    
+    # It's better to stick to one Content-Type, 'application/rss+xml' is specific
+    # 'text/xml' is also valid, but 'application/rss+xml' is more precise.
+    response.headers.set('Content-Type', 'application/rss+xml')
+    response.headers.set('Content-Type', 'text/xml') # Remove this if you prefer application/rss+xml
+    response.headers.set('X-Content-Type-Options', 'nosniff') # Good practice
+
+    return response
 
 @products.route('/api/products', methods=['GET'])
 @role_required('Admin')
