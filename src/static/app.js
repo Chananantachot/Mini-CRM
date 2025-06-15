@@ -296,16 +296,20 @@ function lead_subGridRowExpanded(subgrid_id, leadId) {
       { name: 'lead_id', key: false, hidden: true },
       { name: 'current_stage', label: 'Current Stage', editable: true, editrules: { required: true } },
       { name: 'expected_value', label: 'Expected Value', editable: true, editrules: { required: true } },
-      {
-        name: 'closure_date', label: 'Closure Date', editable: true, editrules: { required: true, date: true }, datefmt: 'yyyy-mm-dd',
+      {name: 'closure_date', label: 'Closure Date', editable: true, editrules: { required: true, date: true }, datefmt: 'yyyy-mm-dd',
         editoptions: {
           dataInit: function (element) {
+            var $wrapper = $("<div class='input-group2 date'></div>");
+            var $addon = $('<span class="input-group-addon2"><i class="glyphicon glyphicon-th"></i></span>');
+           $(element).wrap($wrapper).after($addon);
+  
             $(element).datepicker({
-              dateFormat: 'yy-mm-dd',
-              showOn: 'focus',
-              changeMonth: true,
-              changeYear: true
+              format: 'yyyy-mm-dd',
+              orientation: "bottom left",
+              clearBtn: true,
+             
             });
+            
           }
         }
       },
@@ -315,12 +319,14 @@ function lead_subGridRowExpanded(subgrid_id, leadId) {
         edittype: "checkbox", align: "center"
       }
     ],
+  //  autowidth:true,
     pager: pager_id,
     multiselect: false,
     height: "100%",
     caption: "Sales",
     createeditor: function (row, cellvalue, editor) {
       editor.datepicker(); // initializing jQuery datepicker
+      
     },
     onSelectRow: function (id) {
       var $self = $(this), param = $self.jqGrid("getGridParam");

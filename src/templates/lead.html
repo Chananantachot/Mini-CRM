@@ -1,7 +1,7 @@
 {% extends "layout.html" %}
 {% block styles %}
  <!-- REQUIRED: jQuery UI CSS for Datepicker styling -->
-  <link rel="stylesheet" href="https://ajax.googleapis.com/ajax/libs/jqueryui/1.12.1/themes/smoothness/jquery-ui.css">
+   <!-- <link rel="stylesheet" href="https://ajax.googleapis.com/ajax/libs/jqueryui/1.12.1/themes/smoothness/jquery-ui.css"> -->
 {% endblock %}
 {% block content %}
 
@@ -17,6 +17,8 @@
 {% block scripts %}
 <!-- REQUIRED: jQuery UI JS for Datepicker functionality -->
 <script src="https://ajax.googleapis.com/ajax/libs/jqueryui/1.12.1/jquery-ui.min.js"></script>
+<script src="https://unpkg.com/bootstrap-datepicker@1.9.0/dist/js/bootstrap-datepicker.min.js"></script>
+<script src="https://unpkg.com/bootstrap-datepicker@1.9.0/dist/locales/bootstrap-datepicker.ar.min.js" charset="UTF-8"></script>
 <script>
   "use strict";
  loadLeads()
