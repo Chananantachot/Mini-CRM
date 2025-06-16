@@ -139,8 +139,7 @@ class Db:
                 lead_id TEXT,
                 current_stage VARCHAR(50),
                 expected_value DECIMAL(10, 2),
-                closure_date DATE,      
-                converted BOOLEAN DEFAULT FALSE,        
+                closure_date DATE,         
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                 updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP                    
             )
@@ -519,34 +518,53 @@ class Db:
         cursor = db.cursor()
         cursor.execute('''
             SELECT 
+                o.id,
                 l.id as lead_id,           
                 o.current_stage,
                 o.expected_value,
                 o.closure_date,
-                o.converted,       
+                CASE WHEN c.id IS NULL THEN 0 ELSE 1 END as  converted,   
                 o.created_at,
                 o.updated_at               
             FROM opportunities o
             JOIN leads l ON o.lead_id = l.id AND l.id = ?
+            LEFT JOIN customers c ON c.id = l.id            
         ''', (leadId,))
         return cursor.fetchall() 
     
     @staticmethod
-    def createOpportunities(lead_id,current_stage,expected_value,closure_date,converted):
+    def getOpportunity(id,leadId):
+        db = Db.get_db()
+        cursor = db.cursor()
+        cursor.execute('''
+        SELECT 
+                o.id,
+                l.id as lead_id,           
+                o.current_stage,
+                o.expected_value,
+                o.closure_date,
+                CASE WHEN c.id IS NULL THEN 0 ELSE 1 END as  converted,   
+                o.created_at,
+                o.updated_at               
+            FROM opportunities o
+            JOIN leads l ON o.lead_id = l.id AND l.id = ? AND o.id = ?
+            LEFT JOIN customers c ON c.id = l.id         
+        ''', (leadId,id,))
+        return cursor.fetchone() 
+    
+    @staticmethod
+    def createOpportunities(lead_id,current_stage,expected_value,closure_date):
         id = str(uuid.uuid4())
         db = Db.get_db()
         cursor = db.cursor() 
         cursor.execute('''
-                        INSERT INTO opportunities(id,lead_id,current_stage,expected_value,closure_date,converted) 
-                        VALUES (?,?,?,?,?,?) ''', (id,lead_id,current_stage,expected_value,closure_date,converted,))
+                        INSERT INTO opportunities(id,lead_id,current_stage,expected_value,closure_date) 
+                        VALUES (?,?,?,?,?) ''', (id,lead_id,current_stage,expected_value,closure_date,))
         db.commit()
-
-        if converted == 'Yes':
-            Db.updateLeadStatus(lead_id, "Converted")
         return id
 
     @staticmethod
-    def updateOpportunities(id,lead_id,current_stage,expected_value,closure_date,converted):
+    def updateOpportunities(id,lead_id,current_stage,expected_value,closure_date):
         db = Db.get_db()
         cursor = db.cursor()
 
@@ -554,14 +572,12 @@ class Db:
                             lead_id = ?,
                             current_stage = ?,
                             expected_value = ?,
-                            closure_date = ?,
-                            converted = ?
+                            closure_date = ?
                        WHERE id = ?
-                       ''', (id,lead_id,current_stage,expected_value,closure_date,converted,))
+                       ''', (lead_id,current_stage,expected_value,closure_date,id,))
         
         db.commit()
-        if converted == 'Yes':
-            Db.updateLeadStatus(lead_id, "Converted")
+        return id
 
     @staticmethod
     def getLeads():
@@ -617,6 +633,7 @@ class Db:
                 created_at,
                 updated_at 
             FROM leads       
+            WHERE id = ?           
         ''', (id,))
         return cursor.fetchone() 
     
@@ -668,17 +685,7 @@ class Db:
         db.commit()
         return id
 
-    @staticmethod
-    def updateLeadStatus(id,status):
-        db = Db.get_db()
-        cursor = db.cursor()
-        cursor.execute('''UPDATE leads SET 
-                                status = ?
-                            WHERE id = ?''', 
-                        (status,id,))
-        db.commit()
-        return id
-
+ 
     @staticmethod
     def getCurrentUsers():
         db = Db.get_db()

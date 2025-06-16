@@ -284,10 +284,11 @@ function leads_loadComplete(datas, createUrl = null, editUrl = null) {
 }
 
 function lead_subGridRowExpanded(subgrid_id, leadId) {
-  var editingRowId = null; // Track the row being edited
+  var editingRowId; 
 
   var subgrid_table_id = subgrid_id + "_opportunity";
   var pager_id = "p_" + subgrid_table_id;
+
   $("#" + subgrid_id).html("<table id='" + subgrid_table_id + "'></table><div id='" + pager_id + "' class='scroll'></div>");
   var grid = $("#" + subgrid_table_id).jqGrid({
     url: '/api/opportunities/' + leadId,
@@ -311,7 +312,6 @@ function lead_subGridRowExpanded(subgrid_id, leadId) {
               format: 'yyyy-mm-dd',
               orientation: "bottom left",
               clearBtn: true,
-             
             });
           }
         }
@@ -322,15 +322,12 @@ function lead_subGridRowExpanded(subgrid_id, leadId) {
         edittype: "checkbox", align: "center"
       }
     ],
-  //  autowidth:true,
     pager: pager_id,
     multiselect: false,
     height: "100%",
     caption: "Sales",
     onSelectRow: function (id) {
       editingRowId = id;
-      var $self = $(this), param = $self.jqGrid("getGridParam");
-      param.editurl = `/api/${leadId}/opportunities/${id}edit`
     }
   });
 
@@ -350,8 +347,6 @@ function lead_subGridRowExpanded(subgrid_id, leadId) {
                   $(td).find('input.editable[type="text"]').addClass("ui-state-error");
                   $(td).find('input.editable[type="text"]').focus();
               }
-              //Suppress the modal error message
-              $.jgrid.hideModal();
           }
       }
       return ret
@@ -378,6 +373,12 @@ function lead_subGridRowExpanded(subgrid_id, leadId) {
       }
       originalHideModal.call(this,selector,o);
   };
+
+  $.jgrid.info_dialog = function() {
+      console.log("jqGrid tried to show an error dialog, suppressing it.");
+      return; // do nothing
+  };
+
   $("#" + subgrid_table_id).navGrid("#" + pager_id,
     { edit: false, add: false, del: false, search: false, refresh: false },
     {}, {}
@@ -400,9 +401,10 @@ function lead_subGridRowExpanded(subgrid_id, leadId) {
           p.datatype = "json";
           $self.trigger("reloadGrid", { page: p.page, current: true });
           return [true, '']; // No error
-        },
+        }
       },
       editParams: {
+        url: `/api/${leadId}/opportunities/edit`,
         keys: true,
         mtype: 'POST',
         onSuccess: function (response) {
@@ -512,7 +514,6 @@ function cust_subGridRowExpanded(subgrid_id, id) {
       });
     }
   })
-
 }
 
 function customer_loadComplete(datas, createUrl = null, editUrl = null) {
