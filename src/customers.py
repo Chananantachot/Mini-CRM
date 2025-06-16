@@ -19,20 +19,6 @@ def getCustomer(id):
     result = Db.getCustomer(id)
     customer = dict(result)
     return jsonify(customer),200
-
-@customers.route('/api/lead/new/customer', methods=['POST'])
-@role_required('Admin')
-def convertLeadToCustomer():
-    leadId = request.form.get('leadId')
-    if leadId:
-        lead = Db.getLeadConverted(leadId)
-        if lead:
-            lead = dict(lead)
-            id = Db.covertLeadToCustomer(lead['id'],lead['firstName'], lead['lastName'], lead['email'],lead['mobile'])
-            if id:
-                return jsonify({'error': False, 'message': 'Cretated.'}), 201
-        return jsonify({'error': True, 'message': 'Not Found.'}), 404    
-    return jsonify({'error': True, 'message': 'Failed.'}), 400
             
 @customers.route('/api/customer/new', methods=['POST'])
 @role_required('Admin')
