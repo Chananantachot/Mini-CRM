@@ -284,25 +284,29 @@ function leads_loadComplete(datas, createUrl = null, editUrl = null) {
 }
 
 function lead_subGridRowExpanded(subgrid_id, leadId) {
+  var editingRowId = null; // Track the row being edited
+
   var subgrid_table_id = subgrid_id + "_opportunity";
   var pager_id = "p_" + subgrid_table_id;
   $("#" + subgrid_id).html("<table id='" + subgrid_table_id + "'></table><div id='" + pager_id + "' class='scroll'></div>");
-  $("#" + subgrid_table_id).jqGrid({
+  var grid = $("#" + subgrid_table_id).jqGrid({
     url: '/api/opportunities/' + leadId,
     editurl: `/api/${leadId}/opportunities/edit`,
     datatype: "json",
     colModel: [
       { name: 'id', key: true, hidden: true },
       { name: 'lead_id', key: false, hidden: true },
-      { name: 'current_stage', label: 'Current Stage', editable: true, editrules: { required: true } },
-      { name: 'expected_value', label: 'Expected Value', editable: true, editrules: { required: true } },
-      {name: 'closure_date', label: 'Closure Date', editable: true, editrules: { required: true, date: true }, datefmt: 'yyyy-mm-dd',
-        editoptions: {
-          dataInit: function (element) {
+      { name: 'current_stage', label: 'Current Stage', editable: true, editrules: { required: true }},
+      { name: 'expected_value', label: 'Expected Value', editable: true, editrules: { required: true }},
+      { name: 'closure_date', label: 'Closure Date', editable: true, editrules: { required: true , date: true }, datefmt: 'yyyy-mm-dd',
+        editoptions: { dataInit: function (element) {
             var $wrapper = $("<div class='input-group2 date'></div>");
             var $addon = $('<span class="input-group-addon2"><i class="glyphicon glyphicon-th"></i></span>');
-           $(element).wrap($wrapper).after($addon);
-  
+            const today = new Date();
+            const formattedDate = today.toISOString().slice(0, 10);
+            $(element).val(formattedDate);
+            $(element).wrap($wrapper).after($addon);
+
             $(element).datepicker({
               format: 'yyyy-mm-dd',
               orientation: "bottom left",
@@ -324,16 +328,57 @@ function lead_subGridRowExpanded(subgrid_id, leadId) {
     multiselect: false,
     height: "100%",
     caption: "Sales",
-    createeditor: function (row, cellvalue, editor) {
-      editor.datepicker(); // initializing jQuery datepicker
-      
-    },
     onSelectRow: function (id) {
+      editingRowId = id;
       var $self = $(this), param = $self.jqGrid("getGridParam");
       param.editurl = `/api/${leadId}/opportunities/${id}edit`
     }
   });
 
+  var originalCheckValues = $.jgrid.checkValues,
+      originalHideModal = $.jgrid.hideModal,
+      iColWithError = 0;
+  $.jgrid.checkValues = function(val, valref,g, customobject, nam) {
+      var tr,td,
+          ret = originalCheckValues.call(this,val, valref,g, customobject, nam);
+      if (!ret[0]) {
+          tr = this.rows.namedItem(editingRowId);;
+          if (tr) {
+              $(tr).children('td').children('input.editable[type="text"]').removeClass("ui-state-error");
+              iColWithError = valref; // save to set later the focus
+              td = tr.cells[valref];
+              if (td) {
+                  $(td).find('input.editable[type="text"]').addClass("ui-state-error");
+                  $(td).find('input.editable[type="text"]').focus();
+              }
+              //Suppress the modal error message
+              $.jgrid.hideModal();
+          }
+      }
+      return ret
+  };
+  $.jgrid.hideModal = function (selector,o) {
+      var input, oldOnClose, td,
+          tr = grid[0].rows.namedItem(editingRowId);
+      if (tr) {
+          td = tr.cells[iColWithError];
+          if (td) {
+              input = $(td).children('input.editable[type="text"]:first');
+              if (input.length > 0) {
+                  oldOnClose = o.onClose;
+                  o.onClose = function(s) {
+                      if ($.isFunction(oldOnClose)) {
+                          oldOnClose.call(s);
+                      }
+                      setTimeout(function(){
+                          input.focus();
+                      },100);
+                  };
+              }
+          }
+      }
+      originalHideModal.call(this,selector,o);
+  };
   $("#" + subgrid_table_id).navGrid("#" + pager_id,
     { edit: false, add: false, del: false, search: false, refresh: false },
     {}, {}
@@ -344,6 +389,10 @@ function lead_subGridRowExpanded(subgrid_id, leadId) {
     del: false,
     cancel: true,
     save: true,
+    // errorCell: function (elem, msg) {
+    //         $(elem).css("border", "2px solid red"); // Highlight invalid input
+    //         console.log("Validation error:", msg); // Optional debugging log
+    // },
     addParams: {
       addRowPage: 'last', // Add the new row to the last page (or 'first', 'current')
       position: 'last',   // Position the new row at the end of the grid (or 'first')
