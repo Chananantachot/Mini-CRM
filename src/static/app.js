@@ -12,7 +12,7 @@ $(document).ready(function () {
       if (table.id) {
         let id = "#" + table.id;
         var $grid = $(id),
-          newWidth = $grid.closest(".ui-jqgrid").parent().width();
+        newWidth = $grid.closest(".ui-jqgrid").parent().width();
         $grid.jqGrid("setGridWidth", newWidth, true);
       }
     }
@@ -313,7 +313,6 @@ function lead_subGridRowExpanded(subgrid_id, leadId) {
               clearBtn: true,
              
             });
-            
           }
         }
       },
@@ -389,10 +388,6 @@ function lead_subGridRowExpanded(subgrid_id, leadId) {
     del: false,
     cancel: true,
     save: true,
-    // errorCell: function (elem, msg) {
-    //         $(elem).css("border", "2px solid red"); // Highlight invalid input
-    //         console.log("Validation error:", msg); // Optional debugging log
-    // },
     addParams: {
       addRowPage: 'last', // Add the new row to the last page (or 'first', 'current')
       position: 'last',   // Position the new row at the end of the grid (or 'first')
@@ -432,21 +427,6 @@ function lead_subGridRowExpanded(subgrid_id, leadId) {
         }
       },
     },
-  })
-
-  $("#" + subgrid_table_id).navButtonAdd("#" + pager_id, {
-    buttonicon: "ui-icon-circle-plus",
-    title: "Add to Customer",
-    caption: "",
-    position: "last",
-    onClickButton: function () {
-      var ids = $("#" + subgrid_table_id).jqGrid('getGridParam', 'selarrrow');
-      $.post('/api/lead/new/customer', {
-        leadId: leadId
-      }, function () {
-        $("#" + subgrid_table_id).trigger("reloadGrid");
-      });
-    }
   })
 }
 

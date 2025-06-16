@@ -23,10 +23,12 @@ def create(lead_id):
     if leadId: 
       id =  Db.createOpportunities(leadId,current_stage,expected_value,closure_date,converted)
       if id:
-          if converted == 'Yes':
-              Db.updateLeadStatus(leadId,'Converted')  
-
-          return jsonify({ 'error': False, 'message': 'Created' }), 201  
+        if converted == 'Yes':
+            lead = Db.getLead(lead_id)
+            lead = dict(lead)
+            Db.covertLeadToCustomer(lead['firstName'], lead['lastName'], lead['email'], lead['mobile'])
+        
+        return jsonify({ 'error': False, 'message': 'Created' }), 201  
     return jsonify({ 'error': True, 'message': 'Bad Request' }), 400   
 
 @opportunities.route('/api/<lead_id>/opportunities/<id>/edit', methods=['POST'])
@@ -38,11 +40,18 @@ def edit(id,lead_id):
     closure_date = request.form.get('closure_date')
     converted = request.form.get('converted')
     if id:
-       lead =  Db.getLead(id)
-       if lead:
-           Db.updateOpportunities(id,leadId,current_stage,expected_value,closure_date,converted)
-           return jsonify({ 'error': False, 'message': 'Created' }), 204  
-       else:
-        return jsonify({ 'error': True, 'message': 'Not Found' }), 404
+        lead =  Db.getLead(id)
+        if lead:
+            if converted == 'Yes':
+                lead = dict(lead)
+                _id = Db.covertLeadToCustomer(lead['firstName'], lead['lastName'], lead['email'], lead['mobile'])
+            else:  
+                _id = Db.updateOpportunities(id,leadId,current_stage,expected_value,closure_date,converted)
+                if _id:
+                    return jsonify({ 'error': False, 'message': 'Updated' }), 204  
+                else:
+                    return jsonify({ 'error': True, 'message': 'Failed' }), 400   
+        else:
+            return jsonify({ 'error': True, 'message': 'Not Found' }), 404
     else:   
         return jsonify({ 'error': True, 'message': 'Bad Request' }), 400      
