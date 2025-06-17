@@ -296,10 +296,10 @@ class Db:
         return leadId
 
     @staticmethod
-    def deleteLeadProdsInterested(leadId):
+    def deleteLeadProdsInterested(leadId,productId):
         db = Db.get_db()
         cursor = db.cursor()
-        cursor.execute('DELETE FROM lead_prods_Interested WHERE lead_id = ?',(leadId,))
+        cursor.execute('DELETE FROM lead_prods_Interested WHERE lead_id = ? AND product_id = ?',(leadId,productId,))
 
         db.commit()
         return leadId 

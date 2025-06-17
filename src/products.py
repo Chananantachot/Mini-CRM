@@ -164,11 +164,17 @@ def getProductsLeadInterested(id):
 def postPorductsInterested():
     ids = request.form.getlist('ids[]')
     leadId = request.form.get('leadId')
+    currents = Db.getleadProdsInterested(leadId)
 
-    Db.deleteLeadProdsInterested(leadId)
-    
+    currents =  [c['id'] for c in currents if c['interested'] == 1]
+    addIDs = [id for id in ids if id not in currents]
+    removeIDs = [id for id in currents if id not in ids]           
+   
     if ids and leadId:
-        for prodId in ids:
+        for prodId in removeIDs:
+            Db.deleteLeadProdsInterested(leadId,prodId)
+    
+        for prodId in addIDs:
            id = Db.createLeadProdsInterested(leadId,prodId)
         if id:
             return jsonify({ 'error': False, 'message': 'created' }),201
