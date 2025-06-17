@@ -127,12 +127,12 @@ function loadProducts() {
     sortname: 'price',
     grouping: true,
     groupingView: {
-      groupField: ['category'],
-      groupSummary: [true],
-      groupColumnShow: [true],
-      groupText: ['<b>{0}</b>'],
-      groupCollapse: false,
-      groupOrder: ['asc']
+    groupField: ['category'],
+    groupSummary: [true],
+    groupColumnShow: [true],
+    groupText: ['<b>{0}</b>'],
+    groupCollapse: false,
+    groupOrder: ['asc']
     },
     searching: {
       searchOnEnter: true,
@@ -220,7 +220,7 @@ function loadLeads() {
   ];
 
   init_jqGrid('gridLeads', 'pager', '/api/leads', '/api/lead/new', '/api/lead/edit',
-    colModel, 'Leads Management', true, function (data) { leads_loadComplete(data, '/api/lead/new', '/api/lead/edit') },
+    colModel, 'Leads Management', true, function (data) { leads_loadComplete(data) },
     function (id) { lead_onSelectRow(id) }, function (subgrid_id, id) { lead_subGridRowExpanded(subgrid_id, id) })
 }
 
@@ -229,7 +229,7 @@ function lead_onSelectRow(ids) {
   $("#gridProdsInterest").trigger("reloadGrid");
 }
 
-function leads_loadComplete(datas, createUrl = null, editUrl = null) {
+function leads_loadComplete(datas) {
   fetch('/api/userRoles', {
     headers: {
       'Accept': 'application/json'
@@ -249,7 +249,7 @@ function leads_loadComplete(datas, createUrl = null, editUrl = null) {
       },
       {
         // edit options
-        url: editUrl, //'/api/customer/edit',
+        url: '/api/lead/edit', //'/api/customer/edit',
         closeAfterEdit: true,
         reloadAfterSubmit: true,
         errorTextFormat: function (response) {
@@ -265,7 +265,7 @@ function leads_loadComplete(datas, createUrl = null, editUrl = null) {
       },
       {
         // Add options
-        url: createUrl, //'/api/customer/new',
+        url: '/api/lead/new', //'/api/customer/new',
         closeAfterAdd: true,
         reloadAfterSubmit: true,
         errorTextFormat: function (response) {
@@ -604,22 +604,22 @@ function loadRoles() {
     { label: 'Date updated', name: 'updated_at', width: 100, editable: false, align: 'center', formatter: 'date' }
   ];
   init_jqGrid('gridRole', 'pager', '/api/roles', '/api/roles/create', '/api/roles/edit',
-    colModel, 'Roles Management', true, function (data) { role_loadComplete(data, '/api/roles/create', '/api/roles/edit') },
+    colModel, 'Roles Management', true, function (data) { role_loadComplete(data) },
     function (id) { }, function (subgrid_id, id) { roles_subGridRowExpanded(subgrid_id, id) })
 }
 
-function role_loadComplete(data, createUrl = null, editUrl = null) {
-  $("#grid").navGrid("#pager",
+function role_loadComplete(data) {
+  $("#gridRole").navGrid("#pager",
     { edit: true, add: true, del: false, search: false, refresh: true },
     {
       // Edit options
-      url: editUrl,
+      url: '/api/roles/edit',
       closeAfterEdit: true,
       reloadAfterSubmit: true
     },
     {
       // Add options
-      url: createUrl,
+      url: '/api/roles/create',
       closeAfterAdd: true,
       reloadAfterSubmit: true
     }
