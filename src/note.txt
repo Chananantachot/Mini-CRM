@@ -116,7 +116,14 @@ The Full Flow (Lead -> Opportunity -> Customer):
 Lead: "Someone showed interest in us." (e.g., John Doe, email: john@example.com, source: Website Form).
 
 Stored in leads table.
-Opportunity: "John Doe is a qualified prospect, and we're actively trying to sell him our 'Enterprise Software Package'." (e.g., customer_id: John Doe's ID, current_stage: Prospecting, expected_value: $10,000, closure_date: 2025-07-30).
+Opportunity: "John Doe is a qualified prospect,
+ and we're actively trying to sell him our 'Enterprise Software Package'." e.g.
+ ( 
+ customer_id: John Doe's ID, 
+  current_stage: Prospecting,
+  expected_value: $10,000, 
+  closure_date: 2025-07-30
+)
 
 Stored in opportunities table (and often linked back to the original lead ID).
 Customer: "John Doe bought our 'Enterprise Software Package'!" (e.g., id: John Doe's New Customer ID, firstName: John, lastName: Doe, email: john@example.com).

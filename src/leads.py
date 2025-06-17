@@ -37,7 +37,7 @@ def createLead():
 @leads.route('/api/lead/edit',methods=['POST'])
 @role_required('Admin')
 def updateLead():
-    id = request.form.get('id')
+    leadId = request.form.get('id')
     firstName = request.form.get('firstName')
     lastName = request.form.get('lastName')
     email = request.form.get('email')
@@ -45,8 +45,8 @@ def updateLead():
     status = request.form.get('status')
 
     skipCheckUniqeName = False
-    if id:
-        lead = Db.getLead(id)
+    if leadId:
+        lead = Db.getLead(leadId)
         if lead:
             lead = dict(lead)
             if firstName and lastName and email and lead['firstName'] == firstName and lead['lastName'] == lastName:
@@ -63,8 +63,8 @@ def updateLead():
         isFirstLastUniqe = not _lead
 
     if isFirstLastUniqe:
-        _id =  Db.updateLead(id,firstName,lastName,email,source,status)
-        if _id:
+        leadId =  Db.updateLead(leadId,firstName,lastName,email,source,status)
+        if leadId:
             return jsonify({ 'error': False, 'message': 'Updated' }), 204
         return jsonify({ 'error': True, 'message': 'Failed' }), 400
     return jsonify({ 'error': True, 'message': f'{firstName} {lastName} already exists.' }), 400    

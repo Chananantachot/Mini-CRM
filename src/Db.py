@@ -289,8 +289,6 @@ class Db:
         id = str(uuid.uuid4())
         db = Db.get_db()
         cursor = db.cursor()
-        cursor.execute('DELETE FROM lead_prods_Interested WHERE lead_id = ?',(leadId,))
-
         cursor.execute(''' 
                         INSERT INTO lead_prods_Interested(id,lead_id,product_id) VALUES (?,?,?) 
                        ''', (id,leadId,productId,))

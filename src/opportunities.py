@@ -14,7 +14,7 @@ def getOpportunities(leadId):
 @opportunities.route('/api/<lead_id>/opportunities/new', methods=['POST'])
 @role_required('Admin')
 def create(lead_id):
-    leadId = lead_id #request.form.get('lead_id')
+    leadId = lead_id
     current_stage = request.form.get('current_stage')
     expected_value = request.form.get('expected_value')
     closure_date = request.form.get('closure_date')
@@ -35,23 +35,23 @@ def create(lead_id):
 @role_required('Admin')
 def edit(lead_id):
     leadId = lead_id
-    id  = request.form.get('id')
+    opportunityId  = request.form.get('id')
     current_stage = request.form.get('current_stage')
     expected_value = request.form.get('expected_value')
     closure_date = request.form.get('closure_date')
     converted = request.form.get('converted')
-    if id and leadId:
-        opportunity = Db.getOpportunity(id,lead_id)
+    if opportunityId and leadId:
+        opportunity = Db.getOpportunity(opportunityId,lead_id)
         opportunity = dict(opportunity)
         if opportunity:
             lead =  Db.getLead(lead_id)
             if lead:
                 if converted == 'Yes':
                     lead = dict(lead)
-                    _id = Db.covertLeadToCustomer(lead['firstName'], lead['lastName'], lead['email'], lead['mobile'])
+                    custId = Db.covertLeadToCustomer(lead['firstName'], lead['lastName'], lead['email'], lead['mobile'])
                 else:  
-                    _id = Db.updateOpportunities(id,leadId,current_stage,expected_value,closure_date)
-                    if _id:
+                    custId = Db.updateOpportunities(opportunityId,leadId,current_stage,expected_value,closure_date)
+                    if custId:
                         return jsonify({ 'error': False, 'message': 'Updated' }), 204  
                     else:
                         return jsonify({ 'error': True, 'message': 'Failed' }), 400  
