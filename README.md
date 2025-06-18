@@ -36,7 +36,7 @@ It is perfect for engineers, students, or anyone interested in Customer Relation
 
 1. Clone the repository:
    ```bash
-   git clone (https://github.com/Chananantachot/Mini-CRM.git)
+   git clone https://github.com/Chananantachot/Mini-CRM.git
    cd Mini-CRM/src
    
 2. on your termianl -> follow instructions of this link https://flask.palletsprojects.com/en/stable/installation/#create-an-environment
