@@ -282,6 +282,29 @@ class Db:
 
         ''', (id,))
 
+        return cursor.fetchall()   
+
+    @staticmethod
+    def getCustProdsOrders(id):
+        db = Db.get_db()
+        cursor = db.cursor()
+
+        cursor.execute(''' 
+                    SELECT p.productId, p.productName, p.description, 1 as quantity, p.unitPrice
+                        FROM (
+                            SELECT 
+                                p.id as productId, 
+                                p.name as productName, 
+                                p.price as unitPrice, 
+                                p.description,
+                                CASE WHEN i.product_id IS NOT NULL THEN 1 ELSE 0 END AS interested,
+                                CASE WHEN c.id IS NOT NULL THEN 1 ELSE 0 END AS asCustomer
+                            FROM products p  
+                            LEFT JOIN lead_prods_Interested i ON i.product_id = p.id and (i.lead_id = ? OR i.lead_id is NULL) 
+                            LEFT JOIN customers c ON c.id = i.lead_id 
+                       ) p     
+                    WHERE p.interested = 1 and p.asCustomer = 1
+        ''', (id,))
         return cursor.fetchall()    
 
     @staticmethod
@@ -397,7 +420,9 @@ class Db:
     def getCustomerAddressBy(id):
         db = Db.get_db()
         cursor = db.cursor()
-        cursor.execute('''SELECT id, customerId,
+        cursor.execute('''
+                            SELECT id,
+                                customerId,
                                 addressLine1,addressLine2,
                                 city,state,postalCode,
                                 country,addressType,
@@ -405,6 +430,27 @@ class Db:
                             FROM addresses
                             WHERE id = ?
                             ''',(id,))
+        return cursor.fetchall()
+    
+    @staticmethod
+    def getCustomerSipping(id):
+        db = Db.get_db()
+        cursor = db.cursor()
+        cursor.execute('''
+                SELECT c.customerId,
+                    c.firstName + ' ' + c.lastName as client,
+                    a.addressLine1,
+                    a.addressLine2,
+                    a.city,
+                    a.state,
+                    a.postalCode,
+                    a.country,
+                    a.addressType,
+                    a.isPrimary
+                FROM addresses a
+                JOIN customers c on c.id = a.customerId 
+                WHERE id = ? and a.isPrimary = 1
+                ''',(id,))
         return cursor.fetchone()
 
     @staticmethod
@@ -683,7 +729,6 @@ class Db:
         db.commit()
         return id
 
- 
     @staticmethod
     def getCurrentUsers():
         db = Db.get_db()
