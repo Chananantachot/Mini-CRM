@@ -163,6 +163,20 @@ def home():
     }
     return render_template('home.html',current_user = user)
 
+@app.route("/order")
+@jwt_required()
+def order():  
+    current_user = get_jwt_identity() 
+    roles = get_jwt()["roles"]  
+
+    isAdminRole = 'Admin' in roles
+   
+    user = {
+        'name': current_user,
+        'isAdminRole': isAdminRole
+    }
+    return render_template('order.html',current_user = user)
+
 
 @app.route('/register', methods=['GET'])
 def newUser():

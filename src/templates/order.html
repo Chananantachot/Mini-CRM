@@ -1,0 +1,172 @@
+{% extends "layout.html" %} 
+{% block styles %}
+<style>
+body {
+    font-family: Lucida Grande, Lucida Sans, Arial, sans-serif;
+    font-size: 1.1em; 
+}
+form {
+display: block;
+    margin-top: 0em;
+}   
+
+fieldset {  
+display: block;
+margin-inline-start: 2px;
+margin-inline-end: 2px;
+padding-block-start: 0.35em;
+padding-inline-start: 0.75em;
+padding-inline-end: 0.75em;
+padding-block-end: 0.625em;
+border-top-width: 2px;
+border-right-width: 2px;
+border-bottom-width: 2px;
+border-left-width: 2px;
+border-top-style: groove;
+border-right-style: groove;
+border-bottom-style: groove;
+border-left-style: groove;
+border-top-color: threedface;
+border-right-color: threedface;
+border-bottom-color: threedface;
+border-left-color: threedface;
+min-inline-size: min-content;
+}
+
+legend {     
+display: block;
+width: 20%;
+padding: 0;
+margin-bottom: 20px;
+font-size: 21px;
+line-height: inherit;
+color: #333;
+border: 0;
+border-bottom: 1px solid #e5e5e5;
+padding-inline-start: 2px;
+padding-inline-end: 2px;
+border-top-style: none;
+border-right-style: none;
+border-bottom-style: none;
+border-left-style: none;
+font-family: Lucida Grande, Lucida Sans, Arial, sans-serif;
+font-size: 1.1em; 
+}
+
+
+
+table {
+display: table;
+border-collapse: separate;
+-webkit-border-horizontal-spacing: 2px;
+-webkit-border-vertical-spacing: 2px;
+text-indent: initial;
+box-sizing: border-box;
+}
+
+.order-container {
+    display: flex;
+    margin-left: 0;
+    margin-right: auto;   
+}
+.order-container div {
+    display: block;
+    padding-right: 55px;
+}
+</style>
+{% endblock %}
+{% block content %}
+
+<ul class="order-container">
+    <div>
+        <form method="post" name="order" id="order" action="" title="" style="width:350px;margin:0px;">
+	<fieldset>
+		<legend>Invoice</legend>
+		<table>
+			<tbody>
+				<tr>
+					<td> Invice No:</td>
+					<td><input type="text" name="id" readonly="true" id="invid"></td>
+				</tr>
+				<tr>
+					<td> Invice Date:</td>
+					<td><input type="text" name="invdate"></td>
+				</tr>
+				<tr>
+					<td> Client</td>				
+					<td><input type="text" name="name"></td>
+				</tr>
+				<tr>
+					<td> Amount</td>				
+					<td><input type="text" name="amount"></td>
+				</tr>
+				<tr>
+					<td> Tax</td>				
+					<td><input type="text" name="tax"></td>
+				</tr>
+				<tr>
+					<td> Total</td>				
+					<td><input type="text" name="total"></td>
+				</tr>
+				<tr>
+					<td> Note</td>				
+					<td><input type="text" name="note"></td>
+				</tr>
+				<tr>
+					<td>&nbsp;</td>
+					<!-- <td><input type="button" id="savedata" value="Save"></td> -->
+				</tr>
+			</tbody>
+		</table>
+	</fieldset>
+</form>
+
+    </div>
+      <div><form method="post" name="order" id="order" action="" title="" style="width:350px;margin:0px;">
+	<fieldset>
+		<legend>Shipping</legend>
+		<table>
+			<tbody>
+				<tr>
+					<td> Invice No:</td>
+					<td><input type="text" name="id" readonly="true" id="invid"></td>
+				</tr>
+				<tr>
+					<td> Invice Date:</td>
+					<td><input type="text" name="invdate"></td>
+				</tr>
+				<tr>
+					<td> Client</td>				
+					<td><input type="text" name="name"></td>
+				</tr>
+				<tr>
+					<td> Amount</td>				
+					<td><input type="text" name="amount"></td>
+				</tr>
+				<tr>
+					<td> Tax</td>				
+					<td><input type="text" name="tax"></td>
+				</tr>
+				<tr>
+					<td> Total</td>				
+					<td><input type="text" name="total"></td>
+				</tr>
+				<tr>
+					<td> Note</td>				
+					<td><input type="text" name="note"></td>
+				</tr>
+				<tr>
+					 <td>&nbsp;</td>
+					<!--<td><input type="button" id="savedata" value="Save"></td> -->
+				</tr>
+			</tbody>
+		</table>
+	</fieldset>
+</form></div>
+</div>
+{% endblock %}
+{% block scripts %}
+<script>
+  "use strict";
+</script>
+{% endblock %}
