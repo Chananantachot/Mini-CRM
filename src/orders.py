@@ -18,7 +18,7 @@ def getOrderItems(custId):
 @role_required('Admin')
 def getOrderSipping(custId):
     if custId:
-        address = Db.getCustomerAddress(custId)
+        address = Db.getCustomerPrimaryAddress(custId)
         if address:
             client = Db.getCustomerSipping(custId)
             if client:

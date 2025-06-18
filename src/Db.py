@@ -377,6 +377,8 @@ class Db:
     @staticmethod
     def createProduct(name, description, price,sku,category,isActive):
         id = str(uuid.uuid4())
+        isActive = 1 if isActive == 'Yes' else 0
+
         db = Db.get_db()
         cursor = db.cursor()
         cursor.execute(''' INSERT INTO products (id,name, description, price,sku,category,isActive)
@@ -386,7 +388,9 @@ class Db:
         return id
 
     @staticmethod
-    def updateProduct(id ,name, description, price,sku,category,isActive):        
+    def updateProduct(id ,name, description, price,sku,category,isActive):     
+        isActive = 1 if isActive == 'Yes' else 0
+
         db = Db.get_db()
         cursor = db.cursor()
         cursor.execute(''' UPDATE products SET 
@@ -402,7 +406,7 @@ class Db:
         return id
 
     @staticmethod
-    def getCustomerAddress(id):
+    def getCustomerPrimaryAddress(id):
         db = Db.get_db()
         cursor = db.cursor()
         cursor.execute('''SELECT id, customerId,

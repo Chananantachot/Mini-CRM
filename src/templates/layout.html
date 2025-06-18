@@ -34,7 +34,6 @@
           <li><a href="{{ url_for('lead') }}">Leads</a></li>
           <li><a href="{{ url_for('customer') }}">Customers</a></li>
           <li><a href="{{ url_for('product') }}">Products</a></li>
-            <li><a href="{{ url_for('order') }}">Invoce</a></li>
           {% if current_user.isAdminRole %}
           <li><a href="{{ url_for('user') }}">Users</a></li>
           <li><a href="{{ url_for('roles') }}">Roles</a></li>

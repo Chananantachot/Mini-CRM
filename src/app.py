@@ -165,9 +165,9 @@ def home():
     }
     return render_template('home.html',current_user = user)
 
-@app.route("/order")
+@app.route("/<id>/order/")
 @jwt_required()
-def order():  
+def order(id):  
     current_user = get_jwt_identity() 
     roles = get_jwt()["roles"]  
 

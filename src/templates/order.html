@@ -53,15 +53,15 @@ font-family: Lucida Grande, Lucida Sans, Arial, sans-serif;
 font-size: 1.1em; 
 }
 
-
-
-table {
+.invTable {
+width: 100%;	
 display: table;
 border-collapse: separate;
 -webkit-border-horizontal-spacing: 2px;
 -webkit-border-vertical-spacing: 2px;
 text-indent: initial;
 box-sizing: border-box;
+padding-bottom: 20px;
 }
 
 .order-container {
@@ -70,103 +70,211 @@ box-sizing: border-box;
     margin-right: auto;   
 }
 .order-container div {
+	width:500px;
+	margin:0px;
     display: block;
     padding-right: 55px;
+	padding-bottom: 20px;
 }
+
+ .right { 
+	font-weight: bold;
+	text-align: right; 
+}
+
 </style>
 {% endblock %}
 {% block content %}
 
-<ul class="order-container">
-    <div>
-        <form method="post" name="order" id="order" action="" title="" style="width:350px;margin:0px;">
-	<fieldset>
-		<legend>Invoice</legend>
-		<table>
-			<tbody>
-				<tr>
-					<td> Invice No:</td>
-					<td><input type="text" name="id" readonly="true" id="invid"></td>
-				</tr>
-				<tr>
-					<td> Invice Date:</td>
-					<td><input type="text" name="invdate"></td>
-				</tr>
-				<tr>
-					<td> Client</td>				
-					<td><input type="text" name="name"></td>
-				</tr>
-				<tr>
-					<td> Amount</td>				
-					<td><input type="text" name="amount"></td>
-				</tr>
-				<tr>
-					<td> Tax</td>				
-					<td><input type="text" name="tax"></td>
-				</tr>
-				<tr>
-					<td> Total</td>				
-					<td><input type="text" name="total"></td>
-				</tr>
-				<tr>
-					<td> Note</td>				
-					<td><input type="text" name="note"></td>
-				</tr>
-				<tr>
-					<td>&nbsp;</td>
-					<!-- <td><input type="button" id="savedata" value="Save"></td> -->
-				</tr>
-			</tbody>
-		</table>
-	</fieldset>
-</form>
+<div id="container" class="order-container">
 
-    </div>
-      <div><form method="post" name="order" id="order" action="" title="" style="width:350px;margin:0px;">
-	<fieldset>
-		<legend>Shipping</legend>
-		<table>
+</div>
+<table id="gridInvoice"  class="table table-striped table-bordered">
+
+</table>
+<div id="orderPager"></div>
+<script id="invoice" type="text/html">
+    <div>
+		<fieldset>
+		<legend>Invoice Data</legend>
+		<table class="invTable">
 			<tbody>
 				<tr>
 					<td> Invice No:</td>
-					<td><input type="text" name="id" readonly="true" id="invid"></td>
+					<td><input type="text" class="form-control input-sm" name="id" readonly="true" id="invid" value="${invNumber}"></td>
 				</tr>
 				<tr>
 					<td> Invice Date:</td>
-					<td><input type="text" name="invdate"></td>
+					<td><input type="text" id="orderDate" class="form-control input-sm" readonly="true" name="invdate"></td>
 				</tr>
 				<tr>
 					<td> Client</td>				
-					<td><input type="text" name="name"></td>
+					<td><input type="text" class="form-control input-sm"  name="name"  readonly="true"  value="${client}"></td>
 				</tr>
 				<tr>
 					<td> Amount</td>				
-					<td><input type="text" name="amount"></td>
+					<td><input type="text" id="amount" class="form-control input-sm right" readonly="true"  name="amount"></td>
 				</tr>
 				<tr>
-					<td> Tax</td>				
-					<td><input type="text" name="tax"></td>
+					<td>Tax (7%)</td>				
+					<td><input type="text" id="tax" class="form-control input-sm right" readonly="true"  name="tax"></td>
 				</tr>
 				<tr>
 					<td> Total</td>				
-					<td><input type="text" name="total"></td>
-				</tr>
-				<tr>
-					<td> Note</td>				
-					<td><input type="text" name="note"></td>
-				</tr>
-				<tr>
-					 <td>&nbsp;</td>
-					<!--<td><input type="button" id="savedata" value="Save"></td> -->
+					<td><input type="text" id="total" class="form-control input-sm right"  readonly="true" name="total"></td>
 				</tr>
 			</tbody>
 		</table>
-	</fieldset>
-</form></div>
-</div>
+		</fieldset>
+	</div>		
+    <div>
+		<fieldset>
+			<legend>Shipping Info</legend>
+			<table class="invTable">
+				<tbody>
+					<tr>
+						<td>Address Line 1:</td>
+						<td><input type="text" name="id" class="form-control input-sm" value="${addressLine1}"></td>
+					</tr>
+					<tr>
+						<td> Address Line 2:</td>
+						<td><input type="text" name="invdate" class="form-control input-sm"  value="${addressLine2}"></td>
+					</tr>
+					<tr>
+						<td>State</td>				
+						<td><input type="text" name="name" class="form-control input-sm" value="${state}"></td>
+					</tr>
+					<tr>
+						<td> City</td>				
+						<td><input type="text" id="city" name="city" class="form-control input-sm"  value="${city}"></td>
+					</tr>
+					<tr>
+						<td>Country</td>				
+						<td><input type="text" id="country" name="country" class="form-control input-sm"  value="${country}"></td>
+					</tr>
+					<tr>
+						<td> Postcode:</td>				
+						<td><input type="text" id="postalCode" name="postalCode" class="form-control input-sm"  value="${postalCode}"></td>
+					</tr>
+				</tbody>
+			</table>
+		</fieldset>
+	</div>
+  </script>	
 {% endblock %}
 {% block scripts %}
+ <script src="https://ajax.microsoft.com/ajax/jquery.templates/beta1/jquery.tmpl.min.js"></script>
 <script>
   "use strict";
+	var lastsel
+	var datas;
+	const url = window.location.href;
+	const match = url.match(/\/([0-9a-fA-F-]{36})\//);
+	const custId = match ? match[1] : null;
+
+    fetch(`/invoice/${custId}/order`, {
+		headers: {
+		'Accept': 'application/json'
+		}
+	}).then(resp => resp.json()
+	).then(data => {
+		 $("#invoice").tmpl(data).appendTo("#container");
+		
+	});
+loadOrderItems(custId)
+function loadOrderItems(custId) {
+  $("#gridInvoice").jqGrid({
+    url: `/invoice/${custId}/orderItems`,
+    datatype: "json",
+    height: 200,
+    colModel: [
+      {
+        name: 'productId',
+        index: 'productId',
+        key: true,
+        hidden: true
+      },
+      { label: 'Name', index: 'productName', name: 'productName', width: 120},
+      { label: 'Description', index: 'description', name: 'description', width: 150 },
+      { label: 'Quantity', index:'quantity', name: 'quantity', width: 60, editable: true ,formatter: "number",align: "right"},   		
+      { name: 'unitPrice', label: "Price", index: 'unitPrice', width: 60, align: "right", sorttype: "float", formatter: "number", summaryType: 'sum' }
+    ],
+    loadonce: true,
+    pager: "#orderPager",
+    autowidth: true,
+    viewrecords: true,
+    sortname: 'unitPrice',
+    searching: {
+      searchOnEnter: true,
+      defaultSearch: "bw"
+    },
+	cellEdit: true,
+    afterSaveCell: function(rowid, name, value, iRow, iCol) {
+        var allData = $("#gridInvoice").jqGrid('getRowData');
+        var editedRows = $("#gridInvoice").jqGrid('getGridParam', 'savedRow');
+
+        // Merge changes
+        editedRows.forEach(function(edit) {
+            var rowIndex = allData.findIndex(row => row.id === edit.id);
+            if (rowIndex !== -1) {
+                allData[rowIndex] = {...allData[rowIndex], ...edit};
+            }
+        });
+		var amount = 0;
+		var vat = 0;
+		var total = 0;
+		allData.forEach(function(product, idx) {
+			amount += (parseInt(product.quantity) * parseFloat(product.unitPrice));
+		})
+		vat = amount * 0.07;
+		total = amount + vat;
+		$('#amount').val(amount.toFixed(2));
+		$('#tax').val(vat.toFixed(2));	
+		$('#total').val(total.toFixed(2));
+    },
+	onSelectRow: function (id) {
+    	if (id) {
+			jQuery('#gridInvoice').jqGrid('restoreRow', lastsel);
+			jQuery('#gridInvoice').jqGrid('editRow', id, true);
+			lastsel = id;
+      	}
+    },
+	loadComplete: function(invoiceData) {
+		datas = invoiceData;
+	 },
+	 gridComplete: function() {
+        var allData = $("#gridInvoice").jqGrid('getRowData');
+		if (allData.length == 0)
+			allData = datas;
+
+        var editedRows = $("#gridInvoice").jqGrid('getGridParam', 'savedRow');
+
+        // Merge changes
+        editedRows.forEach(function(edit) {
+            var rowIndex = allData.findIndex(row => row.id === edit.id);
+            if (rowIndex !== -1) {
+                allData[rowIndex] = {...allData[rowIndex], ...edit};
+            }
+        });
+		const currentDate = new Date();
+		var formattedDate = currentDate.toISOString().split('T')[0];
+		$('#orderDate').val(formattedDate)
+
+		var amount = 0;
+		var vat = 0;
+		var total = 0;
+		allData.forEach(function(product, idx) {
+			amount += (parseInt(product.quantity) * parseFloat(product.unitPrice));
+		})
+		vat = amount * 0.07;
+		total = amount + vat;
+		$('#amount').val(amount.toFixed(2));
+		$('#tax').val(vat.toFixed(2));	
+		$('#total').val(total.toFixed(2));
+    },
+    caption: "Order Items"
+  }).navGrid('#orderPager', { add: false, edit: false, del: false, search: false });
+}
+
 </script>
 {% endblock %}

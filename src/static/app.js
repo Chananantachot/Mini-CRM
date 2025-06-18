@@ -93,7 +93,10 @@ function loadCustomers() {
     { label: 'Email', name: 'email', width: 100, editable: true, editrules: { required: true }, editoptions: { dataEvents: [createAutoCorrectMailEvent()] } },
     { label: 'Mobile', name: 'mobile', width: 100, editable: true },
     { label: 'Date created', name: 'created_at', width: 100, editable: false, align: 'center', formatter: 'date' },
-    { label: 'Date updated', name: 'updated_at', width: 100, editable: false, align: 'center', formatter: 'date' }
+    { label: 'Date updated', name: 'updated_at', width: 100, editable: false, align: 'center', formatter: 'date' },
+    { name :'inv', label:'' ,formatter: function (cellvalue, options, rowObject) {  
+         return `<a class='btn btn-link' href='/${rowObject.id}/order'>Invoice</a>`;
+    }}
   ];
 
   init_jqGrid('gridCustomers', 'pager', '/api/customers', '/api/customer/new', '/api/customer/edit',
@@ -188,7 +191,6 @@ function loadProdsInterest() {
       var cell_id = $('#gridLeads').jqGrid('getGridParam', 'selrow');
       var leadId = $('#gridLeads').jqGrid('getCell', cell_id, 'id');
 
-      console.log(ids)
       $.post('/api/product/interested', {
         ids: ids,
         leadId: leadId
@@ -581,6 +583,7 @@ function user_loadComplete(data) {
   );
 }
 
+var lastsel
 function user_onSelectRow(id) {
   if (id) {
     jQuery('#gridUser').jqGrid('restoreRow', lastsel);
