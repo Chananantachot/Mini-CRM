@@ -290,20 +290,25 @@ class Db:
         cursor = db.cursor()
 
         cursor.execute(''' 
-                    SELECT p.productId, p.productName, p.description, 1 as quantity, p.unitPrice
-                        FROM (
-                            SELECT 
-                                p.id as productId, 
-                                p.name as productName, 
-                                p.price as unitPrice, 
-                                p.description,
-                                CASE WHEN i.product_id IS NOT NULL THEN 1 ELSE 0 END AS interested,
-                                CASE WHEN c.id IS NOT NULL THEN 1 ELSE 0 END AS asCustomer
-                            FROM products p  
-                            LEFT JOIN lead_prods_Interested i ON i.product_id = p.id and (i.lead_id = ? OR i.lead_id is NULL) 
-                            LEFT JOIN customers c ON c.id = i.lead_id 
-                       ) p     
-                    WHERE p.interested = 1 and p.asCustomer = 1
+                    SELECT 
+                        p.productId, 
+                        p.productName, 
+                        p.description, 
+                        1 as quantity, 
+                        p.unitPrice
+                    FROM (
+                        SELECT 
+                            p.id as productId, 
+                            p.name as productName, 
+                            p.price as unitPrice, 
+                            p.description,
+                            CASE WHEN i.product_id IS NOT NULL THEN 1 ELSE 0 END AS interested,
+                            CASE WHEN c.id IS NOT NULL THEN 1 ELSE 0 END AS asCustomer
+                        FROM products p  
+                        LEFT JOIN lead_prods_Interested i ON i.product_id = p.id and (i.lead_id = ? OR i.lead_id is NULL) 
+                        LEFT JOIN customers c ON c.id = i.lead_id 
+                    ) p     
+                WHERE p.interested = 1 and p.asCustomer = 1
         ''', (id,))
         return cursor.fetchall()    
 
@@ -421,6 +426,22 @@ class Db:
         return cursor.fetchall()
     
     @staticmethod
+    def getCustomerAddress(id):
+        db = Db.get_db()
+        cursor = db.cursor()
+        cursor.execute('''
+                            SELECT id,
+                                customerId,
+                                addressLine1,addressLine2,
+                                city,state,postalCode,
+                                country,addressType,
+                                isPrimary
+                            FROM addresses
+                            WHERE customerId = ?
+                            ''',(id,))
+        return cursor.fetchall()
+
+    @staticmethod
     def getCustomerAddressBy(id):
         db = Db.get_db()
         cursor = db.cursor()
@@ -506,7 +527,19 @@ class Db:
     def getCustomers():
         db = Db.get_db()
         cursor = db.cursor()
-        cursor.execute('SELECT id, firstName,lastName , email, mobile, created_at, updated_at FROM customers')
+        cursor.execute('''
+            SELECT c.id, 
+                c.firstName,
+                c.lastName , 
+                c.email, 
+                c.mobile, 
+                CASE WHEN a.id IS NOT NULL THEN 1 ELSE 0 END as canInvoice, 
+                c.created_at, 
+                c.updated_at 
+            FROM customers c
+            LEFT JOIN addresses a ON a.customerId =  c.id AND a.isPrimary = 1
+                       
+            ''')
          
         return cursor.fetchall()
     

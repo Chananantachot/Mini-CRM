@@ -75,7 +75,7 @@ def putCustomer():
         
 @customers.route('/api/customer/<id>/address', methods=['GET'])
 def getAddress(id):
-    address = Db.getCustomerPrimaryAddress(id)
+    address = Db.getCustomerAddress(id)
     address = [dict(a) for a in address if a]
     return jsonify(address)
 

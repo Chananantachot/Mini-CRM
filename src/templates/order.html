@@ -101,7 +101,7 @@ padding-bottom: 20px;
 			<tbody>
 				<tr>
 					<td> Invice No:</td>
-					<td><input type="text" class="form-control input-sm" name="id" readonly="true" id="invid" value="${invNumber}"></td>
+					<td><input type="text" class="form-control input-sm" name="invNumber" readonly="true" id="invNumber" value="${invNumber}"></td>
 				</tr>
 				<tr>
 					<td> Invice Date:</td>
@@ -109,7 +109,7 @@ padding-bottom: 20px;
 				</tr>
 				<tr>
 					<td> Client</td>				
-					<td><input type="text" class="form-control input-sm"  name="name"  readonly="true"  value="${client}"></td>
+					<td><input type="text" class="form-control input-sm"  name="client"  readonly="true"  value="${client}"></td>
 				</tr>
 				<tr>
 					<td> Amount</td>				
@@ -134,15 +134,15 @@ padding-bottom: 20px;
 				<tbody>
 					<tr>
 						<td>Address Line 1:</td>
-						<td><input type="text" name="id" class="form-control input-sm" value="${addressLine1}"></td>
+						<td><input type="text" name="addressLine1" class="form-control input-sm" value="${addressLine1}"></td>
 					</tr>
 					<tr>
 						<td> Address Line 2:</td>
-						<td><input type="text" name="invdate" class="form-control input-sm"  value="${addressLine2}"></td>
+						<td><input type="text" name="addressLine2" class="form-control input-sm"  value="${addressLine2}"></td>
 					</tr>
 					<tr>
 						<td>State</td>				
-						<td><input type="text" name="name" class="form-control input-sm" value="${state}"></td>
+						<td><input type="text" name="state" class="form-control input-sm" value="${state}"></td>
 					</tr>
 					<tr>
 						<td> City</td>				
@@ -179,7 +179,6 @@ padding-bottom: 20px;
 	}).then(resp => resp.json()
 	).then(data => {
 		 $("#invoice").tmpl(data).appendTo("#container");
-		
 	});
 loadOrderItems(custId)
 function loadOrderItems(custId) {

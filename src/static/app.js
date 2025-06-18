@@ -88,6 +88,7 @@ function loadCustomers() {
       key: true,
       hidden: true
     },
+    { name: 'canInvoice',index: 'canInvoice',hidden: true},
     { label: 'Frist Name', name: 'firstName', width: 150, editable: true, editrules: { required: true }, editoptions: { dataEvents: [createAutoCorrectEvent()] } },
     { label: 'Last Name', name: 'lastName', width: 150, editable: true, editrules: { required: true }, editoptions: { dataEvents: [createAutoCorrectEvent()] } },
     { label: 'Email', name: 'email', width: 100, editable: true, editrules: { required: true }, editoptions: { dataEvents: [createAutoCorrectMailEvent()] } },
@@ -95,7 +96,10 @@ function loadCustomers() {
     { label: 'Date created', name: 'created_at', width: 100, editable: false, align: 'center', formatter: 'date' },
     { label: 'Date updated', name: 'updated_at', width: 100, editable: false, align: 'center', formatter: 'date' },
     { name :'inv', label:'' ,formatter: function (cellvalue, options, rowObject) {  
-         return `<a class='btn btn-link' href='/${rowObject.id}/order'>Invoice</a>`;
+        if (rowObject.canInvoice == 1)
+          return `<a class='btn btn-link' href='/${rowObject.id}/order'>Invoice</a>`;
+
+         return `<a class='btn btn-link' style='pointer-events: none;cursor: default; color:#808080'  href='#'>Invoice</a>`;
     }}
   ];
 
@@ -485,6 +489,7 @@ function cust_subGridRowExpanded(subgrid_id, id) {
           var $self = $(this), p = $self.jqGrid("getGridParam");
           p.datatype = "json";
           $self.trigger("reloadGrid", { page: p.page, current: true });
+          $('#gridCustomers').trigger("reloadGrid", { page: p.page, current: true });
           return [true, '']; // No error
         },
       }
@@ -496,6 +501,7 @@ function cust_subGridRowExpanded(subgrid_id, id) {
         var $self = $(this), p = $self.jqGrid("getGridParam");
         p.datatype = "json";
         $self.trigger("reloadGrid", { page: p.page, current: true });
+        $('#gridCustomers').trigger("reloadGrid", { page: p.page, current: true });
         return [true, '']; // No error
       },
     }
