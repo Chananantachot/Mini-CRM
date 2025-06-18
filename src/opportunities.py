@@ -25,8 +25,8 @@ def create(lead_id):
       if id:
         if converted == 'Yes':
             lead = Db.getLead(lead_id)
-            lead = dict(lead)
-            Db.covertLeadToCustomer(lead['firstName'], lead['lastName'], lead['email'], lead['mobile'])
+            #lead = dict(lead)
+            Db.covertLeadToCustomer(leadId,lead['firstName'], lead['lastName'], lead['email'], lead['mobile'])
         
         return jsonify({ 'error': False, 'message': 'Created' }), 201  
     return jsonify({ 'error': True, 'message': 'Bad Request' }), 400   
@@ -47,14 +47,15 @@ def edit(lead_id):
             lead =  Db.getLead(lead_id)
             if lead:
                 if converted == 'Yes':
-                    lead = dict(lead)
-                    custId = Db.covertLeadToCustomer(lead['firstName'], lead['lastName'], lead['email'], lead['mobile'])
+                    #lead = dict(lead)
+                    custId = Db.covertLeadToCustomer(leadId, lead['firstName'], lead['lastName'], lead['email'], lead['mobile'])
                 else:  
                     custId = Db.updateOpportunities(opportunityId,leadId,current_stage,expected_value,closure_date)
-                    if custId:
-                        return jsonify({ 'error': False, 'message': 'Updated' }), 204  
-                    else:
-                        return jsonify({ 'error': True, 'message': 'Failed' }), 400  
+                    
+                if custId:
+                    return jsonify({ 'error': False, 'message': 'Updated' }), 204  
+                else:
+                    return jsonify({ 'error': True, 'message': 'Failed' }), 400  
             else:
                 return jsonify({ 'error': True, 'message': 'Not Found' }), 404         
         else:

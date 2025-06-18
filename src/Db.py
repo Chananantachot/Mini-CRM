@@ -411,7 +411,7 @@ class Db:
                                 country,addressType,
                                 isPrimary
                             FROM addresses
-                            WHERE customerId = ?
+                            WHERE customerId = ? and isPrimary = 1
                        ''',(id,)
                        )
         return cursor.fetchall()
@@ -430,27 +430,27 @@ class Db:
                             FROM addresses
                             WHERE id = ?
                             ''',(id,))
-        return cursor.fetchall()
+        return cursor.fetchone()
     
     @staticmethod
     def getCustomerSipping(id):
         db = Db.get_db()
         cursor = db.cursor()
         cursor.execute('''
-                SELECT c.customerId,
-                    c.firstName + ' ' + c.lastName as client,
-                    a.addressLine1,
-                    a.addressLine2,
-                    a.city,
-                    a.state,
-                    a.postalCode,
-                    a.country,
-                    a.addressType,
-                    a.isPrimary
-                FROM addresses a
-                JOIN customers c on c.id = a.customerId 
-                WHERE id = ? and a.isPrimary = 1
-                ''',(id,))
+            SELECT c.id,
+                c.firstName || ' ' || c.lastName as client,
+                a.addressLine1,
+                a.addressLine2,
+                a.city,
+                a.state,
+                a.postalCode,
+                a.country,
+                a.addressType,
+                a.isPrimary
+            FROM customers c 
+            LEFT JOIN addresses a on c.id = a.customerId 
+            WHERE c.id = ? and a.isPrimary = 1
+            ''',(id,))
         return cursor.fetchone()
 
     @staticmethod

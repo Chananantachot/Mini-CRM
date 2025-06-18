@@ -9,6 +9,7 @@ from customers import customers
 from leads import leads
 from products import products
 from opportunities import opportunities
+from orders import orders
 
 from flask import (
     Flask, jsonify, make_response, url_for, render_template, request, redirect, g
@@ -29,6 +30,7 @@ app.register_blueprint(customers)
 app.register_blueprint(leads)
 app.register_blueprint(opportunities)
 app.register_blueprint(products)
+app.register_blueprint(orders)
 
 app.config["JWT_TOKEN_LOCATION"] = ["cookies"]
 app.config["JWT_COOKIE_SECURE"] = True  # Set to False in development if not using HTTPS

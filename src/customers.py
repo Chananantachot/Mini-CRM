@@ -90,6 +90,7 @@ def postAddress(id):
     country = request.form.get('country')
     addressType = request.form.get('addressType')
     isPrimary = request.form.get('isPrimary')
+    isPrimary = 1 if isPrimary == 'Yes' else 0
     id = Db.createCustomerAddress(customerId,addressLine1,addressLine2,city,state,postalCode,country,addressType,isPrimary)
     if id:
         return jsonify({'error': False, 'message': 'Created.'}),201    
@@ -108,6 +109,8 @@ def putAddress(custId):
     country = request.form.get('country')
     addressType = request.form.get('addressType')
     isPrimary = request.form.get('isPrimary')
+    isPrimary = 1 if isPrimary == 'Yes' else 0
+
     if id and addressLine1 and addressLine2 and postalCode and city and country:
         address = Db.getCustomerAddressBy(id)
         if address:

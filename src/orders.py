@@ -18,16 +18,19 @@ def getOrderItems(custId):
 @role_required('Admin')
 def getOrderSipping(custId):
     if custId:
-        client = Db.getCustomerSipping(custId)
-        client = dict(client)
-        client['invNumber'] = generateInvoiceNumber(custId)
-
-        return jsonify(client)
-    return jsonify({ 'error': True, 'message': 'Bad Request' })
+        address = Db.getCustomerAddress(custId)
+        if address:
+            client = Db.getCustomerSipping(custId)
+            if client:
+                client = dict(client)
+                client['invNumber'] = generateInvoiceNumber(custId)
+                return jsonify(client)
+        return jsonify({ 'error': True, 'message': 'Not Found' }), 404   
+    return jsonify({ 'error': True, 'message': 'Bad Request' }), 400
 
 def generateInvoiceNumber(custId):
     length = custId.index("-") - 1 
     custId = custId[0:length]
 
-    now = datetime.datetime.now()
-    return f"INV-{now.strftime('%Y%m%d')}-{custId:03d}" 
+    now = datetime.now()
+    return f"INV-{now.strftime('%Y%m%d')}-{custId}" 
