@@ -25,12 +25,6 @@ It is perfect for engineers, students, or anyone interested in Customer Relation
 - 🔐 **Authentication System** – Supports sign-in, registration, and protected dashboard access.
 - 🌐 **Modular UI** – Built with a clean, tabbed navigation system for Lead, Customer, Products, and Invooice views.
 
-## 📸 Screenshots
-
-### Production Rate Visualization  
-<img width="1140" alt="Screenshot 2568-05-22 at 19 31 44" src="https://github.com/user-attachments/assets/c9ff6722-019e-4c6c-986b-ef2ac80a04c3" />
-
-
 ## 🧰 Tech Stack
 
 - **Frontend**: flask/jinjar/javascript 
