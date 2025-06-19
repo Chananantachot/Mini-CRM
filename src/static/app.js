@@ -34,7 +34,7 @@ function init_jqGrid(gridId, pageId, getUrl, createUrl, editUrl,
     },
     caption: caption,
     autowidth: true,
-    loadonce: true,
+   // loadonce: true,
     rownumbers: true,
     viewrecords: true,
     height: 250,
@@ -91,11 +91,11 @@ function loadCustomers() {
     { name: 'canInvoice',index: 'canInvoice',hidden: true},
     { label: 'Frist Name', name: 'firstName', width: 150, editable: true, editrules: { required: true }, editoptions: { dataEvents: [createAutoCorrectEvent()] } },
     { label: 'Last Name', name: 'lastName', width: 150, editable: true, editrules: { required: true }, editoptions: { dataEvents: [createAutoCorrectEvent()] } },
-    { label: 'Email', name: 'email', width: 100, editable: true, editrules: { required: true }, editoptions: { dataEvents: [createAutoCorrectMailEvent()] } },
+    { label: 'Email', name: 'email', width: 120, editable: true, editrules: { required: true }, editoptions: { dataEvents: [createAutoCorrectMailEvent()] } },
     { label: 'Mobile', name: 'mobile', width: 100, editable: true },
     { label: 'Date created', name: 'created_at', width: 100, editable: false, align: 'center', formatter: 'date' },
     { label: 'Date updated', name: 'updated_at', width: 100, editable: false, align: 'center', formatter: 'date' },
-    { name :'inv', label:'' ,formatter: function (cellvalue, options, rowObject) {  
+    { name :'inv', label:'' , width: 70, align: 'center',formatter: function (cellvalue, options, rowObject) {  
         if (rowObject.canInvoice == 1)
           return `<a class='btn btn-link' href='/${rowObject.id}/order'>Invoice</a>`;
 
@@ -442,7 +442,6 @@ function cust_subGridRowExpanded(subgrid_id, id) {
   var subgrid_table_id = subgrid_id + "_address";
   var pager_id = "p_" + subgrid_table_id;
   $("#" + subgrid_id).html("<table id='" + subgrid_table_id + "'></table><div id='" + pager_id + "' class='scroll'></div>");
-
   $("#" + subgrid_table_id).jqGrid({
     url: `/api/customer/${id}/address`,
     editurl: `/api/customer/${id}/address/edit`,
@@ -459,53 +458,50 @@ function cust_subGridRowExpanded(subgrid_id, id) {
       { name: 'postalCode', label: 'Zip code', width: 95, editable: true, editrules: { required: true } },
       { name: 'isPrimary', label: 'Primary', width: 70, editable: true, formatter: "checkbox", edittype: "checkbox", align: "center" }
     ],
+    loadonce:true,
     pager: pager_id,
     multiselect: false,
     height: "100%",
     caption: "Customer Address"
   });
 
-  $("#" + subgrid_table_id).navGrid("#" + pager_id,
-    { edit: false, add: false, del: false, search: false, refresh: false },
-    {},
-    {},
-    {}
-  )
+  $("#" + subgrid_table_id).navGrid("#" + pager_id,{ edit: false, add: false, del: false, search: false, refresh: false })
 
-  $("#" + subgrid_table_id).jqGrid('inlineNav', "#" + pager_id, {
-    edit: true,
-    add: true,
-    del: true,
-    cancel: true,
-    save: true,
-    addParams: {
-      addRowPage: 'last',
-      position: 'last',
-      addRowParams: {
+  $("#" + subgrid_table_id).jqGrid('inlineNav', "#" + pager_id, 
+    {
+      edit: true,
+      add: true,
+      del: true,
+      cancel: true,
+      save: true,
+      editParams: {
         keys: true,
-        url: `/api/customer/${id}/address/new`,
+        url: `/api/customer/${id}/address/edit`,
         mtype: 'POST',
-        onSuccess: function (response) {
-          var $self = $(this), p = $self.jqGrid("getGridParam");
-          p.datatype = "json";
-          $self.trigger("reloadGrid", { page: p.page, current: true });
-          $('#gridCustomers').trigger("reloadGrid", { page: p.page, current: true });
-          return [true, '']; // No error
+        aftersavefunc: function (rowid, response) {
+          $("#" + subgrid_table_id).trigger("reloadGrid");
+          $("#gridCustomers").trigger("reloadGrid");
         },
-      }
-    },
-    editParams: {
-      keys: true,
-      mtype: 'POST',
-      onSuccess: function (response) {
-        var $self = $(this), p = $self.jqGrid("getGridParam");
-        p.datatype = "json";
-        $self.trigger("reloadGrid", { page: p.page, current: true });
-        $('#gridCustomers').trigger("reloadGrid", { page: p.page, current: true });
-        return [true, '']; // No error
+        errorfunc: function (rowid, response) {
+          alert("Error saving address: " + response.responseText);
+        }
       },
+      addParams: {
+        addRowParams: {
+          keys: true,
+          url: `/api/customer/${id}/address/new`,
+          mtype: 'POST',
+          aftersavefunc: function (rowid, response) {
+            $("#" + subgrid_table_id).trigger("reloadGrid");
+            $("#gridCustomers").trigger("reloadGrid");
+          },
+          errorfunc: function (rowid, response) {
+            alert("Error saving address: " + response.responseText);
+          }
+        }
+      }
     }
-  })
+  )
 
   $("#" + subgrid_table_id).navButtonAdd("#" + pager_id, {
     buttonicon: "ui-icon ui-icon-trash",
@@ -519,6 +515,8 @@ function cust_subGridRowExpanded(subgrid_id, id) {
         addressId: addressId
       }, function () {
         $("#" + subgrid_table_id).trigger("reloadGrid");
+         console.log('Reloading parent grid....')   
+        $("#gridCustomers").trigger("reloadGrid");
       });
     }
   })
