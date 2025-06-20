@@ -184,6 +184,12 @@ padding-bottom: 20px;
 	}).then(resp => resp.json()
 	).then(data => {
 		order = data[0]
+		var currentDate = new Date();
+		if (order.orderDate)
+			currentDate = new Date(order.orderDate);
+	
+		var formattedDate = currentDate.toISOString().split('T')[0];
+		$('#orderDate').val(formattedDate)
 		$("#invoice").tmpl(data).appendTo("#container");
 	});
 	
@@ -237,6 +243,29 @@ function loadOrderItems(custId,orderId) {
 		$('#amount').val(amount.toFixed(2));
 		$('#tax').val(vat.toFixed(2));	
 		$('#total').val(total.toFixed(2));
+
+		if (orderId){
+			var orderItems = allData;
+			order['amount'] = amount.toFixed(2)
+			order['tax'] = vat.toFixed(2)
+			order['total'] = total.toFixed(2)
+			order['status'] ='Pending'
+			$.ajax({
+				url: '/invoice',
+				type: 'PUT',
+				contentType: 'application/json',
+				data: JSON.stringify({
+					"order": order,
+					"orderItems": orderItems
+				}),
+				success: function(response) {
+					console.log(response);
+				},
+				error: function(error) {
+					console.log(error);
+				}
+			});
+		}
     },
 	onSelectRow: function (id) {
     	if (id) {
@@ -262,9 +291,6 @@ function loadOrderItems(custId,orderId) {
                 allData[rowIndex] = {...allData[rowIndex], ...edit};
             }
         });
-		const currentDate = new Date();
-		var formattedDate = currentDate.toISOString().split('T')[0];
-		$('#orderDate').val(formattedDate)
 
 		var amount = 0;
 		var vat = 0;

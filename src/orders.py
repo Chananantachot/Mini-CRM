@@ -64,10 +64,44 @@ def postOrder():
         id = Db.createOrder(order_value,orderItems_value)
         if id:
             return jsonify({ 'error': False, 'message': 'Created' }), 201 
-        return jsonify({ 'error': True, 'message': 'Bad Request' }), 400   
+        return jsonify({ 'error': True, 'message': 'Failed' }), 400   
     else:    
         return jsonify({ 'error': True, 'message': 'Bad Request' }), 400    
 
+
+@orders.route('/invoice', methods = ['PUT'])
+@role_required('Admin')
+def putOrder():
+    if request.is_json: 
+        invoice = request.get_json() 
+        order = invoice.get('order')
+        orderItems = invoice.get('orderItems')
+
+        order_value = (
+            float(order['amount']),
+            float(order['tax']),
+            float(order['total']),
+            order['status'],
+            order['shippingAddress'],
+            order['billingAddress'],
+            order['orderId'],
+            order['customerId']
+        )
+
+        orderItems_value = [
+            (int(float(item["quantity"])), 
+             float(item["unitPrice"]),
+             order['orderId'], 
+             item["productId"])
+            for item in orderItems
+        ]
+        
+        id =  Db.updateOrder(order_value,orderItems_value)
+        if id:
+            return jsonify({ 'error': False, 'message': 'Updated' }), 204
+        return jsonify({ 'error': True, 'message': 'Failed' }), 400   
+    else:    
+        return jsonify({ 'error': True, 'message': 'Bad Request' }), 400    
 
 def generateInvoiceNumber(custId):    
     length = custId.index("-") - 1 

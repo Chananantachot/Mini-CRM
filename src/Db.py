@@ -300,6 +300,42 @@ class Db:
             return orderId
 
     @staticmethod
+    def updateOrder(order, orderItems):
+        db = Db.get_db()
+        cursor = db.cursor()
+        try:
+            # Start the transaction
+            cursor.execute("BEGIN")
+            cursor.execute(''' UPDATE orders SET 
+                                    amount = ?, 
+                                    tax = ?, 
+                                    total = ?,
+                                    status = ?,
+                                    shippingAddress = ?,
+                                    billingAddress = ?
+                                WHERE = id = ? and customerId = ?
+                             ''',order)
+            
+            # Use the given ID from the order tuple (assuming it's the first element)
+            orderId = order[6]
+
+            # Insert each order item (assuming each item is a tuple: (order_id, product_name, quantity, price))
+            cursor.executemany('''UPDATE order_items SET 
+                                    quantity = ?,
+                                    unitPrice = ?
+                                WHERE and orderId = ? and productId = ?
+                                 ''', orderItems)
+
+            db.commit()
+        
+        except Exception as e:
+            db.rollback()
+            print("Transaction failed:", e)
+
+        finally:
+            return orderId
+
+    @staticmethod
     def getleadProdsInterested(id):
         db = Db.get_db()
         cursor = db.cursor()
