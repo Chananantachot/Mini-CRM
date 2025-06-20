@@ -6,7 +6,7 @@ import uuid
 from flask import g, json
 from werkzeug.security import generate_password_hash, check_password_hash
 class Db:
-    DATABASE = "customer.db"
+    DATABASE = "crm.db"
 
     @staticmethod
     def get_db():
@@ -86,17 +86,18 @@ class Db:
         _cursor.execute('''
             CREATE TABLE IF NOT EXISTS orders (
                 id TEXT PRIMARY KEY,
+                invoiceNO TEXT NOT NULL,
                 customerId TEXT NOT NULL,
                 orderDate TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                totalAmount REAL NOT NULL,
+                amount DECIMAL(10, 2) NOT NULL,      
+                tax DECIMAL(10, 2) NOT NULL,           
+                total DECIMAL(10, 2) NOT NULL,
                 status TEXT NOT NULL, -- e.g., 'Pending', 'Completed', 'Cancelled'
-                shippingAddressId TEXT, -- Reference to an address in the addresses table
-                billingAddressId TEXT, -- Reference to an address in the addresses table
+                shippingAddress TEXT,
+                billingAddress TEXT, 
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                 updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                FOREIGN KEY (customerId) REFERENCES customers(id),
-                FOREIGN KEY (shippingAddressId) REFERENCES addresses(id),
-                FOREIGN KEY (billingAddressId) REFERENCES addresses(id)
+                FOREIGN KEY (customerId) REFERENCES customers(id)
             )''')
 
         # Create order_items tables 
@@ -270,6 +271,35 @@ class Db:
                     Db.createProduct(prod['name'],prod['description'], prod['price'],prod['sku'],prod['category'],True)
 
     @staticmethod
+    def createOrder(order, orderItems):
+        db = Db.get_db()
+        cursor = db.cursor()
+        try:
+            # Start the transaction
+            cursor.execute("BEGIN")
+            cursor.execute(''' INSERT INTO orders (id,invoiceNO,customerId,amount, tax, total,status,shippingAddress,billingAddress)
+                            VALUES (?,?,?,?,?,?,?,?,?)
+                    ''',order)
+            
+            # Use the given ID from the order tuple (assuming it's the first element)
+            orderId = order[0]
+
+            # Insert each order item (assuming each item is a tuple: (order_id, product_name, quantity, price))
+            cursor.executemany('''
+                        INSERT INTO order_items (id,orderId,productId,quantity,unitPrice)
+                        VALUES (?,?,?,?,?)
+                        ''', orderItems)
+
+            db.commit()
+        
+        except Exception as e:
+            db.rollback()
+            print("Transaction failed:", e)
+
+        finally:
+            return orderId
+
+    @staticmethod
     def getleadProdsInterested(id):
         db = Db.get_db()
         cursor = db.cursor()
@@ -414,10 +444,15 @@ class Db:
     def getCustomerPrimaryAddress(id):
         db = Db.get_db()
         cursor = db.cursor()
-        cursor.execute('''SELECT id, customerId,
-                                addressLine1,addressLine2,
-                                city,state,postalCode,
-                                country,addressType,
+        cursor.execute('''SELECT id, 
+                                customerId,
+                                addressLine1,
+                                addressLine2,
+                                city,
+                                state,
+                                postalCode,
+                                country,
+                                addressType,
                                 isPrimary
                             FROM addresses
                             WHERE customerId = ? and isPrimary = 1
@@ -458,11 +493,15 @@ class Db:
         return cursor.fetchone()
     
     @staticmethod
-    def getCustomerSipping(id):
+    def getCustomerOrder(id,orderId):
         db = Db.get_db()
-        cursor = db.cursor()
-        cursor.execute('''
-            SELECT c.id,
+        cursor = db.cursor() 
+        cursor.execute(f'''
+            SELECT c.id as customerId,
+                COALESCE(o.id,'') as orderId,       
+                COALESCE(o.invoiceNO,'') as invNumber,  
+                COALESCE(o.id,'') as orderId,         
+                o.orderDate,     
                 c.firstName || ' ' || c.lastName as client,
                 a.addressLine1,
                 a.addressLine2,
@@ -471,12 +510,19 @@ class Db:
                 a.postalCode,
                 a.country,
                 a.addressType,
+                COALESCE(o.billingAddress,a.addressLine1 || ', ' ||  a.addressLine2 || ', '|| a.state || ', ' ||  a.postalCode || ' '||  a.country) as billingAddress,
+                COALESCE(o.shippingAddress,a.addressLine1 || ', ' ||  a.addressLine2 || ', '|| a.state || ', ' ||  a.postalCode || ' '||  a.country) as shippingAddress,  
+                COALESCE(o.status,'Pending') as status,     
+                COALESCE(o.amount,0) as amount,
+                COALESCE(o.tax,0) as tax,
+                COALESCE(o.total,0) as total,                    
                 a.isPrimary
-            FROM customers c 
-            LEFT JOIN addresses a on c.id = a.customerId 
-            WHERE c.id = ? and a.isPrimary = 1
-            ''',(id,))
-        return cursor.fetchone()
+            FROM  orders o
+            LEFT JOIN customers c on c.id = o.customerId
+            LEFT JOIN addresses a on c.id = a.customerId and a.isPrimary = 1          
+            WHERE c.id = ? AND (? IS NULL OR o.id = ?)
+            ''',(id,orderId,orderId,))
+        return cursor.fetchall()
 
     @staticmethod
     def createCustomerAddress(customerId, addressLine1,addressLine2,
@@ -534,10 +580,12 @@ class Db:
                 c.email, 
                 c.mobile, 
                 CASE WHEN a.id IS NOT NULL THEN 1 ELSE 0 END as canInvoice, 
+                COUNT(o.id) as invoicedCount,
                 c.created_at, 
                 c.updated_at 
             FROM customers c
-            LEFT JOIN addresses a ON a.customerId =  c.id AND a.isPrimary = 1
+            LEFT JOIN orders o ON o.customerId = c.id              
+            LEFT JOIN addresses a ON a.customerId =  c.id AND a.isPrimary = 1         
                        
             ''')
          

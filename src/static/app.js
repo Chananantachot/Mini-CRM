@@ -88,6 +88,8 @@ function loadCustomers() {
       key: true,
       hidden: true
     },
+    //
+    { name: 'invoicedCount',index: 'invoicedCount',hidden: true},
     { name: 'canInvoice',index: 'canInvoice',hidden: true},
     { label: 'Frist Name', name: 'firstName', width: 150, editable: true, editrules: { required: true }, editoptions: { dataEvents: [createAutoCorrectEvent()] } },
     { label: 'Last Name', name: 'lastName', width: 150, editable: true, editrules: { required: true }, editoptions: { dataEvents: [createAutoCorrectEvent()] } },
@@ -96,16 +98,50 @@ function loadCustomers() {
     { label: 'Date created', name: 'created_at', width: 100, editable: false, align: 'center', formatter: 'date' },
     { label: 'Date updated', name: 'updated_at', width: 100, editable: false, align: 'center', formatter: 'date' },
     { name :'inv', label:'' , width: 70, align: 'center',formatter: function (cellvalue, options, rowObject) {  
+        if (rowObject.invoicedCount > 0)
+            return `<a class='btn btn-link' style='pointer-events: none;cursor: default; color:#808080' title='You have got one or more invoices'  href='#'>Invoices (+${rowObject.invoicedCount})</a>`;
+
         if (rowObject.canInvoice == 1)
-          return `<a class='btn btn-link' href='/${rowObject.id}/order'>Invoice</a>`;
+          return `<a class='btn btn-link' href='/${rowObject.id}/order'>Invoice</a>`;``
 
          return `<a class='btn btn-link' style='pointer-events: none;cursor: default; color:#808080'  href='#'>Invoice</a>`;
     }}
   ];
 
   init_jqGrid('gridCustomers', 'pager', '/api/customers', '/api/customer/new', '/api/customer/edit',
-    colModel, 'Customers Registration', true, function (data) { customer_loadComplete(data, '/api/customer/new', '/api/customer/edit') },
-    function (id) { }, function (subgrid_id, id) { cust_subGridRowExpanded(subgrid_id, id) })
+    colModel, 'Customers', true, function (data) { customer_loadComplete(data, '/api/customer/new', '/api/customer/edit') },
+    function (id) { loadCustOrders(id) }, function (subgrid_id, id) { cust_subGridRowExpanded(subgrid_id, id) })
+}
+
+function loadCustOrders(custId) {
+ $("#gridOrders").jqGrid({
+    url: `/invoice/${custId}/order`,
+    datatype: "json",
+    height: 200,
+    colModel: [
+      {
+        name: 'orderId',
+        index: 'orderId',
+        key: true,
+        hidden: true
+      },
+      { label: 'Invoice NO.', index: 'invNumber', name: 'invNumber', width: 80 , align: "center", formatter: function (cellvalue, options, rowObject) {  
+           return `<a class='btn btn-link' href='/${custId}/order/${rowObject.orderId}'>${rowObject.invNumber}</a>`;``
+      }},
+      { label: 'Date Order', index: 'orderDate', name: 'orderDate', width: 80, align: "center" ,formatter: "date"},
+      { label: 'Total', index:'total', name: 'total', width: 60, editable: true ,formatter: "number",align: "right"},   		
+      { name: 'status', label: "Status", index: 'status', width: 60, align: "center" }
+    ],
+    loadonce: true,
+    pager: "#ordersPager",
+    autowidth: true,
+    viewrecords: true,
+    searching: {
+      searchOnEnter: true,
+      defaultSearch: "bw"
+    },
+    caption: "Invoices"
+  }).navGrid('#ordersPager', { add: false, edit: false, del: false, search: false });
 }
 
 function loadProducts() {

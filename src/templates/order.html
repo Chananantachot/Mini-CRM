@@ -81,7 +81,6 @@ padding-bottom: 20px;
 	font-weight: bold;
 	text-align: right; 
 }
-
 </style>
 {% endblock %}
 {% block content %}
@@ -168,18 +167,26 @@ padding-bottom: 20px;
   "use strict";
 	var lastsel
 	var datas;
-	const url = window.location.href;
-	const match = url.match(/\/([0-9a-fA-F-]{36})\//);
-	const custId = match ? match[1] : null;
+	var order;
+	var url = window.location.href;
+	const match = url.match(/\/([0-9a-fA-F-]{36})(?:\/order\/([0-9a-fA-F-]{36}))?/);
 
-    fetch(`/invoice/${custId}/order`, {
+	const custId = match ? match[1] : null;
+	const orderId = match ? match[2] : null;
+	url = `/invoice/${custId}/order`;
+	if (orderId)
+		url = `/invoice/${custId}/order/${orderId}`;
+
+    fetch(url, {
 		headers: {
 		'Accept': 'application/json'
 		}
 	}).then(resp => resp.json()
 	).then(data => {
-		 $("#invoice").tmpl(data).appendTo("#container");
+		order = data[0]
+		$("#invoice").tmpl(data).appendTo("#container");
 	});
+	
 loadOrderItems(custId)
 function loadOrderItems(custId) {
   $("#gridInvoice").jqGrid({
@@ -270,10 +277,33 @@ function loadOrderItems(custId) {
 		$('#amount').val(amount.toFixed(2));
 		$('#tax').val(vat.toFixed(2));	
 		$('#total').val(total.toFixed(2));
+
+		if (order){
+			var orderItems = allData;
+			order['amount'] = amount.toFixed(2)
+			order['tax'] = vat.toFixed(2)
+			order['total'] = total.toFixed(2)
+			order['status'] ='Pending'
+			$.ajax({
+				url: '/invoice',
+				type: 'POST',
+				contentType: 'application/json', // Crucial for Flask to recognize as JSON
+				data: JSON.stringify({
+					"order": order,
+					"orderItems": orderItems
+				}),
+				success: function(response) {
+					console.log(response);
+				},
+				error: function(error) {
+					console.log(error);
+				}
+			});
+		}
+
     },
     caption: "Order Items"
   }).navGrid('#orderPager', { add: false, edit: false, del: false, search: false });
 }
-
 </script>
 {% endblock %}

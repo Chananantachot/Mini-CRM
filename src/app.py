@@ -1,4 +1,6 @@
 import os
+import pdfkit
+
 from dotenv import load_dotenv
 from decorators import role_required
 
@@ -165,9 +167,10 @@ def home():
     }
     return render_template('home.html',current_user = user)
 
-@app.route("/<id>/order/")
+@app.route("/<id>/order/", defaults = { 'orderId' : None} , methods=['GET'])
+@app.route("/<id>/order/<orderId>", methods=['GET'])
 @jwt_required()
-def order(id):  
+def order(id,orderId):  
     current_user = get_jwt_identity() 
     roles = get_jwt()["roles"]  
 
@@ -178,7 +181,6 @@ def order(id):
         'isAdminRole': isAdminRole
     }
     return render_template('order.html',current_user = user)
-
 
 @app.route('/register', methods=['GET'])
 def newUser():

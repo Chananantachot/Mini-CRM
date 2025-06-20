@@ -1,5 +1,6 @@
 from datetime import datetime
-from flask import Blueprint, jsonify
+import uuid
+from flask import Blueprint, jsonify, request
 from Db import Db
 from decorators import role_required
 
@@ -14,21 +15,61 @@ def getOrderItems(custId):
         return jsonify(items)
     return jsonify({ 'error': True, 'message': 'Bad Request' })
 
-@orders.route('/invoice/<custId>/order', methods=['GET'])
+
+@orders.route('/invoice/<custId>/order', defaults = {'orderId' : None} , methods=['GET'])
+@orders.route('/invoice/<custId>/order/<orderId>', methods=['GET'])
 @role_required('Admin')
-def getOrderSipping(custId):
+def getOrder(custId,orderId):
     if custId:
         address = Db.getCustomerPrimaryAddress(custId)
         if address:
-            client = Db.getCustomerSipping(custId)
-            if client:
-                client = dict(client)
-                client['invNumber'] = generateInvoiceNumber(custId)
-                return jsonify(client)
+            orders = Db.getCustomerOrder(custId,orderId)
+            orders = [dict(order) for order in orders if order]
+            order = orders[0]
+            if not order['invNumber']:
+                order['invNumber'] = generateInvoiceNumber(custId)
+
+            return jsonify(orders)
         return jsonify({ 'error': True, 'message': 'Not Found' }), 404   
     return jsonify({ 'error': True, 'message': 'Bad Request' }), 400
 
-def generateInvoiceNumber(custId):
+@orders.route('/invoice', methods = ['POST'])
+@role_required('Admin')
+def postOrder():
+    if request.is_json: 
+        invoice = request.get_json() 
+        order = invoice.get('order')
+        orderItems = invoice.get('orderItems')
+
+        orderId = str(uuid.uuid4())
+        order_value = (orderId,
+            order['invNumber'],
+            order['customerId'],
+            float(order['amount']),
+            float(order['tax']),
+            float(order['total']),
+            order['status'],
+            order['shippingAddress'],
+            order['billingAddress']
+        )
+
+        orderItems_value = [
+            (str(uuid.uuid4()), 
+             orderId, 
+             item["productId"], 
+             int(float(item["quantity"])), 
+             float(item["unitPrice"]))
+            for item in orderItems
+        ]
+        id = Db.createOrder(order_value,orderItems_value)
+        if id:
+            return jsonify({ 'error': False, 'message': 'Created' }), 201 
+        return jsonify({ 'error': True, 'message': 'Bad Request' }), 400   
+    else:    
+        return jsonify({ 'error': True, 'message': 'Bad Request' }), 400    
+
+
+def generateInvoiceNumber(custId):    
     length = custId.index("-") - 1 
     custId = custId[0:length]
 
