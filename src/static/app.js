@@ -244,7 +244,7 @@ function loadProdsInterest() {
 
 }
 
-function loadLeads() {
+function loadLeads(custId) {
   const colModel = [
     {
       name: 'id',
@@ -260,9 +260,11 @@ function loadLeads() {
     { label: 'Date created', name: 'created_at', width: 100, editable: false, align: 'center', formatter: 'date' },
     { label: 'Date updated', name: 'updated_at', width: 100, editable: false, align: 'center', formatter: 'date' }
   ];
+  caption = custId ? `Customer Pickig Product Interestes` : 'Leads Management';
+  subGrid = custId ? false : true;
 
-  init_jqGrid('gridLeads', 'pager', '/api/leads', '/api/lead/new', '/api/lead/edit',
-    colModel, 'Leads Management', true, function (data) { leads_loadComplete(data) },
+  init_jqGrid('gridLeads', 'pager', `/api/leads/${custId}`, '/api/lead/new', '/api/lead/edit',
+    colModel, caption, subGrid, function (data) { leads_loadComplete(data) },
     function (id) { lead_onSelectRow(id) }, function (subgrid_id, id) { lead_subGridRowExpanded(subgrid_id, id) })
 }
 

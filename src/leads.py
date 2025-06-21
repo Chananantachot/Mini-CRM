@@ -5,10 +5,11 @@ from decorators import role_required
 
 leads = Blueprint('leads', __name__, template_folder='templates')
 
-@leads.route('/api/leads',methods=['GET'])
+@leads.route('/api/leads', defaults={'custId': None} ,methods=['GET'])
+@leads.route('/api/leads/<custId>',methods=['GET'])
 @role_required('Admin')
-def getLeads():
-    _leads = Db.getLeads()
+def getLeads(custId):
+    _leads = Db.getLeads(custId)
     responses =  [dict(lead) for lead in _leads if lead]
     return jsonify(responses)
 

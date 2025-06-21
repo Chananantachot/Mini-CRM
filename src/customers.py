@@ -54,7 +54,7 @@ def putCustomer():
         if cust:
             cust = dict(cust)
             if firstName and lastName and email and cust['firstName'] == firstName and cust['lastName'] == lastName:
-                 skipCheckUniqeName =  cust['email'] != email or cust['mobile'] != mobile 
+                skipCheckUniqeName =  cust['email'] != email or cust['mobile'] != mobile 
         else:
             return jsonify({'error': True, 'message': 'Not Founded.'}),404          
     else:
@@ -78,6 +78,7 @@ def getAddress(id):
     address = Db.getCustomerAddress(id)
     address = [dict(a) for a in address if a]
     return jsonify(address)
+    return jsonify([])
 
 @customers.route('/api/customer/<id>/address/new', methods=['POST'])
 def postAddress(id):

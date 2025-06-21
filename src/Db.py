@@ -206,6 +206,12 @@ class Db:
                 updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP                    
             )
         ''')              
+        
+        # _cursor.execute('DELETE FROM orders')
+        # _cursor.execute('DELETE FROM order_items')
+        
+         
+        
         db.commit()
 
     @staticmethod
@@ -281,15 +287,13 @@ class Db:
                             VALUES (?,?,?,?,?,?,?,?,?)
                     ''',order)
             
-            # Use the given ID from the order tuple (assuming it's the first element)
-            orderId = order[0]
-
             # Insert each order item (assuming each item is a tuple: (order_id, product_name, quantity, price))
             cursor.executemany('''
                         INSERT INTO order_items (id,orderId,productId,quantity,unitPrice)
                         VALUES (?,?,?,?,?)
                         ''', orderItems)
-
+            
+            cursor.execute('DELETE FROM lead_prods_Interested WHERE lead_id = ?',(order[2],)) # Assuming order[2] is customerId
             db.commit()
         
         except Exception as e:
@@ -297,7 +301,7 @@ class Db:
             print("Transaction failed:", e)
 
         finally:
-            return orderId
+            return order[0]
 
     @staticmethod
     def updateOrder(order, orderItems):
@@ -306,24 +310,19 @@ class Db:
         try:
             # Start the transaction
             cursor.execute("BEGIN")
-            cursor.execute(''' UPDATE orders SET 
-                                    amount = ?, 
+            cursor.execute(''' UPDATE orders SET amount = ?, 
                                     tax = ?, 
                                     total = ?,
                                     status = ?,
                                     shippingAddress = ?,
                                     billingAddress = ?
-                                WHERE = id = ? and customerId = ?
+                                WHERE id = ? and customerId = ?
                              ''',order)
             
-            # Use the given ID from the order tuple (assuming it's the first element)
-            orderId = order[6]
-
             # Insert each order item (assuming each item is a tuple: (order_id, product_name, quantity, price))
-            cursor.executemany('''UPDATE order_items SET 
-                                    quantity = ?,
+            cursor.executemany('''UPDATE order_items SET quantity = ?,
                                     unitPrice = ?
-                                WHERE and orderId = ? and productId = ?
+                                WHERE orderId = ? and productId = ?
                                  ''', orderItems)
 
             db.commit()
@@ -333,7 +332,7 @@ class Db:
             print("Transaction failed:", e)
 
         finally:
-            return orderId
+            return order[6]
 
     @staticmethod
     def getleadProdsInterested(id):
@@ -344,9 +343,9 @@ class Db:
                     SELECT p.id, p.name, p.price, p.description,
                         CASE WHEN i.product_id IS NOT NULL THEN 1 ELSE 0 END AS interested  
                     FROM products p  
-                    LEFT JOIN lead_prods_Interested i ON i.product_id = p.id and (i.lead_id = ? OR i.lead_id is NULL)
-
-        ''', (id,))
+                    LEFT JOIN lead_prods_Interested i ON i.product_id = p.id and (i.lead_id = ? OR ? is NULL)
+                    LEFT JOIN customers c ON c.id = i.lead_id OR (c.id = ? OR ? IS NULL) 
+        ''', (id,id,id,id,))
 
         return cursor.fetchall()   
 
@@ -354,28 +353,20 @@ class Db:
     def getCustProdsOrders(id):
         db = Db.get_db()
         cursor = db.cursor()
-
         cursor.execute(''' 
-                    SELECT 
-                        p.productId, 
-                        p.productName, 
-                        p.description, 
-                        1 as quantity, 
-                        p.unitPrice
-                    FROM (
-                        SELECT 
-                            p.id as productId, 
-                            p.name as productName, 
-                            p.price as unitPrice, 
-                            p.description,
-                            CASE WHEN i.product_id IS NOT NULL THEN 1 ELSE 0 END AS interested,
-                            CASE WHEN c.id IS NOT NULL THEN 1 ELSE 0 END AS asCustomer
-                        FROM products p  
-                        LEFT JOIN lead_prods_Interested i ON i.product_id = p.id and (i.lead_id = ? OR i.lead_id is NULL) 
-                        LEFT JOIN customers c ON c.id = i.lead_id 
-                    ) p     
-                WHERE p.interested = 1 and p.asCustomer = 1
-        ''', (id,))
+                SELECT 
+                        p.id AS productId,
+                        p.name AS productName,
+                        p.description,
+                        COALESCE(oi.quantity, 1.0) AS quantity,
+                        p.price AS unitPrice
+                    FROM products p
+                    LEFT JOIN order_items oi ON oi.productId = p.id 
+                    LEFT JOIN orders o ON o.id = oi.orderId   
+                    LEFT JOIN lead_prods_Interested i ON i.product_id = p.id            
+                    LEFT JOIN customers c ON c.id = o.customerId OR c.id = i.lead_id 
+                WHERE c.id IS NOT NULL AND (c.id = ? OR ? IS NULL)
+        ''', (id,id,))
         return cursor.fetchall()    
 
     @staticmethod
@@ -542,9 +533,9 @@ class Db:
                 COALESCE(o.billingAddress,a.addressLine1 || ', ' ||  a.addressLine2 || ', '|| a.state || ', ' ||  a.postalCode || ' '||  a.country) as billingAddress,
                 COALESCE(o.shippingAddress,a.addressLine1 || ', ' ||  a.addressLine2 || ', '|| a.state || ', ' ||  a.postalCode || ' '||  a.country) as shippingAddress,  
                 COALESCE(o.status,'Pending') as status,     
-                COALESCE(o.amount,0) as amount,
-                COALESCE(o.tax,0) as tax,
-                COALESCE(o.total,0) as total, 
+                COALESCE(o.amount,0.00) as amount,
+                COALESCE(o.tax,0.00) as tax,
+                COALESCE(o.total,0.00) as total, 
                 a.addressLine1,
                 a.addressLine2,
                 a.city,
@@ -553,8 +544,8 @@ class Db:
                 a.country,
                 a.addressType,                
                 a.isPrimary
-            FROM  orders o
-            LEFT JOIN customers c on c.id = o.customerId
+            FROM  customers c 
+            LEFT JOIN orders o on c.id = o.customerId
             LEFT JOIN addresses a on c.id = a.customerId and a.isPrimary = 1          
             WHERE c.id = ? AND (? IS NULL OR o.id = ?)
             ''',(id,orderId,orderId,))
@@ -616,11 +607,10 @@ class Db:
                 c.email, 
                 c.mobile, 
                 CASE WHEN a.id IS NOT NULL THEN 1 ELSE 0 END as canInvoice, 
-                COUNT(o.id) as invoicedCount,
+                (SELECT COUNT(id) FROM orders WHERE customerId = c.id) as invoicedCount,      
                 c.created_at, 
                 c.updated_at 
-            FROM customers c
-            LEFT JOIN orders o ON o.customerId = c.id              
+            FROM customers c            
             LEFT JOIN addresses a ON a.customerId =  c.id AND a.isPrimary = 1         
                        
             ''')
@@ -745,12 +735,11 @@ class Db:
         return id
 
     @staticmethod
-    def getLeads():
+    def getLeads(id):
         db = Db.get_db()
         cursor = db.cursor()
-        cursor.execute('''
-            SELECT 
-                id,        
+        cursor.execute('''        
+        SELECT id,
                 firstName,
                 lastName, 
                 email, 
@@ -758,9 +747,34 @@ class Db:
                 source,      
                 status,          
                 created_at,
-                updated_at 
-            FROM leads        
-        ''')
+                updated_at
+            FROM         
+                (SELECT 
+                    id,
+                    firstName,
+                    lastName,
+                    email,
+                    mobile,
+                    '' as source,
+                    'Converted' as status,
+                    created_at,
+                    updated_at
+                FROM customers 
+                UNION ALL 
+                SELECT 
+                    id,        
+                    firstName,
+                    lastName, 
+                    email, 
+                    mobile,
+                    source,      
+                    status,          
+                    created_at,
+                    updated_at 
+            FROM leads) t  
+        WHERE id = ? OR ? IS NULL
+        ''', (id,id,))
+               
         return cursor.fetchall() 
      
     @staticmethod

@@ -183,18 +183,14 @@ padding-bottom: 20px;
 		}
 	}).then(resp => resp.json()
 	).then(data => {
+		
 		order = data[0]
-		var currentDate = new Date();
-		if (order.orderDate)
-			currentDate = new Date(order.orderDate);
-	
-		var formattedDate = currentDate.toISOString().split('T')[0];
-		$('#orderDate').val(formattedDate)
 		$("#invoice").tmpl(data).appendTo("#container");
 	});
 	
 loadOrderItems(custId,orderId)
 function loadOrderItems(custId,orderId) {
+
   $("#gridInvoice").jqGrid({
     url: `/invoice/${custId}/orderItems`,
     datatype: "json",
@@ -260,6 +256,8 @@ function loadOrderItems(custId,orderId) {
 				}),
 				success: function(response) {
 					console.log(response);
+					orderId = response.id;
+					order.orderId = orderId
 				},
 				error: function(error) {
 					console.log(error);
@@ -281,7 +279,7 @@ function loadOrderItems(custId,orderId) {
         var allData = $("#gridInvoice").jqGrid('getRowData');
 		if (allData.length == 0)
 			allData = datas;
-
+	
         var editedRows = $("#gridInvoice").jqGrid('getGridParam', 'savedRow');
 
         // Merge changes
@@ -292,24 +290,37 @@ function loadOrderItems(custId,orderId) {
             }
         });
 
-		var amount = 0;
-		var vat = 0;
-		var total = 0;
-		allData.forEach(function(product, idx) {
-			amount += (parseInt(product.quantity) * parseFloat(product.unitPrice));
-		})
-		vat = amount * 0.07;
-		total = amount + vat;
+		var currentDate = new Date();
+		if (order.orderDate){
+			console.log(order.orderDate)
+			currentDate = new Date(order.orderDate);
+		}
+	
+		var formattedDate = currentDate.toISOString().split('T')[0];
+		$('#orderDate').val(formattedDate)
+
+		var amount = order.amount;
+		var vat = order.tax;
+		var total = order.total;
+		if (amount == 0 && vat == 0 && total == 0){
+			allData.forEach(function(product, idx) {
+				amount += (parseFloat(product.quantity) * parseFloat(product.unitPrice));
+			})
+			vat = amount * 0.07;
+			total = amount + vat;
+		}
+
 		$('#amount').val(amount.toFixed(2));
 		$('#tax').val(vat.toFixed(2));	
 		$('#total').val(total.toFixed(2));
 
+		order['amount'] = amount.toFixed(2)
+		order['tax'] = vat.toFixed(2)
+		order['total'] = total.toFixed(2)
+		order['status'] ='Pending'
+
 		if (orderId == null){
 			var orderItems = allData;
-			order['amount'] = amount.toFixed(2)
-			order['tax'] = vat.toFixed(2)
-			order['total'] = total.toFixed(2)
-			order['status'] ='Pending'
 			$.ajax({
 				url: '/invoice',
 				type: 'POST',
@@ -320,6 +331,8 @@ function loadOrderItems(custId,orderId) {
 				}),
 				success: function(response) {
 					console.log(response);
+					order.orderId = response.id;
+					orderId =  response.id;
 				},
 				error: function(error) {
 					console.log(error);

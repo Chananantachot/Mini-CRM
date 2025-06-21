@@ -21,7 +21,12 @@
 <script src="https://unpkg.com/bootstrap-datepicker@1.9.0/dist/locales/bootstrap-datepicker.ar.min.js" charset="UTF-8"></script>
 <script>
   "use strict";
- loadLeads()
+
+  var url = window.location.href;
+  const match = url.match(/\/customers\/([0-9a-fA-F-]{36})?/);
+
+  const custId = match ? match[1] : null;
+ loadLeads(custId)
  loadProdsInterest()
 </script>
 {% endblock %}

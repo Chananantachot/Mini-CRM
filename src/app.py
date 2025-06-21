@@ -87,9 +87,10 @@ def customer():
     
     return render_template('customer.html',current_user = user)
 
-@app.route("/leads", methods=['GET'])
+@app.route("/leads", defaults = {'custId' : None},  methods=['GET'])
+@app.route("/customers/<custId>" , methods=['GET'])
 @jwt_required()
-def lead():
+def lead(custId):
     current_user = get_jwt_identity() 
     roles = get_jwt()["roles"] or [] 
     isAdminRole = 'Admin' in roles

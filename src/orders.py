@@ -63,7 +63,7 @@ def postOrder():
         ]
         id = Db.createOrder(order_value,orderItems_value)
         if id:
-            return jsonify({ 'error': False, 'message': 'Created' }), 201 
+            return jsonify({ 'error': False, 'message': 'Created' , 'id': orderId }), 201 
         return jsonify({ 'error': True, 'message': 'Failed' }), 400   
     else:    
         return jsonify({ 'error': True, 'message': 'Bad Request' }), 400    
@@ -98,7 +98,7 @@ def putOrder():
         
         id =  Db.updateOrder(order_value,orderItems_value)
         if id:
-            return jsonify({ 'error': False, 'message': 'Updated' }), 204
+            return jsonify({ 'error': False, 'message': 'Updated', 'id': id}), 204
         return jsonify({ 'error': True, 'message': 'Failed' }), 400   
     else:    
         return jsonify({ 'error': True, 'message': 'Bad Request' }), 400    
