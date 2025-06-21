@@ -209,8 +209,7 @@ class Db:
         
         # _cursor.execute('DELETE FROM orders')
         # _cursor.execute('DELETE FROM order_items')
-        
-         
+        # _cursor.execute('DELETE FROM lead_prods_Interested')
         
         db.commit()
 
@@ -258,7 +257,7 @@ class Db:
                     Db.createCustomer(cust['first_name'], cust['last_name'], cust['email'], cust['mobile'])
     @staticmethod
     def seedLeads():
-        leads = Db.getLeads()
+        leads = Db.getLeads(None)
         if not leads:
             data_path = os.path.join("static", "data", "MOCK_DATA.json")
             with open(data_path, "r") as f:
@@ -350,24 +349,46 @@ class Db:
         return cursor.fetchall()   
 
     @staticmethod
-    def getCustProdsOrders(id):
+    def getCustProdsOrders(id,orderId):
         db = Db.get_db()
         cursor = db.cursor()
-        cursor.execute(''' 
-                SELECT 
+
+        if orderId:
+            cursor.execute('''       
+                SELECT
+                    oi.orderId ,       
+                    c.id as customerId,           
+                    p.id AS productId,
+                    p.name AS productName,
+                    p.description,
+                    COALESCE(oi.quantity, 1.0) AS quantity,
+                    p.price AS unitPrice
+                FROM products p
+                    LEFT JOIN order_items oi ON oi.productId = p.id    
+                    LEFT JOIN orders o ON o.id = oi.orderId       
+                    LEFT JOIN customers c ON c.id = o.customerId
+                WHERE (c.id = ? OR ? IS NULL) AND (oi.orderId = ? OR ? IS NULL)
+            ''', (id,id,orderId,orderId,))
+        else:   
+            cursor.execute('''    
+                        SELECT 
+                        oi.orderId,        
+                        c.id as customerId,       
                         p.id AS productId,
                         p.name AS productName,
                         p.description,
                         COALESCE(oi.quantity, 1.0) AS quantity,
                         p.price AS unitPrice
-                    FROM products p
-                    LEFT JOIN order_items oi ON oi.productId = p.id 
-                    LEFT JOIN orders o ON o.id = oi.orderId   
-                    LEFT JOIN lead_prods_Interested i ON i.product_id = p.id            
-                    LEFT JOIN customers c ON c.id = o.customerId OR c.id = i.lead_id 
-                WHERE c.id IS NOT NULL AND (c.id = ? OR ? IS NULL)
-        ''', (id,id,))
-        return cursor.fetchall()    
+                FROM products p
+                    LEFT JOIN lead_prods_Interested i ON i.product_id = p.id 
+                    LEFT JOIN order_items oi ON oi.productId = p.id or oi.productId = i.product_id     
+                    LEFT JOIN customers c ON c.id = i.lead_id      
+                WHERE (c.id = ? OR ? IS NULL) AND (oi.orderId = ? OR ? IS NULL)      
+            ''', (id,id,orderId,orderId,))
+                
+        return cursor.fetchall()
+        # orderPorods = cursor.fetchall()    
+        # return prodOrdersInteres if prodOrdersInteres else orderPorods
 
     @staticmethod
     def createLeadProdsInterested(leadId,productId):
@@ -519,6 +540,23 @@ class Db:
                             ''',(id,))
         return cursor.fetchone()
     
+    @staticmethod 
+    def getCustomerInvoiceDetail(id):
+        db = Db.get_db()
+        cursor = db.cursor()
+        cursor.execute('''
+            SELECT 
+                o.orderDate,
+                COALESCE(o.id,'') as orderId,   
+                COALESCE(o.invoiceNO,'') as invNumber,         
+                COALESCE(o.status,'Pending') as status,     
+                COALESCE(o.total,0.00) as total
+            FROM  orders o    
+            LEFT JOIN customers c on c.id = o.customerId     
+            WHERE c.id = ?                  
+            ''', (id,))
+        return cursor.fetchall()
+
     @staticmethod
     def getCustomerOrder(id,orderId):
         db = Db.get_db()
@@ -526,7 +564,7 @@ class Db:
         cursor.execute(f'''
             SELECT c.id as customerId,
                 c.firstName || ' ' || c.lastName as client,
-                o.orderDate,
+                COALESCE(o.orderDate,'') as orderDate,
                 COALESCE(o.id,'') as orderId,   
                 COALESCE(o.invoiceNO,'') as invNumber,  
                 COALESCE(o.id,'') as orderId,         
@@ -545,7 +583,7 @@ class Db:
                 a.addressType,                
                 a.isPrimary
             FROM  customers c 
-            LEFT JOIN orders o on c.id = o.customerId
+            LEFT JOIN orders o on c.id = o.customerId 
             LEFT JOIN addresses a on c.id = a.customerId and a.isPrimary = 1          
             WHERE c.id = ? AND (? IS NULL OR o.id = ?)
             ''',(id,orderId,orderId,))
@@ -605,9 +643,7 @@ class Db:
                 c.firstName,
                 c.lastName , 
                 c.email, 
-                c.mobile, 
-                CASE WHEN a.id IS NOT NULL THEN 1 ELSE 0 END as canInvoice, 
-                (SELECT COUNT(id) FROM orders WHERE customerId = c.id) as invoicedCount,      
+                c.mobile,   
                 c.created_at, 
                 c.updated_at 
             FROM customers c            
@@ -759,20 +795,20 @@ class Db:
                     'Converted' as status,
                     created_at,
                     updated_at
-                FROM customers 
-                UNION ALL 
-                SELECT 
-                    id,        
-                    firstName,
-                    lastName, 
-                    email, 
-                    mobile,
-                    source,      
-                    status,          
-                    created_at,
-                    updated_at 
-            FROM leads) t  
-        WHERE id = ? OR ? IS NULL
+                    FROM customers 
+                UNION
+                    SELECT 
+                        id,        
+                        firstName,
+                        lastName, 
+                        email, 
+                        mobile,
+                        source,      
+                        status,          
+                        created_at,
+                        updated_at 
+                    FROM leads) t  
+        WHERE t.id = ? OR ? IS NULL
         ''', (id,id,))
                
         return cursor.fetchall() 

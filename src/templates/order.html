@@ -190,9 +190,13 @@ padding-bottom: 20px;
 	
 loadOrderItems(custId,orderId)
 function loadOrderItems(custId,orderId) {
+  var url = `/invoice/${custId}/orderItems`;
+  if (orderId) {
+	url = `/invoice/${custId}/orderItems/${orderId}`;
+  }
 
   $("#gridInvoice").jqGrid({
-    url: `/invoice/${custId}/orderItems`,
+    url: url,
     datatype: "json",
     height: 200,
     colModel: [
@@ -292,7 +296,6 @@ function loadOrderItems(custId,orderId) {
 
 		var currentDate = new Date();
 		if (order.orderDate){
-			console.log(order.orderDate)
 			currentDate = new Date(order.orderDate);
 		}
 	

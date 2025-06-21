@@ -88,24 +88,12 @@ function loadCustomers() {
       key: true,
       hidden: true
     },
-    //
-    { name: 'invoicedCount',index: 'invoicedCount',hidden: true},
-    { name: 'canInvoice',index: 'canInvoice',hidden: true},
-    { label: 'Frist Name', name: 'firstName', width: 150, editable: true, editrules: { required: true }, editoptions: { dataEvents: [createAutoCorrectEvent()] } },
-    { label: 'Last Name', name: 'lastName', width: 150, editable: true, editrules: { required: true }, editoptions: { dataEvents: [createAutoCorrectEvent()] } },
-    { label: 'Email', name: 'email', width: 120, editable: true, editrules: { required: true }, editoptions: { dataEvents: [createAutoCorrectMailEvent()] } },
-    { label: 'Mobile', name: 'mobile', width: 100, editable: true },
+    { label: 'Frist Name', name: 'firstName', width: 150, editable: false, editrules: { required: true }, editoptions: { dataEvents: [createAutoCorrectEvent()] } },
+    { label: 'Last Name', name: 'lastName', width: 150, editable: false, editrules: { required: true }, editoptions: { dataEvents: [createAutoCorrectEvent()] } },
+    { label: 'Email', name: 'email', width: 120, editable: false, editrules: { required: true }, editoptions: { dataEvents: [createAutoCorrectMailEvent()] } },
+    { label: 'Mobile', name: 'mobile', width: 100, editable: false, editrules: { required: true }, editoptions: { dataEvents: [createAutoCorrectEvent()] } },
     { label: 'Date created', name: 'created_at', width: 100, editable: false, align: 'center', formatter: 'date' },
-    { label: 'Date updated', name: 'updated_at', width: 100, editable: false, align: 'center', formatter: 'date' },
-    { name :'inv', label:'' , width: 70, align: 'center',formatter: function (cellvalue, options, rowObject) {  
-        if (rowObject.invoicedCount > 0)
-            return `<a class='btn btn-link' style='pointer-events: none;cursor: default; color:#808080' title='You have got one or more invoices'  href='#'>Invoices (+${rowObject.invoicedCount})</a>`;
-
-        if (rowObject.canInvoice == 1)
-          return `<a class='btn btn-link' href='/${rowObject.id}/order'>Invoice</a>`;``
-
-         return `<a class='btn btn-link' style='pointer-events: none;cursor: default; color:#808080'  href='#'>Invoice</a>`;
-    }}
+    { label: 'Date updated', name: 'updated_at', width: 100, editable: false, align: 'center', formatter: 'date' }
   ];
 
   init_jqGrid('gridCustomers', 'pager', '/api/customers', '/api/customer/new', '/api/customer/edit',
@@ -115,7 +103,7 @@ function loadCustomers() {
 
 function loadCustOrders(custId) {
  $("#gridOrders").jqGrid({
-    url: `/invoice/${custId}/order`,
+    url: `/invoice/${custId}/orderDetails`,
     datatype: "json",
     height: 200,
     colModel: [
@@ -142,6 +130,18 @@ function loadCustOrders(custId) {
     },
     caption: "Invoices"
   }).navGrid('#ordersPager', { add: false, edit: false, del: false, search: false });
+
+    $("#gridOrders").navButtonAdd("#ordersPager" , {
+      buttonicon: "ui-icon ui-icon-plus",
+      title: "Create Invoice",
+      caption: "",
+      position: "last",
+      onClickButton: function () {
+        var cell_id = $('#gridCustomers').jqGrid('getGridParam', 'selrow');
+        var customerId = $('#gridCustomers').jqGrid('getCell', cell_id, 'id');
+        window.location.href = `/customers/${customerId}`;
+      }
+    });
 }
 
 function loadProducts() {
@@ -236,7 +236,13 @@ function loadProdsInterest() {
         leadId: leadId
       },
         function () {
+          var url = window.location.href;
+          const match = url.match(/\/customers\/([0-9a-fA-F-]{36})?/);
+
           $("#gridProdsInterest").trigger("reloadGrid");
+          const custId = match ? match[1] : null;
+          if (custId)
+             window.location.href = `/${custId}/order/`;
         });
     }
   })
@@ -260,10 +266,11 @@ function loadLeads(custId) {
     { label: 'Date created', name: 'created_at', width: 100, editable: false, align: 'center', formatter: 'date' },
     { label: 'Date updated', name: 'updated_at', width: 100, editable: false, align: 'center', formatter: 'date' }
   ];
-  caption = custId ? `Customer Pickig Product Interestes` : 'Leads Management';
-  subGrid = custId ? false : true;
-
-  init_jqGrid('gridLeads', 'pager', `/api/leads/${custId}`, '/api/lead/new', '/api/lead/edit',
+  var caption = custId ? `Customer Pickig Product Interestes` : 'Leads Management';
+  var subGrid = custId ? false : true;
+  var url = custId ? `/api/leads/${custId}` : '/api/leads';
+  
+  init_jqGrid('gridLeads', 'pager', url, '/api/lead/new', '/api/lead/edit',
     colModel, caption, subGrid, function (data) { leads_loadComplete(data) },
     function (id) { lead_onSelectRow(id) }, function (subgrid_id, id) { lead_subGridRowExpanded(subgrid_id, id) })
 }
@@ -568,17 +575,17 @@ function customer_loadComplete(datas, createUrl = null, editUrl = null) {
   }).then(resp => resp.json()
   ).then(data => {
     $("#gridCustomers").navGrid("#pager",
-      {
-        edit: data.isAdminRole,
+    {
+        edit: false,
         add: false, //data.isAdminRole,
         del: false,
         search: true,
         refresh: true,
-        view: true,
+        view: false,
         position: "left",
-        cloneToTop: true
-      },
-      {
+        cloneToTop: false
+    },
+    {
         // edit options
         url: editUrl, //'/api/customer/edit',
         closeAfterEdit: true,
@@ -593,8 +600,8 @@ function customer_loadComplete(datas, createUrl = null, editUrl = null) {
           $self.trigger("reloadGrid", { page: p.page, current: true });
           return [true, '']; // no error
         }
-      },
-      {
+    },
+    {
         // Add options
         url: createUrl, //'/api/customer/new',
         closeAfterAdd: true,
@@ -609,7 +616,7 @@ function customer_loadComplete(datas, createUrl = null, editUrl = null) {
           $self.trigger("reloadGrid", { page: p.page, current: true });
           return [true, '']; // no error
         }
-      }
+    }
     );
   })
 }

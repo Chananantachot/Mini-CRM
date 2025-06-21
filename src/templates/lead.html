@@ -26,7 +26,11 @@
   const match = url.match(/\/customers\/([0-9a-fA-F-]{36})?/);
 
   const custId = match ? match[1] : null;
- loadLeads(custId)
+  if (custId)
+    loadLeads(custId)
+  else
+    loadLeads()
+
  loadProdsInterest()
 </script>
 {% endblock %}

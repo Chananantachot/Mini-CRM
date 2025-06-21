@@ -6,15 +6,23 @@ from decorators import role_required
 
 orders = Blueprint('orders', __name__, template_folder='templates')
 
-@orders.route('/invoice/<custId>/orderItems', methods=['GET'])
+@orders.route('/invoice/<custId>/orderItems', defaults ={'orderId': None } , methods=['GET'])
+@orders.route('/invoice/<custId>/orderItems/<orderId>', methods=['GET'])
 @role_required('Admin')
-def getOrderItems(custId):
+def getOrderItems(custId, orderId):
     if custId:
-        items = Db.getCustProdsOrders(custId)
+        items = Db.getCustProdsOrders(custId, orderId)
         items = [dict(item) for item in items if item]
         return jsonify(items)
     return jsonify({ 'error': True, 'message': 'Bad Request' })
 
+
+@orders.route('/invoice/<custId>/orderDetails', methods=['GET'])
+@role_required('Admin')
+def getOrderDetails(custId):
+    orderDetails =  Db.getCustomerInvoiceDetail(custId)
+    orderDetails = [dict(order) for order in orderDetails if order]
+    return jsonify(orderDetails)
 
 @orders.route('/invoice/<custId>/order', defaults = {'orderId' : None} , methods=['GET'])
 @orders.route('/invoice/<custId>/order/<orderId>', methods=['GET'])
