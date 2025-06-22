@@ -44,7 +44,13 @@
 
 .lead-table table {
   width: 100%;
+  height: 10px;
+  border: 1px solid #ccc;
+  border-radius: 8px;
+  font-family: Arial, sans-serif;
+  font-size: 1.2rem;
   border-collapse: collapse;
+  margin-top: 20px;
 }
 
 .lead-table th,
@@ -179,18 +185,7 @@ canvas {
             }
         }
     });
-    fetch('/lead/dashboard')
-    .then(response => response.json())
-    .then(data => {
-      console.log(data);
-
-      // Update the chart with fetched data
-      myChart.data.labels = data.labels;
-      myChart.data.datasets[0].data = data.data;
-      myChart.update();
-    }); 
-
-
+ 
     const weekCtx = document.getElementById('weeklyLeadsChart').getContext('2d');
     var weeklyLeadsChart = new Chart(weekCtx, {
         type: 'bar',
@@ -198,7 +193,7 @@ canvas {
             labels: ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'],
             datasets: [{
                 label: 'Weekly Leads',
-                data: [3, 7, 5, 4, 6, 2, 8] ,
+                data: [] ,
                 backgroundColor: 'rgba(75, 192, 192, 0.2)',
                 borderColor: 'rgba(75, 192, 192, 1)',
                 borderWidth: 1
@@ -214,6 +209,20 @@ canvas {
             }
         }
     });
+
+   fetch('/lead/dashboard')
+    .then(response => response.json())
+    .then(data => {
+      console.log(data);
+
+      // Update the chart with fetched data
+      myChart.data.labels = data.labels;
+      myChart.data.datasets[0].data = data.data;
+      myChart.update();
+
+      weeklyLeadsChart.data.datasets[0].data = data.weekly_leads;
+      weeklyLeadsChart.update();
+    }); 
 
 </script>
 {% endblock %}

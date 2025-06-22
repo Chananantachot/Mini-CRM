@@ -1,4 +1,5 @@
 import os
+import random
 import pdfkit
 
 from dotenv import load_dotenv
@@ -24,7 +25,7 @@ from flask_jwt_extended import (
 from flask.cli import with_appcontext
 import click
 
-from datetime import timedelta
+from datetime import date, timedelta
 
 app = Flask(__name__)
 app.register_blueprint(users)
@@ -188,7 +189,7 @@ def home():
         SELECT firstName, lastName, email, mobile, source, status, created_at
         FROM leads
         ORDER BY created_at DESC
-        LIMIT 10
+        LIMIT 5
     """)
     lead_rows = cursor.fetchall()
     metrics = {
@@ -210,13 +211,28 @@ def dashboard():
     db = Db.get_db()
     cursor = db.cursor()
     # Chart: Leads per Month
-    cursor.execute("SELECT strftime('%Y-%m', created_at) AS month, COUNT(*) FROM leads GROUP BY month ORDER BY month")
-    rows = cursor.fetchall()
-    chart_labels = [row[0] for row in rows]
-    chart_data = [row[1] for row in rows]
+    #cursor.execute("SELECT strftime('%Y-%m', created_at) AS month, COUNT(*) FROM leads GROUP BY month ORDER BY month")
+    #rows = cursor.fetchall()
+# Get today's date
+    today = date.today()
+
+# Create an empty list to store the dates
+    labels = []
+
+# Loop to generate the next 7 days
+    for i in range(7):
+        # Calculate the date for the current iteration
+        current_date = today + timedelta(days=i)
+        # Format the date as 'YYYY-MM-DD' and add it to the list
+        labels.append(current_date.strftime('%Y-%m-%d'))
+
+    chart_labels =labels #[row[0] for row in rows]
+    chart_data = [round(random.uniform(10, 900),2) for _ in range(7)]  #[row[1] for row in rows]
+    weekly_leads_data= [round(random.uniform(1, 100),2) for _ in range(7)]
     data = {
         'labels': chart_labels,
-        'data': chart_data
+        'data': chart_data,
+        'weekly_leads': weekly_leads_data
     }    
     return jsonify(data), 200
 
