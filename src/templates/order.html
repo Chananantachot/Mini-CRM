@@ -333,9 +333,8 @@ function loadOrderItems(custId,orderId) {
 					"orderItems": orderItems
 				}),
 				success: function(response) {
-					console.log(response);
-					order.orderId = response.id;
 					orderId =  response.id;
+					window.history.pushState({}, '', `/invoice/${custId}/order/${orderId}`);
 				},
 				error: function(error) {
 					console.log(error);

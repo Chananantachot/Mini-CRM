@@ -235,6 +235,8 @@ class Db:
                 if roleId:
                     Db.addUserInRoles(roleId,userid) 
 
+
+    # Seed the database
     @staticmethod
     def seedRole():
         id = None
@@ -275,6 +277,9 @@ class Db:
                 for prod in products:
                     Db.createProduct(prod['name'],prod['description'], prod['price'],prod['sku'],prod['category'],True)
 
+
+
+    #ORDERS    
     @staticmethod
     def createOrder(order, orderItems):
         db = Db.get_db()
@@ -334,6 +339,79 @@ class Db:
             return order[6]
 
     @staticmethod
+    def updateOrderStatus(orderId, status):
+        db = Db.get_db()
+        cursor = db.cursor()
+        cursor.execute(''' UPDATE orders SET status = ? WHERE id = ? ''', (status, orderId,))
+        db.commit()
+        return orderId
+    
+    @staticmethod 
+    def getCustomerInvoiceDetail(custId):
+        db = Db.get_db()
+        cursor = db.cursor()
+        cursor.execute('''
+            SELECT 
+                o.orderDate,
+                COALESCE(o.id,'') as orderId,   
+                COALESCE(o.invoiceNO,'') as invNumber,         
+                COALESCE(o.status,'Pending') as status,     
+                COALESCE(o.total,0.00) as total
+            FROM  orders o    
+            LEFT JOIN customers c on c.id = o.customerId          
+            WHERE c.id = ?                  
+            ''', (custId,))
+        return cursor.fetchall()
+
+    @staticmethod
+    def getCustomerOrder(id,orderId):
+        db = Db.get_db()
+        cursor = db.cursor() 
+        cursor.execute(f'''
+            SELECT c.id as customerId,
+                c.firstName || ' ' || c.lastName as client,
+                COALESCE(o.orderDate,'') as orderDate,
+                COALESCE(o.id,'') as orderId,   
+                COALESCE(o.invoiceNO,'') as invNumber,  
+                COALESCE(o.id,'') as orderId,         
+                COALESCE(o.billingAddress,a.addressLine1 || ', ' ||  a.addressLine2 || ', '|| a.state || ', ' ||  a.postalCode || ' '||  a.country) as billingAddress,
+                COALESCE(o.shippingAddress,a.addressLine1 || ', ' ||  a.addressLine2 || ', '|| a.state || ', ' ||  a.postalCode || ' '||  a.country) as shippingAddress,  
+                COALESCE(o.status,'Pending') as status,     
+                COALESCE(o.amount,0.00) as amount,
+                COALESCE(o.tax,0.00) as tax,
+                COALESCE(o.total,0.00) as total, 
+                a.addressLine1,
+                a.addressLine2,
+                a.city,
+                a.state,
+                a.postalCode,
+                a.country,
+                a.addressType,                
+                a.isPrimary
+            FROM  customers c 
+            LEFT JOIN orders o on c.id = o.customerId 
+            LEFT JOIN addresses a on c.id = a.customerId and a.isPrimary = 1          
+            WHERE c.id = ? AND (? IS NULL OR o.id = ?)
+            ''',(id,orderId,orderId,))
+        return cursor.fetchall()
+
+    @staticmethod
+    def getCustomerInvoiceLeftInProdInterested(custId):
+        db = Db.get_db()
+        cursor = db.cursor()
+        cursor.execute('''
+            SELECT 
+                c.id as customerId,
+                CASE WHEN COUNT(i.product_id) > 0 THEN 1 ELSE 0 END as orderLeft  
+            FROM  lead_prods_Interested i
+            LEFT JOIN customers c on c.id = o.customerId and c.id =i.lead_id    
+            LEFT JOIN orders o on c.id = o.customerId  OR o.customerId =i.lead_id AND o.id IS NULL   
+            WHERE (c.id = ?)                 
+            ''', (custId,))
+        return cursor.fetchall()
+
+    #LEAD PRODUCTS INTERESTED
+    @staticmethod
     def getleadProdsInterested(id):
         db = Db.get_db()
         cursor = db.cursor()
@@ -353,42 +431,58 @@ class Db:
         db = Db.get_db()
         cursor = db.cursor()
 
-        if orderId:
-            cursor.execute('''       
-                SELECT
-                    oi.orderId ,       
-                    c.id as customerId,           
-                    p.id AS productId,
-                    p.name AS productName,
-                    p.description,
-                    COALESCE(oi.quantity, 1.0) AS quantity,
-                    p.price AS unitPrice
-                FROM products p
-                    LEFT JOIN order_items oi ON oi.productId = p.id    
-                    LEFT JOIN orders o ON o.id = oi.orderId       
-                    LEFT JOIN customers c ON c.id = o.customerId
-                WHERE (c.id = ? OR ? IS NULL) AND (oi.orderId = ? OR ? IS NULL)
-            ''', (id,id,orderId,orderId,))
-        else:   
-            cursor.execute('''    
-                        SELECT 
-                        oi.orderId,        
-                        c.id as customerId,       
-                        p.id AS productId,
-                        p.name AS productName,
-                        p.description,
-                        COALESCE(oi.quantity, 1.0) AS quantity,
-                        p.price AS unitPrice
-                FROM products p
-                    LEFT JOIN lead_prods_Interested i ON i.product_id = p.id 
-                    LEFT JOIN order_items oi ON oi.productId = p.id or oi.productId = i.product_id     
-                    LEFT JOIN customers c ON c.id = i.lead_id      
-                WHERE (c.id = ? OR ? IS NULL) AND (oi.orderId = ? OR ? IS NULL)      
-            ''', (id,id,orderId,orderId,))
+        #  if orderId:
+        #     cursor.execute('''       
+        #         SELECT
+        #             oi.orderId ,       
+        #             c.id as customerId,           
+        #             p.id AS productId,
+        #             p.name AS productName,
+        #             p.description,
+        #             COALESCE(oi.quantity, 1.0) AS quantity,
+        #             p.price AS unitPrice
+        #         FROM products p
+        #             LEFT JOIN order_items oi ON oi.productId = p.id    
+        #             LEFT JOIN orders o ON o.id = oi.orderId       
+        #             LEFT JOIN customers c ON c.id = o.customerId
+        #         WHERE (c.id = ? OR ? IS NULL) AND (oi.orderId = ? OR ? IS NULL)
+        #     ''', (id,id,orderId,orderId,))
+        # else:   
+        #     cursor.execute('''    
+        #                 SELECT 
+        #                 oi.orderId,        
+        #                 c.id as customerId,       
+        #                 p.id AS productId,
+        #                 p.name AS productName,
+        #                 p.description,
+        #                 COALESCE(oi.quantity, 1.0) AS quantity,
+        #                 p.price AS unitPrice
+        #         FROM products p
+        #             LEFT JOIN lead_prods_Interested i ON i.product_id = p.id 
+        #             LEFT JOIN order_items oi ON oi.productId = p.id or oi.productId = i.product_id     
+        #             LEFT JOIN customers c ON c.id = i.lead_id      
+        #         WHERE (c.id = ? OR ? IS NULL) AND (oi.orderId = ? OR ? IS NULL)      
+        #     ''', (id,id,orderId,orderId,))
+
+        # Always use the same query, but adjust the JOINs and WHERE clause to cover both cases
+        cursor.execute('''
+            SELECT
+            oi.orderId,
+            c.id as customerId,
+            p.id AS productId,
+            p.name AS productName,
+            p.description,
+            COALESCE(oi.quantity, 1.0) AS quantity,
+            p.price AS unitPrice
+            FROM products p
+            LEFT JOIN lead_prods_Interested i ON i.product_id = p.id
+            LEFT JOIN order_items oi ON oi.productId = p.id OR oi.productId = i.product_id
+            LEFT JOIN orders o ON o.id = oi.orderId
+            LEFT JOIN customers c ON c.id = o.customerId OR c.id = i.lead_id
+            WHERE (c.id = ? OR ? IS NULL) AND (oi.orderId = ? OR ? IS NULL)
+        ''', (id, id, orderId, orderId,))
                 
         return cursor.fetchall()
-        # orderPorods = cursor.fetchall()    
-        # return prodOrdersInteres if prodOrdersInteres else orderPorods
 
     @staticmethod
     def createLeadProdsInterested(leadId,productId):
@@ -410,6 +504,9 @@ class Db:
         db.commit()
         return leadId 
 
+
+
+    #PRODUCTS
     @staticmethod
     def getProducts():
         db = Db.get_db()
@@ -488,6 +585,9 @@ class Db:
         db.commit()
         return id
 
+
+
+    #CUSTOMER ADDRESS
     @staticmethod
     def getCustomerPrimaryAddress(id):
         db = Db.get_db()
@@ -540,55 +640,6 @@ class Db:
                             ''',(id,))
         return cursor.fetchone()
     
-    @staticmethod 
-    def getCustomerInvoiceDetail(id):
-        db = Db.get_db()
-        cursor = db.cursor()
-        cursor.execute('''
-            SELECT 
-                o.orderDate,
-                COALESCE(o.id,'') as orderId,   
-                COALESCE(o.invoiceNO,'') as invNumber,         
-                COALESCE(o.status,'Pending') as status,     
-                COALESCE(o.total,0.00) as total
-            FROM  orders o    
-            LEFT JOIN customers c on c.id = o.customerId     
-            WHERE c.id = ?                  
-            ''', (id,))
-        return cursor.fetchall()
-
-    @staticmethod
-    def getCustomerOrder(id,orderId):
-        db = Db.get_db()
-        cursor = db.cursor() 
-        cursor.execute(f'''
-            SELECT c.id as customerId,
-                c.firstName || ' ' || c.lastName as client,
-                COALESCE(o.orderDate,'') as orderDate,
-                COALESCE(o.id,'') as orderId,   
-                COALESCE(o.invoiceNO,'') as invNumber,  
-                COALESCE(o.id,'') as orderId,         
-                COALESCE(o.billingAddress,a.addressLine1 || ', ' ||  a.addressLine2 || ', '|| a.state || ', ' ||  a.postalCode || ' '||  a.country) as billingAddress,
-                COALESCE(o.shippingAddress,a.addressLine1 || ', ' ||  a.addressLine2 || ', '|| a.state || ', ' ||  a.postalCode || ' '||  a.country) as shippingAddress,  
-                COALESCE(o.status,'Pending') as status,     
-                COALESCE(o.amount,0.00) as amount,
-                COALESCE(o.tax,0.00) as tax,
-                COALESCE(o.total,0.00) as total, 
-                a.addressLine1,
-                a.addressLine2,
-                a.city,
-                a.state,
-                a.postalCode,
-                a.country,
-                a.addressType,                
-                a.isPrimary
-            FROM  customers c 
-            LEFT JOIN orders o on c.id = o.customerId 
-            LEFT JOIN addresses a on c.id = a.customerId and a.isPrimary = 1          
-            WHERE c.id = ? AND (? IS NULL OR o.id = ?)
-            ''',(id,orderId,orderId,))
-        return cursor.fetchall()
-
     @staticmethod
     def createCustomerAddress(customerId, addressLine1,addressLine2,
                                 city,state,postalCode,country,addressType,
@@ -633,7 +684,10 @@ class Db:
         cursor = db.cursor()
         cursor.execute(''' DELETE FROM addresses WHERE id = ? AND customerId = ?''',(id,custId,))
         db.commit()
+    #-------------------------------------------------------------
 
+
+    #CUSTOMERS
     @staticmethod
     def getCustomers():
         db = Db.get_db()
@@ -643,12 +697,11 @@ class Db:
                 c.firstName,
                 c.lastName , 
                 c.email, 
-                c.mobile,   
+                c.mobile,       
                 c.created_at, 
                 c.updated_at 
             FROM customers c            
-            LEFT JOIN addresses a ON a.customerId =  c.id AND a.isPrimary = 1         
-                       
+            LEFT JOIN addresses a ON a.customerId = c.id AND a.isPrimary = 1  
             ''')
          
         return cursor.fetchall()
@@ -702,7 +755,11 @@ class Db:
                             , (firstName,lastName,email,mobile,id,))
         db.commit()
         return id
+    
+   #-------------------------------------------------------------
 
+
+    #OPPORTUNITIES
     @staticmethod
     def getOpportunities(leadId):
         db = Db.get_db()
@@ -770,6 +827,9 @@ class Db:
         db.commit()
         return id
 
+
+
+    #LEADS
     @staticmethod
     def getLeads(id):
         db = Db.get_db()
@@ -900,6 +960,9 @@ class Db:
         db.commit()
         return id
 
+
+
+    #USERS
     @staticmethod
     def getCurrentUsers():
         db = Db.get_db()
@@ -970,6 +1033,9 @@ class Db:
         db.commit()
         return True
 
+
+
+    #USER ROLES
     @staticmethod
     def getAssignedUserRoles(roleId):
         db = Db.get_db()

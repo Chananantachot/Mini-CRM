@@ -1,4 +1,6 @@
 from datetime import datetime
+import hashlib
+import time
 import uuid
 from flask import Blueprint, jsonify, request
 from Db import Db
@@ -41,6 +43,17 @@ def getOrder(custId,orderId):
         return jsonify({ 'error': True, 'message': 'Not Found' }), 404   
     return jsonify({ 'error': True, 'message': 'Bad Request' }), 400
 
+@orders.route('/check/<custId>/orderLeft', methods=['GET'])
+@role_required('Admin')
+def getOrderLeft(custId):
+    if not custId:
+        return jsonify({ 'error': True, 'message': 'Bad Request' }), 400
+    
+    getOrderLeft = Db.getCustomerInvoiceLeftInProdInterested(custId)
+    getOrderLeft = [dict(order) for order in getOrderLeft if order]
+    return jsonify(getOrderLeft),200
+
+
 @orders.route('/invoice', methods = ['POST'])
 @role_required('Admin')
 def postOrder():
@@ -76,7 +89,6 @@ def postOrder():
     else:    
         return jsonify({ 'error': True, 'message': 'Bad Request' }), 400    
 
-
 @orders.route('/invoice', methods = ['PUT'])
 @role_required('Admin')
 def putOrder():
@@ -111,9 +123,21 @@ def putOrder():
     else:    
         return jsonify({ 'error': True, 'message': 'Bad Request' }), 400    
 
-def generateInvoiceNumber(custId):    
-    length = custId.index("-") - 1 
-    custId = custId[0:length]
+@orders.route('/invoice/<orderID>/updateOrderStatus', methods=['PUT'])
+@role_required('Admin')
+def updateOrderStatus(orderID):
+    if request.is_json:
+        data = request.get_json()
+        status = data.get('status')
+        if not status:
+            return jsonify({'error': True, 'message': 'Status is required'}), 400
+        
+        updated = Db.updateOrderStatus(orderID, status)
+        if updated:
+            return jsonify({'error': False, 'message': 'Order status updated successfully'}), 200
+        return jsonify({'error': True, 'message': 'Failed to update order status'}), 400
+    return jsonify({'error': True, 'message': 'Bad Request'}), 400
 
-    now = datetime.now()
-    return f"INV-{now.strftime('%Y%m%d')}-{custId}" 
+def generateInvoiceNumber(custId):    
+    base = f"{custId}-{time.time()}"
+    return "INV-" + hashlib.md5(base.encode()).hexdigest()[:10]

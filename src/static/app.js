@@ -106,6 +106,7 @@ function loadCustOrders(custId) {
     url: `/invoice/${custId}/orderDetails`,
     datatype: "json",
     height: 200,
+    cellEdit: true,
     colModel: [
       {
         name: 'orderId',
@@ -114,21 +115,43 @@ function loadCustOrders(custId) {
         hidden: true
       },
       { label: 'Invoice NO.', index: 'invNumber', name: 'invNumber', width: 80 , align: "center", formatter: function (cellvalue, options, rowObject) {  
-           return `<a class='btn btn-link' href='/${custId}/order/${rowObject.orderId}'>${rowObject.invNumber}</a>`;``
+        return `<a class='btn btn-link' href='/${custId}/order/${rowObject.orderId}'>${rowObject.invNumber}</a>`;``
       }},
       { label: 'Date Order', index: 'orderDate', name: 'orderDate', width: 80, align: "center" ,formatter: "date"},
       { label: 'Total', index:'total', name: 'total', width: 60, editable: true ,formatter: "number",align: "right"},   		
-      { name: 'status', label: "Status", index: 'status', width: 60, align: "center" }
+      { name: 'status', label: "Status", index: 'status', width: 60, align: "center" ,editable: true,edittype:"select"
+        ,editoptions:{value:"Pending:Pending;Completed:Completed;Cancelled:Cancelled"}}
     ],
     loadonce: true,
     pager: "#ordersPager",
     autowidth: true,
     viewrecords: true,
-    searching: {
-      searchOnEnter: true,
-      defaultSearch: "bw"
+    caption: "Invoices",
+    onSelectRow: function (id) {
+    	if (id) {
+        jQuery('#ordersPager').jqGrid('restoreRow', lastsel);
+        jQuery('#ordersPager').jqGrid('editRow', id, true);
+			  lastsel = id;
+      	}
     },
-    caption: "Invoices"
+    afterSaveCell: function(rowid, name, value, iRow, iCol) {
+        var orderId = $('#gridOrders').jqGrid('getCell', rowid, 'orderId');
+        $.ajax({
+          url: `/invoice/${orderId}/updateOrderStatus`,
+          type: 'PUT',
+          contentType: 'application/json',
+          data: JSON.stringify({
+            "status": value
+          }),
+          success: function(response) {
+            console.log("Order status updated successfully");
+            $("#gridOrders").trigger("reloadGrid");
+          },
+          error: function(error) {
+            console.log(error);
+          }
+			});
+    }
   }).navGrid('#ordersPager', { add: false, edit: false, del: false, search: false });
 
     $("#gridOrders").navButtonAdd("#ordersPager" , {
@@ -139,7 +162,23 @@ function loadCustOrders(custId) {
       onClickButton: function () {
         var cell_id = $('#gridCustomers').jqGrid('getGridParam', 'selrow');
         var customerId = $('#gridCustomers').jqGrid('getCell', cell_id, 'id');
-        window.location.href = `/customers/${customerId}`;
+    
+        fetch(`/check/${customerId}/orderLeft`, {
+        method: 'GET',
+        headers: {
+          'Accept': 'application/json'
+        }
+        }).then(resp => resp.json())
+        .then(data => {
+          //THis check if the customer has any order left to create (when the customer has first convert form leads)
+          if (data && data.orderLeft  == 0) {
+            console.log('Customer has no order left to create');
+            window.location.href = `/customers/${customerId}`;
+          } else {
+            console.log('Customer has order left to create');
+            window.location.href = `/${customerId}/order/`;
+          }
+        });
       }
     });
 }
