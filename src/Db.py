@@ -641,9 +641,13 @@ class Db:
         cursor.execute('''
                             SELECT id,
                                 customerId,
-                                addressLine1,addressLine2,
-                                city,state,postalCode,
-                                country,addressType,
+                                addressLine1,
+                                addressLine2,
+                                city,
+                                state,
+                                postalCode,
+                                country,
+                                addressType,
                                 isPrimary
                             FROM addresses
                             WHERE customerId = ?

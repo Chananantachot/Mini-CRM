@@ -208,7 +208,23 @@ function loadOrderItems(custId,orderId) {
       },
       { label: 'Name', index: 'productName', name: 'productName', width: 120},
       { label: 'Description', index: 'description', name: 'description', width: 150 },
-      { label: 'Quantity', index:'quantity', name: 'quantity', width: 60, editable: true ,formatter: "number",align: "right"},   		
+      { label: 'Quantity', index:'quantity', name: 'quantity', width: 60, editable: true ,formatter: "number",align: "right" ,
+	  		editrules: {custom: true,
+				custom_func: function (value, colName) {
+					if (value === "") {
+						return [false, "Quantity cannot be empty"];
+					}
+					if (isNaN(value)) {
+						return [false, "Quantity must be a number"];
+					}
+
+					value = parseFloat(value);
+					
+					if (value <= 0) {
+						return [false, "Quantity cannot be negative or zero"];
+					}
+					return [true, ""];
+				}}},   		
       { name: 'unitPrice', label: "Price", index: 'unitPrice', width: 60, align: "right", sorttype: "float", formatter: "number", summaryType: 'sum' }
     ],
     loadonce: true,

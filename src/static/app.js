@@ -531,11 +531,12 @@ function cust_subGridRowExpanded(subgrid_id, id) {
     editurl: `/api/customer/${id}/address/edit`,
     datatype: "json",
     colModel: [
+      
       { name: 'id', key: true, hidden: true },
       { name: 'customerId', key: false, hidden: true },
       { name: 'addressLine1', label: 'Line 1', width: 180, editable: true, editrules: { required: true } },
       { name: 'addressLine2', label: 'Line 2', width: 180, editable: true },
-      { name: 'addressType', label: 'Type', width: 75, editable: true },
+      { name: 'addressType', label: 'Type', width: 75, editable: true ,edittype:"select",editoptions:{value:"Billing:Billing;Shipping:Shipping;Work:Work;Home:Home"} },
       { name: 'city', label: 'City', width: 120, editable: true, editrules: { required: true } },
       { name: 'state', label: 'State', width: 120, editable: true },
       { name: 'country', label: 'Country', width: 100, editable: true, editrules: { required: true } },
