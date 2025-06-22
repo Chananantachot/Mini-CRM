@@ -166,7 +166,59 @@ def home():
         'name': current_user,
         'isAdminRole': isAdminRole
     }
-    return render_template('home.html',current_user = user)
+    db = Db.get_db()
+    cursor = db.cursor()
+    cursor.execute("SELECT COUNT(*) FROM leads")
+    total_leads = cursor.fetchone()[0]
+
+    cursor.execute("SELECT COUNT(*) FROM opportunities WHERE current_stage NOT IN ('Closed Won', 'Closed Lost')")
+    open_opps = cursor.fetchone()[0]
+
+    cursor.execute("SELECT COUNT(*) FROM orders WHERE status = 'Completed'")
+    completed_orders = cursor.fetchone()[0]
+
+    cursor.execute("SELECT IFNULL(SUM(total), 0) FROM orders WHERE status = 'Completed'")
+    total_revenue = cursor.fetchone()[0]
+
+    cursor.execute("SELECT COUNT(*) FROM users WHERE active = 1")
+    active_users = cursor.fetchone()[0]
+
+    # Lead Table
+    cursor.execute("""
+        SELECT firstName, lastName, email, mobile, source, status, created_at
+        FROM leads
+        ORDER BY created_at DESC
+        LIMIT 10
+    """)
+    lead_rows = cursor.fetchall()
+    metrics = {
+        'leads': total_leads,
+        'opportunities': open_opps,
+        'orders': completed_orders,
+        'revenue': round(total_revenue, 2),
+        'users': active_users
+    }
+
+    return render_template('home.html',current_user = user, metrics=metrics, 
+                           lead_rows=lead_rows,)
+
+@app.route("/lead/dashboard", methods=['GET'])
+@jwt_required()
+def dashboard():
+    current_user = get_jwt_identity() 
+    roles = get_jwt()["roles"]  
+    db = Db.get_db()
+    cursor = db.cursor()
+    # Chart: Leads per Month
+    cursor.execute("SELECT strftime('%Y-%m', created_at) AS month, COUNT(*) FROM leads GROUP BY month ORDER BY month")
+    rows = cursor.fetchall()
+    chart_labels = [row[0] for row in rows]
+    chart_data = [row[1] for row in rows]
+    data = {
+        'labels': chart_labels,
+        'data': chart_data
+    }    
+    return jsonify(data), 200
 
 @app.route("/<id>/order/", defaults = { 'orderId' : None} , methods=['GET'])
 @app.route("/<id>/order/<orderId>", methods=['GET'])

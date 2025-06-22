@@ -277,6 +277,66 @@ class Db:
                 for prod in products:
                     Db.createProduct(prod['name'],prod['description'], prod['price'],prod['sku'],prod['category'],True)
 
+    #Dashboard Data
+    @staticmethod
+    def getCustomerDashboardData():
+        db = Db.get_db()
+        cursor = db.cursor()
+        cursor.execute('''
+            SELECT 
+                COUNT(DISTINCT c.id) AS totalCustomers,
+                COUNT(DISTINCT l.id) AS totalLeads,
+                COUNT(DISTINCT o.id) AS totalOrders,
+                SUM(o.total) AS totalSales
+            FROM customers c
+            LEFT JOIN leads l ON c.id = l.id
+            LEFT JOIN orders o ON c.id = o.customerId
+        ''')
+        return cursor.fetchone()
+    
+    @staticmethod
+    def getSalesDashboardData():
+        db = Db.get_db()
+        cursor = db.cursor()
+        cursor.execute('''
+            SELECT 
+                COUNT(DISTINCT o.id) AS totalOrders,
+                SUM(o.total) AS totalSales,
+                COUNT(DISTINCT c.id) AS totalCustomers,
+                COUNT(DISTINCT l.id) AS totalLeads
+            FROM orders o
+            LEFT JOIN customers c ON o.customerId = c.id
+            LEFT JOIN leads l ON c.id = l.id
+        ''')
+        return cursor.fetchone()
+    
+    @staticmethod
+    def getOpportunitiesDashboardData():
+        db = Db.get_db()
+        cursor = db.cursor()
+        cursor.execute('''
+            SELECT 
+                COUNT(DISTINCT o.id) AS totalOpportunities,
+                SUM(o.expected_value) AS totalExpectedValue,
+                COUNT(DISTINCT l.id) AS totalLeads
+            FROM opportunities o
+            LEFT JOIN leads l ON o.lead_id = l.id
+        ''')
+        return cursor.fetchone()
+
+    @staticmethod
+    def getProductsDashboardData():
+        db = Db.get_db()
+        cursor = db.cursor()
+        cursor.execute('''
+            SELECT 
+                COUNT(DISTINCT p.id) AS totalProducts,
+                SUM(p.price) AS totalProductValue,
+                COUNT(DISTINCT i.product_id) AS totalInterestedProducts
+            FROM products p
+            LEFT JOIN lead_prods_Interested i ON p.id = i.product_id
+        ''')
+        return cursor.fetchone()   
 
 
     #ORDERS    
@@ -410,6 +470,7 @@ class Db:
             ''', (custId,))
         return cursor.fetchall()
 
+
     #LEAD PRODUCTS INTERESTED
     @staticmethod
     def getleadProdsInterested(id):
@@ -430,40 +491,6 @@ class Db:
     def getCustProdsOrders(id,orderId):
         db = Db.get_db()
         cursor = db.cursor()
-
-        #  if orderId:
-        #     cursor.execute('''       
-        #         SELECT
-        #             oi.orderId ,       
-        #             c.id as customerId,           
-        #             p.id AS productId,
-        #             p.name AS productName,
-        #             p.description,
-        #             COALESCE(oi.quantity, 1.0) AS quantity,
-        #             p.price AS unitPrice
-        #         FROM products p
-        #             LEFT JOIN order_items oi ON oi.productId = p.id    
-        #             LEFT JOIN orders o ON o.id = oi.orderId       
-        #             LEFT JOIN customers c ON c.id = o.customerId
-        #         WHERE (c.id = ? OR ? IS NULL) AND (oi.orderId = ? OR ? IS NULL)
-        #     ''', (id,id,orderId,orderId,))
-        # else:   
-        #     cursor.execute('''    
-        #                 SELECT 
-        #                 oi.orderId,        
-        #                 c.id as customerId,       
-        #                 p.id AS productId,
-        #                 p.name AS productName,
-        #                 p.description,
-        #                 COALESCE(oi.quantity, 1.0) AS quantity,
-        #                 p.price AS unitPrice
-        #         FROM products p
-        #             LEFT JOIN lead_prods_Interested i ON i.product_id = p.id 
-        #             LEFT JOIN order_items oi ON oi.productId = p.id or oi.productId = i.product_id     
-        #             LEFT JOIN customers c ON c.id = i.lead_id      
-        #         WHERE (c.id = ? OR ? IS NULL) AND (oi.orderId = ? OR ? IS NULL)      
-        #     ''', (id,id,orderId,orderId,))
-
         # Always use the same query, but adjust the JOINs and WHERE clause to cover both cases
         cursor.execute('''
             SELECT
@@ -503,7 +530,6 @@ class Db:
 
         db.commit()
         return leadId 
-
 
 
     #PRODUCTS

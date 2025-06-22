@@ -1,11 +1,219 @@
 {% extends "layout.html" %} 
 {% block styles %}
+<style>
+  .metrics {
+  display: flex;
+  justify-content: space-around;
+  gap: 2rem;
+  margin: 2rem 0;
+}
+
+.metric {
+  background: #fff;
+  box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+  padding: 1rem;
+  border-radius: 12px;
+  text-align: center;
+  flex: 1;
+}
+.progress-circle {
+  width: 100px;
+  height: 100px;
+  border-radius: 50%;
+  background: conic-gradient(var(--color) var(--percent), #eee 0%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto;
+  position: relative;
+  transition: transform 0.3s ease;
+}
+
+.progress-circle:hover {
+  transform: scale(1.05);
+}
+
+.progress-value {
+  position: absolute;
+  font-size: 4.0rem;
+  font-weight: bold;
+  color: #ffffff;
+  text-align: center;
+}
+
+
+.lead-table table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.lead-table th,
+.lead-table td {
+  padding: 0.75rem;
+  border-bottom: 1px solid #ccc;
+}
+
+.lead-table tr:nth-child(even) {
+  background-color: #f9f9f9;
+}
+canvas {
+    width: 300px !important;
+    display: block;
+    box-sizing:
+    border-box; 
+    height: 280px !important;
+}
+
+  .activity canvas {
+    width: 700px !important;
+    display: block;
+    box-sizing: border-box; 
+    height: 280px !important;
+}
+</style>
 {% endblock %}
 {% block content %}
-<img src="{{ url_for('static', filename='customer_dashboard.jpg') }}" style="height: auto;" width="100%" />
+ <header class="dashboard-header">
+    <h1>Customer Relationship Management Dashboard</h1>
+    <p>This slide covers... activities, lead target details, etc.</p>
+  </header>
+
+  <section class="metrics">
+  <div class="metric">
+    <div class="progress-circle" style="--color: #007bff; --percent: {{ metrics.leads }}%;">
+      <div class="progress-value">{{ metrics.leads }}</div>
+    </div>
+    <p>Total Leads</p>
+  </div>
+  <div class="metric">
+    <div class="progress-circle" style="--color: #28a745; --percent: {{ metrics.leads }}%;">
+      <div class="progress-value">{{ metrics.opportunities }}</div>
+    </div>
+    <p>Open Opportunities</p>
+  </div>
+
+  <div class="metric">
+     <div class="progress-circle" style="--color: #17a2b8; --percent: {{ metrics.leads }}%;">
+      <div class="progress-value">{{ metrics.orders }}</div>
+    </div>
+    <p>Completed Orders</p>
+  </div>
+
+  <div class="metric">
+     <div class="progress-circle" style="--color: #ffc107; --percent: {{ metrics.leads }}%;">
+      <div class="progress-value">${{ metrics.revenue }}</div>
+    </div>
+    <p>Total Revenue</p>
+  </div>
+
+  <div class="metric">
+      <div class="progress-circle" style="--color: #6f42c1; --percent: {{ metrics.leads }}%;">
+      <div class="progress-value">{{ metrics.users }}</div>
+    </div>
+    <p>Active Users</p>
+  </div>
+  </section>
+ <div style="display: flex; justify-content: space-between;">
+    <section class="lead-target">
+    <canvas id="leadsChart"></canvas>
+    </section>
+        <section class="activity">
+      <!-- Placeholder for bar chart (use canvas.js or Chart.js) -->
+      <canvas id="weeklyLeadsChart"></canvas>
+    </section>
+ </div>
+
+
+  <section class="lead-table">
+   <table>
+  <thead>
+    <tr>
+      <th>Name</th><th>Email</th><th>Mobile</th><th>Source</th><th>Status</th><th>Created At</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for lead in lead_rows %}
+    <tr>
+      <td>{{ lead[0] }} {{ lead[1] }}</td>
+      <td>{{ lead[2] }}</td>
+      <td>{{ lead[3] }}</td>
+      <td>{{ lead[4] }}</td>
+      <td>{{ lead[5] }}</td>
+      <td>{{ lead[6] }}</td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+
+  </section>
 {% endblock %}
+
 {% block scripts %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script>
   "use strict";
+  const ctx = document.getElementById('leadsChart').getContext('2d');
+  var  myChart = new Chart(ctx, {
+        type: 'doughnut',
+        data: {
+            labels: [],
+            datasets: [{
+                label: '',
+                data: [],
+                borderWidth: 1,
+                backgroundColor: [
+                  'rgb(255, 99, 132)',
+                  'rgb(54, 162, 235)',
+                  'rgb(255, 205, 86)'
+                ],
+                hoverOffset: 4
+            }]
+        },
+        options: {
+           responsive: true,
+            plugins: {
+              legend: { display: false }
+            },
+            scales: {
+              y: { beginAtZero: true }
+            }
+        }
+    });
+    fetch('/lead/dashboard')
+    .then(response => response.json())
+    .then(data => {
+      console.log(data);
+
+      // Update the chart with fetched data
+      myChart.data.labels = data.labels;
+      myChart.data.datasets[0].data = data.data;
+      myChart.update();
+    }); 
+
+
+    const weekCtx = document.getElementById('weeklyLeadsChart').getContext('2d');
+    var weeklyLeadsChart = new Chart(weekCtx, {
+        type: 'bar',
+        data: {
+            labels: ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'],
+            datasets: [{
+                label: 'Weekly Leads',
+                data: [3, 7, 5, 4, 6, 2, 8] ,
+                backgroundColor: 'rgba(75, 192, 192, 0.2)',
+                borderColor: 'rgba(75, 192, 192, 1)',
+                borderWidth: 1
+            }]
+        },
+        options: {
+            responsive: true,
+            plugins: {
+              legend: { display: false }
+            },
+            scales: {
+              y: { beginAtZero: true }
+            }
+        }
+    });
+
 </script>
 {% endblock %}
