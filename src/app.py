@@ -9,6 +9,7 @@ from Db import Db
 from users import users
 from customers import customers
 from leads import leads
+from sales import sales
 from products import products
 from opportunities import opportunities
 from orders import orders
@@ -31,6 +32,7 @@ app = Flask(__name__)
 app.register_blueprint(users)
 app.register_blueprint(customers)
 app.register_blueprint(leads)
+app.register_blueprint(sales)
 app.register_blueprint(opportunities)
 app.register_blueprint(products)
 app.register_blueprint(orders)
@@ -102,6 +104,21 @@ def lead(custId):
     }
     
     return render_template('lead.html',current_user = user)
+
+
+@app.route("/sale", methods=['GET'])
+@role_required('Admin')
+def sale():
+    current_user = get_jwt_identity() 
+    roles = get_jwt()["roles"] or [] 
+    isAdminRole = 'Admin' in roles
+    user = {
+        'name': current_user,
+        'isAdminRole': isAdminRole
+    }
+    
+    return render_template('sale.html',current_user = user)
+
 
 @app.route("/products", methods=['GET'])
 @jwt_required()

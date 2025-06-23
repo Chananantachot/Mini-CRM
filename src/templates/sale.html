@@ -1,0 +1,22 @@
+{% extends "layout.html" %}
+{% block styles %}
+
+{% endblock %}
+{% block content %}
+
+<table id="gridSales" class="table table-striped table-bordered">
+</table>
+<div id="pager"></div>
+<br />
+
+{% endblock %}
+{% block scripts %}
+ <script src="{{ url_for('static', filename='sale.js') }}"></script>
+<script>
+  "use strict";
+
+  var url = window.location.href;
+  const match = url.match(/\/customers\/([0-9a-fA-F-]{36})?/);
+  loadSalesGrid();
+</script>
+{% endblock %}

@@ -171,7 +171,7 @@ class Db:
             name VARCHAR(100),
             email VARCHAR(150) UNIQUE,
             phone VARCHAR(20),
-            region VARCHAR(50),
+            active BOOLEAN DEFAULT TRUE,
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         )''')
 
@@ -835,7 +835,9 @@ class Db:
                 o.id,
                 l.id as lead_id,           
                 o.current_stage,
-                o.expected_value,
+                COALESCE(o.expected_value,0.0) as expected_value,
+                COALESCE(deal_value,0.0) as deal_value,        
+                COALESCE(conversion_probability,0.0) as conversion_probability,       
                 o.closure_date,
                 CASE WHEN c.id IS NULL THEN 0 ELSE 1 END as  converted,   
                 o.created_at,

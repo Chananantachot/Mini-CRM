@@ -37,6 +37,7 @@
           <li><a href="{{ url_for('customer') }}">Customers</a></li>
           <li><a href="{{ url_for('product') }}">Products</a></li>
           {% if current_user.isAdminRole %}
+          <li><a href="{{ url_for('sale') }}">Sales</a></li>
           <li><a href="{{ url_for('user') }}">Users</a></li>
           <li><a href="{{ url_for('roles') }}">Roles</a></li>
           {% endif %}
