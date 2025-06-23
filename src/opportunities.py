@@ -16,12 +16,14 @@ def getOpportunities(leadId):
 def create(lead_id):
     leadId = lead_id
     current_stage = request.form.get('current_stage')
-    expected_value = request.form.get('expected_value')
+    deal_value = request.form.get('deal_value')
+    conversion_probability = request.form.get('conversion_probability')
     closure_date = request.form.get('closure_date')
     converted = request.form.get('converted')
+    expected_value = float(deal_value) * (float(conversion_probability) / 100) if deal_value and conversion_probability else 0.0    
 
     if leadId: 
-      id =  Db.createOpportunities(leadId,current_stage,expected_value,closure_date)
+      id =  Db.createOpportunities(leadId,current_stage,deal_value,expected_value,conversion_probability,closure_date)
       if id:
         if converted == 'Yes':
             lead = Db.getLead(lead_id)
@@ -37,9 +39,11 @@ def edit(lead_id):
     leadId = lead_id
     opportunityId  = request.form.get('id')
     current_stage = request.form.get('current_stage')
-    expected_value = request.form.get('expected_value')
+    deal_value = request.form.get('deal_value')
+    conversion_probability = request.form.get('conversion_probability')
     closure_date = request.form.get('closure_date')
     converted = request.form.get('converted')
+    expected_value = float(deal_value) * (float(conversion_probability) / 100) if deal_value and conversion_probability else 0.0 
     if opportunityId and leadId:
         opportunity = Db.getOpportunity(opportunityId,lead_id)
         opportunity = dict(opportunity)
@@ -50,7 +54,7 @@ def edit(lead_id):
                     #lead = dict(lead)
                     custId = Db.covertLeadToCustomer(leadId, lead['firstName'], lead['lastName'], lead['email'], lead['mobile'])
                 else:  
-                    custId = Db.updateOpportunities(opportunityId,leadId,current_stage,expected_value,closure_date)
+                    custId = Db.updateOpportunities(opportunityId,leadId,current_stage,deal_value,expected_value,conversion_probability,closure_date)
                     
                 if custId:
                     return jsonify({ 'error': False, 'message': 'Updated' }), 204  

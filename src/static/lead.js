@@ -99,7 +99,40 @@ function lead_subGridRowExpanded(subgrid_id, leadId) {
       { name: 'id', key: true, hidden: true },
       { name: 'lead_id', key: false, hidden: true },
       { name: 'current_stage', label: 'Current Stage', editable: true, editrules: { required: true }},
-      { name: 'expected_value', label: 'Expected Value', editable: true, editrules: { required: true }},
+      { name: 'deal_value', label: 'Deal Value', editable: true, editrules: { required: true },formatter: "number",align: "right" ,
+	  		editrules: {custom: true,
+				custom_func: function (value, colName) {
+					if (value === "") {
+						return [false, "Deal Value cannot be empty"];
+					}
+					if (isNaN(value)) {
+						return [false, "Deal Value must be a number"];
+					}
+
+					value = parseFloat(value);
+					
+					if (value <= 0) {
+						return [false, "Deal Value cannot be negative or zero"];
+					}
+					return [true, ""];
+				}}}, 
+      { name: 'conversion_probability', label: 'Probability (%)', editable: true, editrules: { required: true },formatter: "number", align: "right" ,
+	  		editrules: {custom: true,
+				custom_func: function (value, colName) {
+					if (value === "") {
+						return [false, "Probability cannot be empty"];
+					}
+					if (isNaN(value)) {
+						return [false, "Probability must be a number"];
+					}
+
+					value = parseFloat(value);
+					
+					if (value <= 0) {
+						return [false, "Probability cannot be negative or zero"];
+					}
+					return [true, ""];
+				}}}, 
       { name: 'closure_date', label: 'Closure Date', editable: true, editrules: { required: true , date: true }, datefmt: 'yyyy-mm-dd',
         editoptions: { dataInit: function (element) {
             var $wrapper = $("<div class='input-group2 date'></div>");
@@ -133,10 +166,21 @@ function lead_subGridRowExpanded(subgrid_id, leadId) {
   });
 
 
-  $.jgrid.info_dialog = function() {
-      console.log("jqGrid tried to show an error dialog, suppressing it.");
-      return; // do nothing
-  };
+$.jgrid.jqModal = $.extend($.jgrid.jqModal || {}, {
+    beforeOpen: centerInfoDialog
+});	
+
+function centerInfoDialog()
+{
+    var $infoDlg = $("#info_dialog");
+    var $parentDiv = $infoDlg.parent();
+    var dlgWidth = $infoDlg.width();
+    var parentWidth = $parentDiv.width();
+    var dlgHeight = $infoDlg.height();
+    var parentHeight = $parentDiv.height();
+    $infoDlg[0].style.top = Math.round((parentHeight - dlgHeight) / 2) + "px";
+    $infoDlg[0].style.left = Math.round((parentWidth - dlgWidth) / 2) + "px";
+}
 
   $("#" + subgrid_table_id).navGrid("#" + pager_id,
     { edit: false, add: false, del: false, search: false, refresh: false },

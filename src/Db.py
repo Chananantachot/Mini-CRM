@@ -813,7 +813,9 @@ class Db:
                 o.id,
                 l.id as lead_id,           
                 o.current_stage,
-                o.expected_value,
+                COALESCE(o.expected_value,0.0) as expected_value,
+                COALESCE(deal_value,0.0) as deal_value,        
+                COALESCE(conversion_probability,0.0) as conversion_probability,       
                 o.closure_date,
                 CASE WHEN c.id IS NULL THEN 0 ELSE 1 END as  converted,   
                 o.created_at,
@@ -845,28 +847,30 @@ class Db:
         return cursor.fetchone() 
     
     @staticmethod
-    def createOpportunities(lead_id,current_stage,expected_value,closure_date):
+    def createOpportunities(leadId, current_stage, deal_value, expected_value, conversion_probability, closure_date):
         id = str(uuid.uuid4())
         db = Db.get_db()
         cursor = db.cursor() 
         cursor.execute('''
-                        INSERT INTO opportunities(id,lead_id,current_stage,expected_value,closure_date) 
-                        VALUES (?,?,?,?,?) ''', (id,lead_id,current_stage,expected_value,closure_date,))
+                        INSERT INTO opportunities(id,lead_id,current_stage,deal_value,expected_value,conversion_probability,closure_date) 
+                        VALUES (?,?,?,?,?,?,?) ''', (id,leadId, current_stage, deal_value, expected_value, conversion_probability,closure_date,))
         db.commit()
         return id
 
     @staticmethod
-    def updateOpportunities(id,lead_id,current_stage,expected_value,closure_date):
+    def updateOpportunities(id,lead_id,current_stage, deal_value, expected_value, conversion_probability, closure_date):
         db = Db.get_db()
         cursor = db.cursor()
 
         cursor.execute('''UPDATE opportunities SET 
                             lead_id = ?,
                             current_stage = ?,
+                            deal_value = ?,
                             expected_value = ?,
+                            conversion_probability = ?,
                             closure_date = ?
                        WHERE id = ?
-                       ''', (lead_id,current_stage,expected_value,closure_date,id,))
+                       ''', (lead_id,current_stage, deal_value, expected_value, conversion_probability, closure_date,id,))
         
         db.commit()
         return id

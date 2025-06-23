@@ -26,26 +26,17 @@ def get_interactions(custId, prodsId):
     interactions_list =  [dict(activity) for activity in rows if activity is not None]
     return jsonify(interactions_list), 200  
 
-@interactions.route('/interactions', methods=['POST'])
+@interactions.route('/<custId>/interactions/<prodsId>', methods=['POST'])
 @role_required('Admin')
-def add_interaction():
-    data = request.get_json()
-    if not data:
-        return jsonify({"error": "No input data provided"}), 400
-
-
-
-    required_fields = ['customer_id', 'interaction_type', 'product_id', 'note']
-    for field in required_fields:
-        if field not in data:
-            return jsonify({"error": f"Missing field: {field}"}), 400
-
+def add_interaction(custId, prodsId):
+    interaction_type = request.form.get('interaction_type')
+    note = request.form.get('notes')
     db = Db.get_db()
     cursor = db.cursor()
     cursor.execute('''
                     INSERT INTO interactions (id,customer_id, interaction_type, product_id, notes)
                     VALUES (?, ?, ?, ?, ?)
-                ''', (id , data['customer_id'], data['interaction_type'], data['product_id'], data['note']))
+                ''', (id , custId, interaction_type, prodsId , note))
     db.commit()
 
     return jsonify({"message": "Interaction added successfully"}), 201
