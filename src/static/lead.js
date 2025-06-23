@@ -25,6 +25,7 @@ function loadLeads(custId) {
 }
 
 function lead_onSelectRow(ids) {
+  loadProdsInterest();
   $("#gridProdsInterest").jqGrid('setGridParam', { url: '/api/products/lead/' + ids + '/interested' });
   $("#gridProdsInterest").trigger("reloadGrid");
 }
@@ -131,48 +132,6 @@ function lead_subGridRowExpanded(subgrid_id, leadId) {
     }
   });
 
-  var originalCheckValues = $.jgrid.checkValues,
-      originalHideModal = $.jgrid.hideModal,
-      iColWithError = 0;
-  $.jgrid.checkValues = function(val, valref,g, customobject, nam) {
-      var tr,td,
-          ret = originalCheckValues.call(this,val, valref,g, customobject, nam);
-      if (!ret[0]) {
-          tr = this.rows.namedItem(editingRowId);;
-          if (tr) {
-              $(tr).children('td').children('input.editable[type="text"]').removeClass("ui-state-error");
-              iColWithError = valref; // save to set later the focus
-              td = tr.cells[valref];
-              if (td) {
-                  $(td).find('input.editable[type="text"]').addClass("ui-state-error");
-                  $(td).find('input.editable[type="text"]').focus();
-              }
-          }
-      }
-      return ret
-  };
-  $.jgrid.hideModal = function (selector,o) {
-      var input, oldOnClose, td,
-          tr = grid[0].rows.namedItem(editingRowId);
-      if (tr) {
-          td = tr.cells[iColWithError];
-          if (td) {
-              input = $(td).children('input.editable[type="text"]:first');
-              if (input.length > 0) {
-                  oldOnClose = o.onClose;
-                  o.onClose = function(s) {
-                      if ($.isFunction(oldOnClose)) {
-                          oldOnClose.call(s);
-                      }
-                      setTimeout(function(){
-                          input.focus();
-                      },100);
-                  };
-              }
-          }
-      }
-      originalHideModal.call(this,selector,o);
-  };
 
   $.jgrid.info_dialog = function() {
       console.log("jqGrid tried to show an error dialog, suppressing it.");

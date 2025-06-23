@@ -119,7 +119,8 @@ class Db:
         # The leads table can store details about how they were acquired and their current status.
         _cursor.execute('''
             CREATE TABLE IF NOT EXISTS leads (
-                id TEXT PRIMARY KEY,        
+                id TEXT PRIMARY KEY,  
+                salesPersonId TEXT, -- Optional: to link to a salesperson      
                 firstName TEXT NOT NULL,
                 lastName TEXT NOT NULL, 
                 email TEXT NOT NULL, 
@@ -127,7 +128,8 @@ class Db:
                 source TEXT,      
                 status TEXT,          
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP                    
+                updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                FOREIGN KEY (salesPersonId) REFERENCES sales(id)                            
             )
         ''')
 
@@ -139,7 +141,9 @@ class Db:
                 id TEXT PRIMARY KEY,        
                 lead_id TEXT,
                 current_stage VARCHAR(50),
-                expected_value DECIMAL(10, 2),
+                expected_value DECIMAL(10, 2), -- this will be calculated based on the deal value and conversion probability: deal_value × conversion_probability
+                deal_value DECIMAL(10, 2),        
+                conversion_probability DECIMAL(5,2) DEFAULT 0.00 CHECK (conversion_probability BETWEEN 0 AND 1), -- (%) value
                 closure_date DATE,         
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                 updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP                    
@@ -160,6 +164,16 @@ class Db:
                 updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP                    
             )
         ''')
+
+        # Creating your new salespeople table
+        _cursor.execute('''CREATE TABLE IF NOT EXISTS sales (
+            id TEXT PRIMARY KEY,
+            name VARCHAR(100),
+            email VARCHAR(150) UNIQUE,
+            phone VARCHAR(20),
+            region VARCHAR(50),
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        )''')
 
         # Create addresses tables 
         _cursor.execute('''
@@ -190,7 +204,6 @@ class Db:
             )
         ''')
 
-
         # Create interactions tables  OR LOG 
         # This table records every interaction with your customers, 
         # from emails sent to follow-up calls or purchases made. 
@@ -198,10 +211,11 @@ class Db:
         _cursor.execute('''
             CREATE TABLE IF NOT EXISTS interactions (
                 id TEXT PRIMARY KEY,        
-                customer_id TEXT,
-                interaction_type VARCHAR(50),
-                date TIMESTAMP,
-                notes TEXT,   
+                customer_id TEXT NOT NULL,
+                product_id TEXT NOT NULL, -- if applicable, to track interactions related to specific products
+                interaction_type VARCHAR(50), -- e.g., 'Email', 'Call', 'Meeting', 'Purchase'
+                date_activity TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                notes TEXT NOT NULL, -- any notes or details about the interaction
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                 updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP                    
             )

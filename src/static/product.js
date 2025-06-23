@@ -40,7 +40,8 @@ function loadProducts() {
   }).navGrid('#pager', { add: false, edit: false, del: false, search: true });
 }
 
-function loadProdsInterest() {
+
+function loadProdsInterest() {     
   $("#gridProdsInterest").jqGrid({
     url: '/api/products/lead/interested',
     datatype: "json",
@@ -52,17 +53,53 @@ function loadProdsInterest() {
       { name: 'price', label: 'Price', width: 80, align: "right" } //,
       //{name:'interested',label:'Interested', width:80, formatter: "checkbox", align:"center"}
     ],
-    autowidth: true,
-    rownumbers: true,
-    height: 150,
-    rowNum: 200,
-    pager: '#_pager',
-    sortname: 'item',
-    sortorder: "asc",
-    multiselect: true,
-    caption: "Interested Products",
-    footerrow: true,
-    userDataOnFooter: true,
+      autowidth: true,
+      rownumbers: true,
+      height: 150,
+      rowNum: 200,
+      pager: '#_pager',
+      sortname: 'item',
+      sortorder: "asc",
+      multiselect: true,
+      caption: "Interested Products",
+      footerrow: true,
+      userDataOnFooter: true,
+      subGrid:  true,
+    subGridRowExpanded: function (subgrid_id, row_id) {
+      var cell_id = $('#gridLeads').jqGrid('getGridParam', 'selrow');
+      var leadId = $('#gridLeads').jqGrid('getCell', cell_id, 'id');
+      if (!leadId) {
+        $("#" + row_id).find("td.ui-sgcollapsed>a").hide();
+        return
+      }
+
+      var subgrid_table_id = subgrid_id + "_t";
+      var pager_id = "p_" + subgrid_table_id;
+      $("#" + subgrid_id).html("<table id='" + subgrid_table_id + "' class='scroll' style='width:100%;'></table><div id='" + pager_id + "' class='scroll' style='width:100%;'></div>");
+      $("#" + subgrid_table_id).jqGrid({
+        url: `/${leadId}/interactions/${row_id}`,
+        datatype: "json",
+        mtype: 'GET',
+        colModel: [
+          { name: 'id', hidden: true, key: true },
+          { name: 'customer_id', hidden: true, key: false },
+          { name: 'product_id', hidden: true, key: false },
+          { name: 'interaction_type', label: 'Contact via', width: 40 ,editable: true },
+          { name: 'note', label: 'Note', width: 180 ,editable: true },
+          { name: 'date_activity', label: 'Date contact', width: 80 }
+        ],
+        autowidth: true,
+        rownumbers: true,
+        width: '100%',
+        pager: pager_id,
+        sortname: 'date_activity',
+        sortorder: "asc",
+        multiselect: true,
+        caption: "Interactions",
+        loadonce: true, 
+      
+      }).navGrid('#' + pager_id, { add: false, edit: false, del: false, search: false });
+    },
     loadComplete: function (data) {
       let sumAmoutPrice = 0;
       data.forEach((product, idx) => {

@@ -69,7 +69,7 @@ def close_connection(exception):
 
 @app.before_request
 def before_request():
-    if request.endpoint in ['customer', 'lead', 'product' ,'user', 'roles','newUser','users.register', 'users.signin','login','users.activateUser','static']:
+    if request.endpoint in ['interactions' ,'customer', 'lead', 'product' ,'user', 'roles','newUser','users.register', 'users.signin','login','users.activateUser' ,'static']:
         return
     try:
         verify_jwt_in_request()

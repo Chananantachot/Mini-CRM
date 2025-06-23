@@ -46,8 +46,8 @@ def signin():
         return response
 
     # Login successful — issue new tokens
-    access_token = create_access_token(identity=user['fullname'], additional_claims={"roles": user['roles']})
-    refresh_token = create_refresh_token(identity=user['fullname'], additional_claims={"jti": str(uuid.uuid4()), "roles": user['roles']})
+    access_token = create_access_token(identity=user['email'], additional_claims={"roles": user['roles']})
+    refresh_token = create_refresh_token(identity=user['email'], additional_claims={"jti": str(uuid.uuid4()), "roles": user['roles']})
     # Set the tokens in cookies
     response = make_response(redirect(request.args.get("next") or url_for("home")))
     _set_jwt_cookies(response, 'access_token_cookie', access_token)
