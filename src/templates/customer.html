@@ -46,6 +46,7 @@ user-select: none;
 </div>
 {% endblock %}
 {% block scripts %}
+ <script src="{{ url_for('static', filename='customer.js') }}"></script>
 <script>
   "use strict";
  loadCustomers()
