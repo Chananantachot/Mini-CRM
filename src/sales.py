@@ -19,7 +19,7 @@ def get_sales():
                    FROM sales 
                    ''')
     sales_data = cursor.fetchall()
-    sales_data = [sale for sale in sales_data if sale['id'] is not None]
+    sales_data = [sale for sale in sales_data if sale]
     return jsonify(sales_data)
 
 @sales.route('/sale/<id>/leads', methods=['GET'])
@@ -49,17 +49,15 @@ def get_sale_leads(id):
 def add_sale():
     db = Db.get_db()
     cursor = db.cursor()
-    data = request.get_json()
     
     id = str(uuid.uuid4())
     name = request.form.get('name')
     email = request.form.get('email')
     phone = request.form.get('phone')
-    active = request.form.get('active', 'true').lower() == 'true'
     
-    cursor.execute('''INSERT INTO sales (id, name, email, phone, active) 
-                      VALUES (%s, %s, %s, %s, %s)''', 
-                   (id, name, email, phone,active))
+    cursor.execute('''INSERT INTO sales (id, name, email, phone) 
+                      VALUES (?, ?, ?, ?)''', 
+                   (id, name, email, phone,))
     db.commit()
     
     return jsonify({{"message": "Created successfully"}}), 201
@@ -69,17 +67,17 @@ def add_sale():
 def update_sale():
     db = Db.get_db()
     cursor = db.cursor()
-    data = request.get_json()
+
     sale_id = request.form.get('id')
-    name = data.get('name')
-    email = data.get('email')
-    phone = data.get('phone')
-    active = request.form.get('active', 'true').lower() == 'true'
+    name = request.form.get('name')
+    email = request.form.get('email')
+    phone = request.form.get('phone')
+    #active = request.form.get('active', 'true').lower() == 'true'
     
     cursor.execute('''UPDATE sales 
-                      SET name = %s, email = %s, phone = %s ,active = %s
-                      WHERE id = %s''', 
-                   (name, email, phone, active,sale_id))
+                      SET name = ?, email = ?, phone = ?
+                      WHERE id = ?''', 
+                   (name, email, phone,sale_id,))
     db.commit()
     
     return jsonify({{"message": "Updated successfully"}}), 201
@@ -96,8 +94,8 @@ def update_sale_leads(id):
     for lead_id in lead_ids:
         cursor.execute('''UPDATE leads 
                         SET salesPersonId = %s 
-                        WHERE id = %s''', 
-                    (sales_person_id, lead_id))
+                        WHERE id = ?''', 
+                    (sales_person_id, lead_id,))
         db.commit()
     
     return jsonify({{"message": "Lead updated successfully"}}), 201
