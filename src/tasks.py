@@ -31,6 +31,23 @@ def get_due_tasks():
     tasks = [dict(task) for task in tasks if task]
     return jsonify(tasks)
 
+@tasks.route('/tasks/leads/<saleId>', methods=['GET'])
+@jwt_required()
+def getLeadsOrCustsBySaleId(saleId):
+    db = Db.get_db()
+    cursor = db.cursor()
+    cursor.execute('''
+        SELECT l.id,
+               l.firstName || ' ' || l.lastName as name
+        FROM leads l 
+        LEFT JOIN sales s on l.salesPersonId = s.id AND l.salesPersonId IS NOT NULL
+        WHERE s.id = ? OR ? IS NULL
+    ''', (saleId,saleId,))
+    leads = cursor.fetchall()
+    leads = [dict(lead) for lead in leads if lead ]
+    return leads
+
+
 @tasks.route('/tasks', methods=['POST'])
 @jwt_required()
 def createTask():

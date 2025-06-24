@@ -1,67 +1,80 @@
 function fetchSalePersons() {
-   var sales =  fetch('/sales', {
-		headers: {
-		'Accept': 'application/json'
-		}
-	}).then(resp => resp.json()
-	).then(data => {
-		return data;
-	});
-    return sales;
-}
-
-function fetchCustomers() {
-   var custs = fetch('/api/leads', {
-		headers: {
-		'Accept': 'application/json'
-		}
-	}).then(resp => resp.json()
-	).then(data => {
-		return data;
-	});
-    return custs;
-}
-
-async function loadMyTasksGrid(){
-    let salePersons = await fetchSalePersons();
-    let leads = await fetchCustomers();
-    console.log(salePersons)
-    console.log(leads)
-
-    let salesOptions = "";
-    if (Array.isArray(salePersons)){
-        salePersons.forEach(item => {
-            salesOptions += item.id + ":" + item.name + ";";
-        });
-        salesOptions = salesOptions.slice(0, -1);
+  var sales = fetch('/sales', {
+    headers: {
+      'Accept': 'application/json'
     }
+  }).then(resp => resp.json()
+  ).then(data => {
+    return data;
+  });
+  return sales;
+}
 
+function fetchCustomers(saleId) {
+  var custs = fetch(`/tasks/leads/${saleId}`, {
+    headers: {
+      'Accept': 'application/json'
+    }
+  }).then(resp => resp.json()
+  ).then(data => {
     let custOptions = "";
-    if (Array.isArray(leads)){
-        leads.forEach(item => {
-            let firstName = item.firstName || '';
-            let lastName = item.lastName || '';
+    data.forEach(item => {
+      custOptions += item.id + ":" + item.name + ";";
+    });
+    custOptions = custOptions.slice(0, -1);
+    return custOptions
+  });
+  return custs;
+}
 
-            let name = `${firstName}  ${lastName}`;
-            if (name && name !== 'undefined') {
-                custOptions += item.id + ":" + name + ";";
-            }
-        });
-        custOptions = custOptions.slice(0, -1);
-    }
+async function loadMyTasksGrid() {
+  let salePersons = await fetchSalePersons();
+  let salesOptions = "";
+  if (Array.isArray(salePersons)) {
+    salePersons.forEach(item => {
+      salesOptions += item.id + ":" + item.name + ";";
+    });
+    salesOptions = salesOptions.slice(0, -1);
+  }
 
-    $("#gridTasks").jqGrid({
+  $("#gridTasks").jqGrid({
     url: `/tasks`,
-    editurl : '/tasks',
+    editurl: '/tasks',
     datatype: "json",
     height: 300,
     colModel: [
-      { name: 'id',index: 'id',key: true,hidden: true},
-      { label: 'Title', index: 'title', name: 'title',editable: true, width: 120},
-      { label: 'Description', index: 'description', name: 'description',editable: true ,width: 150 },
-      { label: 'Assigned To', index: 'assigned_to', name: 'assigned_to', width: 150, editable: true,edittype: 'select',editoptions: {value: salesOptions}}, 
-      { label: 'Due Date', index: 'due_date', name: 'due_date', width: 120, editable: true, editrules: { required: true , date: true }, datefmt: 'yyyy-mm-dd',
-        editoptions: { dataInit: function (element) {
+      { name: 'id', index: 'id', key: true, hidden: true },
+      { label: 'Title', index: 'title', name: 'title', editable: true, width: 120 },
+      { label: 'Description', index: 'description', name: 'description', editable: true, width: 150 },
+      {
+        label: 'Assigned To', index: 'assigned_to', name: 'assigned_to', width: 150, editable: true, edittype: 'select', editoptions: {
+          value: salesOptions,
+          dataEvents: [
+            {
+              type: 'change',
+              fn: function (e) {
+                const selected = $(e.target).val();
+                fetchCustomers(selected).then(custOptions => {
+                  const $row = $(this).closest('tr');
+                  $row.find("select[name='relatedTo_id']").empty();
+
+                  custOptions.split(';').filter(Boolean).forEach(opt => {
+                    const [val, text] = opt.split(':');
+                    const $select = $row.find("select[name='relatedTo_id']");
+                    if ($select.length) {
+                      $select.append(new Option(text, val));
+                    }
+                  });
+                });
+              }
+            }
+          ]
+        }
+      },
+      {
+        label: 'Due Date', index: 'due_date', name: 'due_date', width: 120, editable: true, editrules: { required: true, date: true }, datefmt: 'yyyy-mm-dd',
+        editoptions: {
+          dataInit: function (element) {
             var $wrapper = $("<div class='input-group2 date'></div>");
             var $addon = $('<span class="input-group-addon2"><i class="glyphicon glyphicon-th"></i></span>');
             const today = new Date();
@@ -75,10 +88,10 @@ async function loadMyTasksGrid(){
               clearBtn: true,
             });
           }
-        }},
-        //high," "medium," "low
-      { label: 'Priority', index: 'priority', name: 'priority',editable: true, width: 120, edittype: 'select',editoptions: {value: "High:High;Medium:Medium;Low:Low"}},
-      { label: 'Related To', index: 'relatedTo_id', name: 'relatedTo_id',editable: true, width: 150,edittype: 'select',editoptions: {value: custOptions}}		
+        }
+      },
+      { label: 'Priority', index: 'priority', name: 'priority', editable: true, width: 120, edittype: 'select', editoptions: { value: "High:High;Medium:Medium;Low:Low" } },
+      { label: 'Related To', index: 'relatedTo_id', name: 'relatedTo_id', editable: true, width: 150, edittype: 'select', editoptions: { value: " : " } }
     ],
     loadonce: true,
     pager: "#pager",
@@ -87,127 +100,127 @@ async function loadMyTasksGrid(){
       searchOnEnter: true,
       defaultSearch: "bw"
     },
-	//cellEdit: true,
-    afterSaveCell: function(rowid, name, value, iRow, iCol) {
-        // var allData = $("#gridTasks").jqGrid('getRowData');
-        // var editedRows = $("#gridTasks").jqGrid('getGridParam', 'savedRow');
+    //cellEdit: true,
+    afterSaveCell: function (rowid, name, value, iRow, iCol) {
+      // var allData = $("#gridTasks").jqGrid('getRowData');
+      // var editedRows = $("#gridTasks").jqGrid('getGridParam', 'savedRow');
 
-        // Merge changes
-        // editedRows.forEach(function(edit) {
-        //     var rowIndex = allData.findIndex(row => row.id === edit.id);
-        //     if (rowIndex !== -1) {
-        //         allData[rowIndex] = {...allData[rowIndex], ...edit};
-        //     }
-        // });
-		// var amount = 0;
-		// var vat = 0;
-		// var total = 0;
-		// allData.forEach(function(product, idx) {
-		// 	amount += (parseInt(product.quantity) * parseFloat(product.unitPrice));
-		// })
-		// vat = amount * 0.07;
-		// total = amount + vat;
-		// $('#amount').val(amount.toFixed(2));
-		// $('#tax').val(vat.toFixed(2));	
-		// $('#total').val(total.toFixed(2));
+      // Merge changes
+      // editedRows.forEach(function(edit) {
+      //     var rowIndex = allData.findIndex(row => row.id === edit.id);
+      //     if (rowIndex !== -1) {
+      //         allData[rowIndex] = {...allData[rowIndex], ...edit};
+      //     }
+      // });
+      // var amount = 0;
+      // var vat = 0;
+      // var total = 0;
+      // allData.forEach(function(product, idx) {
+      // 	amount += (parseInt(product.quantity) * parseFloat(product.unitPrice));
+      // })
+      // vat = amount * 0.07;
+      // total = amount + vat;
+      // $('#amount').val(amount.toFixed(2));
+      // $('#tax').val(vat.toFixed(2));	
+      // $('#total').val(total.toFixed(2));
 
-		// if (orderId){
-		// 	var orderItems = allData;
-		// 	order['amount'] = amount.toFixed(2)
-		// 	order['tax'] = vat.toFixed(2)
-		// 	order['total'] = total.toFixed(2)
-		// 	order['status'] ='Pending'
-		// 	$.ajax({
-		// 		url: '/invoice',
-		// 		type: 'PUT',
-		// 		contentType: 'application/json',
-		// 		data: JSON.stringify({
-		// 			"order": order,
-		// 			"orderItems": orderItems
-		// 		}),
-		// 		success: function(response) {
-		// 			console.log(response);
-		// 			orderId = response.id;
-		// 			order.orderId = orderId
-		// 		},
-		// 		error: function(error) {
-		// 			console.log(error);
-		// 		}
-		// 	});
-		// }
+      // if (orderId){
+      // 	var orderItems = allData;
+      // 	order['amount'] = amount.toFixed(2)
+      // 	order['tax'] = vat.toFixed(2)
+      // 	order['total'] = total.toFixed(2)
+      // 	order['status'] ='Pending'
+      // 	$.ajax({
+      // 		url: '/invoice',
+      // 		type: 'PUT',
+      // 		contentType: 'application/json',
+      // 		data: JSON.stringify({
+      // 			"order": order,
+      // 			"orderItems": orderItems
+      // 		}),
+      // 		success: function(response) {
+      // 			console.log(response);
+      // 			orderId = response.id;
+      // 			order.orderId = orderId
+      // 		},
+      // 		error: function(error) {
+      // 			console.log(error);
+      // 		}
+      // 	});
+      // }
     },
-	onSelectRow: function (id) {
-    	// if (id) {
-		// 	jQuery('#gridInvoice').jqGrid('restoreRow', lastsel);
-		// 	jQuery('#gridInvoice').jqGrid('editRow', id, true);
-		// 	lastsel = id;
-      	// }
+    onSelectRow: function (id) {
+      // if (id) {
+      // 	jQuery('#gridInvoice').jqGrid('restoreRow', lastsel);
+      // 	jQuery('#gridInvoice').jqGrid('editRow', id, true);
+      // 	lastsel = id;
+      // }
     },
-	loadComplete: function(tasks) {
-		//datas = invoiceData;
-	 },
-	 gridComplete: function() {
-        // var allData = $("#gridInvoice").jqGrid('getRowData');
-		// if (allData.length == 0)
-		// 	allData = datas;
-	
-        // var editedRows = $("#gridInvoice").jqGrid('getGridParam', 'savedRow');
+    loadComplete: function (tasks) {
+      //datas = invoiceData;
+    },
+    gridComplete: function () {
+      // var allData = $("#gridInvoice").jqGrid('getRowData');
+      // if (allData.length == 0)
+      // 	allData = datas;
 
-        // // Merge changes
-        // editedRows.forEach(function(edit) {
-        //     var rowIndex = allData.findIndex(row => row.id === edit.id);
-        //     if (rowIndex !== -1) {
-        //         allData[rowIndex] = {...allData[rowIndex], ...edit};
-        //     }
-        // });
+      // var editedRows = $("#gridInvoice").jqGrid('getGridParam', 'savedRow');
 
-		// var currentDate = new Date();
-		// if (order.orderDate){
-		// 	currentDate = new Date(order.orderDate);
-		// }
-	
-		// var formattedDate = currentDate.toISOString().split('T')[0];
-		// $('#orderDate').val(formattedDate)
+      // // Merge changes
+      // editedRows.forEach(function(edit) {
+      //     var rowIndex = allData.findIndex(row => row.id === edit.id);
+      //     if (rowIndex !== -1) {
+      //         allData[rowIndex] = {...allData[rowIndex], ...edit};
+      //     }
+      // });
 
-		// var amount = order.amount;
-		// var vat = order.tax;
-		// var total = order.total;
-		// if (amount == 0 && vat == 0 && total == 0){
-		// 	allData.forEach(function(product, idx) {
-		// 		amount += (parseFloat(product.quantity) * parseFloat(product.unitPrice));
-		// 	})
-		// 	vat = amount * 0.07;
-		// 	total = amount + vat;
-		// }
+      // var currentDate = new Date();
+      // if (order.orderDate){
+      // 	currentDate = new Date(order.orderDate);
+      // }
 
-		// $('#amount').val(amount.toFixed(2));
-		// $('#tax').val(vat.toFixed(2));	
-		// $('#total').val(total.toFixed(2));
+      // var formattedDate = currentDate.toISOString().split('T')[0];
+      // $('#orderDate').val(formattedDate)
 
-		// order['amount'] = amount.toFixed(2)
-		// order['tax'] = vat.toFixed(2)
-		// order['total'] = total.toFixed(2)
-		// order['status'] ='Pending'
+      // var amount = order.amount;
+      // var vat = order.tax;
+      // var total = order.total;
+      // if (amount == 0 && vat == 0 && total == 0){
+      // 	allData.forEach(function(product, idx) {
+      // 		amount += (parseFloat(product.quantity) * parseFloat(product.unitPrice));
+      // 	})
+      // 	vat = amount * 0.07;
+      // 	total = amount + vat;
+      // }
 
-		// if (orderId == null){
-		// 	var orderItems = allData;
-		// 	$.ajax({
-		// 		url: '/invoice',
-		// 		type: 'POST',
-		// 		contentType: 'application/json',
-		// 		data: JSON.stringify({
-		// 			"order": order,
-		// 			"orderItems": orderItems
-		// 		}),
-		// 		success: function(response) {
-		// 			orderId =  response.id;
-		// 			window.history.pushState({}, '', `/invoice/${custId}/order/${orderId}`);
-		// 		},
-		// 		error: function(error) {
-		// 			console.log(error);
-		// 		}
-		// 	});
-		// }
+      // $('#amount').val(amount.toFixed(2));
+      // $('#tax').val(vat.toFixed(2));	
+      // $('#total').val(total.toFixed(2));
+
+      // order['amount'] = amount.toFixed(2)
+      // order['tax'] = vat.toFixed(2)
+      // order['total'] = total.toFixed(2)
+      // order['status'] ='Pending'
+
+      // if (orderId == null){
+      // 	var orderItems = allData;
+      // 	$.ajax({
+      // 		url: '/invoice',
+      // 		type: 'POST',
+      // 		contentType: 'application/json',
+      // 		data: JSON.stringify({
+      // 			"order": order,
+      // 			"orderItems": orderItems
+      // 		}),
+      // 		success: function(response) {
+      // 			orderId =  response.id;
+      // 			window.history.pushState({}, '', `/invoice/${custId}/order/${orderId}`);
+      // 		},
+      // 		error: function(error) {
+      // 			console.log(error);
+      // 		}
+      // 	});
+      // }
     },
     caption: "Tasks"
   }).navGrid('#pager', { add: false, edit: false, del: false, search: false });
@@ -232,17 +245,17 @@ async function loadMyTasksGrid(){
           return [true, '']; // No error
         }
       },
-    //   editParams: {
-    //     url: `/api/${leadId}/opportunities/edit`,
-    //     keys: true,
-    //     mtype: 'POST',
-    //     onSuccess: function (response) {
-    //       var $self = $(this), p = $self.jqGrid("getGridParam");
-    //       p.datatype = "json";
-    //       $self.trigger("reloadGrid", { page: p.page, current: true });
-    //       return [true, '']; // No error
-    //     },
-    //   },
+      //   editParams: {
+      //     url: `/api/${leadId}/opportunities/edit`,
+      //     keys: true,
+      //     mtype: 'POST',
+      //     onSuccess: function (response) {
+      //       var $self = $(this), p = $self.jqGrid("getGridParam");
+      //       p.datatype = "json";
+      //       $self.trigger("reloadGrid", { page: p.page, current: true });
+      //       return [true, '']; // No error
+      //     },
+      //   },
       // This callback fires AFTER the new empty row is inserted and put into edit mode.
       addRowCallback: function (rowid, response) {
         // Find the input field for 'closure_date' in the newly added row
@@ -262,17 +275,16 @@ async function loadMyTasksGrid(){
 }
 
 $.jgrid.jqModal = $.extend($.jgrid.jqModal || {}, {
-    beforeOpen: centerInfoDialog
-});	
+  beforeOpen: centerInfoDialog
+});
 
-function centerInfoDialog()
-{
-    var $infoDlg = $("#info_dialog");
-    var $parentDiv = $infoDlg.parent();
-    var dlgWidth = $infoDlg.width();
-    var parentWidth = $parentDiv.width();
-	var dlgHeight = $infoDlg.height();
-	var parentHeight = $parentDiv.height();
-	$infoDlg[0].style.top = Math.round((parentHeight - dlgHeight) / 2) + "px";
-    $infoDlg[0].style.left = Math.round((parentWidth - dlgWidth) / 2) + "px";
+function centerInfoDialog() {
+  var $infoDlg = $("#info_dialog");
+  var $parentDiv = $infoDlg.parent();
+  var dlgWidth = $infoDlg.width();
+  var parentWidth = $parentDiv.width();
+  var dlgHeight = $infoDlg.height();
+  var parentHeight = $parentDiv.height();
+  $infoDlg[0].style.top = Math.round((parentHeight - dlgHeight) / 2) + "px";
+  $infoDlg[0].style.left = Math.round((parentWidth - dlgWidth) / 2) + "px";
 }
