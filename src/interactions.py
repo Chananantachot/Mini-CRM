@@ -2,6 +2,7 @@ import uuid
 from flask import Blueprint, jsonify, request
 from flask_jwt_extended import get_jwt_identity
 from Db import Db
+from audit import AuditAction, log_audit
 from decorators import role_required
 
 interactions = Blueprint('interactions', __name__, template_folder='templates')
@@ -38,6 +39,11 @@ def add_interaction(custId, prodsId):
                     INSERT INTO interactions (id,customer_id, interaction_type, product_id, notes)
                     VALUES (?, ?, ?, ?, ?)
                 ''', (id , custId, interaction_type, prodsId , note,))
+    log_audit(action=AuditAction.INSERT,
+            table_name='interactions',
+            record_id= id,
+            old_value=None,
+            new_value=jsonify({'id': id, 'interaction_type': interaction_type, 'note': note }))  
     db.commit()
 
     return jsonify({"message": "Interaction added successfully"}), 201

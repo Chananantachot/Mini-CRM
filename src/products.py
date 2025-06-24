@@ -1,6 +1,7 @@
 import datetime
 from flask import Blueprint, Response, jsonify, make_response, request, url_for
 import xml.etree.ElementTree as ET
+from feedgenerator import Rss201rev2Feed
 from Db import Db
 from audit import AuditAction, log_audit
 from decorators import role_required

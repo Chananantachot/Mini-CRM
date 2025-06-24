@@ -1,6 +1,7 @@
 import uuid
 from flask import Blueprint, jsonify, request
 from Db import Db
+from audit import AuditAction, log_audit
 from decorators import role_required
 
 leads = Blueprint('leads', __name__, template_folder='templates')
@@ -29,6 +30,12 @@ def createLead():
              return jsonify({ 'error': True, 'message': f'{firstName} {lastName} already exists.' }), 400
          else:
             _id =  Db.createLead(id,firstName,lastName,email,source,status)
+            log_audit(action=AuditAction.INSERT,
+                table_name='leads',
+                record_id= id,
+                old_value= None,
+                new_value=jsonify({ 'id': id, 'firstName': firstName,'lastName': lastName, 'email': email, 'source':source, 'status':status })
+            )
             if _id:
                 return jsonify({ 'error': False, 'message': 'Created' }), 201
             return jsonify({ 'error': True, 'message': 'Failed' }), 400
@@ -48,6 +55,7 @@ def updateLead():
     skipCheckUniqeName = False
     if leadId:
         lead = Db.getLead(leadId)
+        lead = dict(lead)
         if lead:
             lead = dict(lead)
             if firstName and lastName and email and lead['firstName'] == firstName and lead['lastName'] == lastName:
@@ -65,6 +73,12 @@ def updateLead():
 
     if isFirstLastUniqe:
         leadId =  Db.updateLead(leadId,firstName,lastName,email,source,status)
+        log_audit(action=AuditAction.UPDATE,
+            table_name='leads',
+            record_id= leadId,
+            old_value= jsonify(lead),
+            new_value=jsonify({ 'id': leadId, 'firstName': firstName,'lastName': lastName, 'email': email, 'source':source, 'status':status })
+            )
         if leadId:
             return jsonify({ 'error': False, 'message': 'Updated' }), 204
         return jsonify({ 'error': True, 'message': 'Failed' }), 400

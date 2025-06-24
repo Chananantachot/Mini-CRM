@@ -2,6 +2,7 @@ from flask import Blueprint, jsonify, redirect, request, url_for
 from flask_jwt_extended import jwt_required
 
 from Db import Db
+from audit import AuditAction, log_audit
 from decorators import role_required
 
 customers = Blueprint('customers', __name__, template_folder='templates')
@@ -93,6 +94,12 @@ def postAddress(id):
     isPrimary = request.form.get('isPrimary')
     isPrimary = 1 if isPrimary == 'Yes' else 0
     id = Db.createCustomerAddress(customerId,addressLine1,addressLine2,city,state,postalCode,country,addressType,isPrimary)
+    log_audit(action=AuditAction.INSERT,
+        table_name='address',
+        record_id= id,
+        old_value= None,
+        new_value=jsonify({'customerId': customerId, 'addressLine1': addressLine1, 'addressLine2':addressLine2, 'city': city, 'state': state, 'postalCode': postalCode,'country': country,'addressType': addressType,'isPrimary': isPrimary})
+    )
     if id:
         return jsonify({'error': False, 'message': 'Created.'}),201    
     else:
@@ -114,8 +121,15 @@ def putAddress(custId):
 
     if id and addressLine1 and addressLine2 and postalCode and city and country:
         address = Db.getCustomerAddressBy(id)
+        address = dict(address)
         if address:
             _id = Db.updateustomerAddress(id,customerId,addressLine1,addressLine2,city,state,postalCode,country,addressType,isPrimary)
+            log_audit(action=AuditAction.UPDATE,
+                table_name='address',
+                record_id= _id,
+                old_value= jsonify(address),
+                new_value=jsonify({'customerId': customerId, 'addressLine1': addressLine1, 'addressLine2':addressLine2, 'city': city, 'state': state, 'postalCode': postalCode,'country': country,'addressType': addressType,'isPrimary': isPrimary})
+            )
             if _id:
                 return jsonify({'error': False, 'message': 'Created.'}),201    
             else:

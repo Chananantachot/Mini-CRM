@@ -1,5 +1,6 @@
 from flask import Blueprint, jsonify,request
 from Db import Db
+from audit import AuditAction, log_audit
 from decorators import role_required
 
 opportunities = Blueprint('opportunities', __name__, template_folder='templates')
@@ -24,12 +25,23 @@ def create(lead_id):
 
     if leadId: 
       id =  Db.createOpportunities(leadId,current_stage,deal_value,expected_value,conversion_probability,closure_date)
+      log_audit(action=AuditAction.INSERT,
+            table_name='opportunities',
+            record_id= id,
+            old_value= None,
+            new_value=jsonify({'opportunityId': id, 'leadId': leadId, 'current_stage':current_stage, 'deal_value': deal_value,'expected_value': expected_value,'conversion_probability': conversion_probability,'closure_date': closure_date})
+        )          
       if id:
         if converted == 'Yes':
             lead = Db.getLead(lead_id)
-            #lead = dict(lead)
             Db.covertLeadToCustomer(leadId,lead['firstName'], lead['lastName'], lead['email'], lead['mobile'])
-        
+            lead = dict(lead)
+            log_audit(action=AuditAction.INSERT,
+                        table_name='customers',
+                        record_id= id,
+                        old_value= None,
+                        new_value=jsonify(lead)
+            )
         return jsonify({ 'error': False, 'message': 'Created' }), 201  
     return jsonify({ 'error': True, 'message': 'Bad Request' }), 400   
 
@@ -49,13 +61,25 @@ def edit(lead_id):
         opportunity = dict(opportunity)
         if opportunity:
             lead =  Db.getLead(lead_id)
+            lead = dict(lead)
             if lead:
                 if converted == 'Yes':
                     #lead = dict(lead)
                     custId = Db.covertLeadToCustomer(leadId, lead['firstName'], lead['lastName'], lead['email'], lead['mobile'])
+                    log_audit(action=AuditAction.INSERT,
+                        table_name='customers',
+                        record_id= id,
+                        old_value= None,
+                        new_value=jsonify(lead)
+                    )
                 else:  
                     custId = Db.updateOpportunities(opportunityId,leadId,current_stage,deal_value,expected_value,conversion_probability,closure_date)
-                    
+                    log_audit(action=AuditAction.UPDATE,
+                        table_name='opportunities',
+                        record_id= id,
+                        old_value= None,
+                        new_value=jsonify({'opportunityId': opportunityId, 'leadId': leadId, 'current_stage':current_stage, 'deal_value': deal_value,'expected_value': expected_value,'conversion_probability': conversion_probability,'closure_date': closure_date})
+                    )
                 if custId:
                     return jsonify({ 'error': False, 'message': 'Updated' }), 204  
                 else:
