@@ -219,7 +219,20 @@ class Db:
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                 updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP                    
             )
-        ''')              
+        ''')      
+
+        _cursor.execute(''' CREATE TABLE IF NOT EXISTS audit_logs (
+                            id TEXT PRIMARY KEY,
+                            user_id TEXT,
+                            action TEXT NOT NULL, -- 'INSERT', 'UPDATE', 'DELETE'
+                            table_name TEXT NOT NULL,
+                            record_id TEXT NOT NULL,
+                            old_value TEXT,
+                            new_value TEXT,
+                            timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                            FOREIGN KEY (user_id) REFERENCES users(id)
+                        )
+                    ''' )         
         
         # _cursor.execute('DELETE FROM orders')
         # _cursor.execute('DELETE FROM order_items')

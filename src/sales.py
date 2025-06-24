@@ -1,6 +1,7 @@
 import uuid
-from flask import Blueprint, jsonify, request
+from flask import Blueprint, json, jsonify, request
 from Db import Db
+from audit import AuditAction, log_audit
 from decorators import role_required
 
 sales = Blueprint('sales', __name__, template_folder='templates')
@@ -59,7 +60,11 @@ def add_sale():
                       VALUES (?, ?, ?, ?)''', 
                    (id, name, email, phone,))
     db.commit()
-    
+    log_audit(action=AuditAction.INSERT,
+        table_name='sales',
+        record_id= id,
+        old_value= None,
+        new_value=json.dump({'id': id , 'name': name, 'email': email, 'phone': phone}))
     return jsonify({"message": "Created successfully"}), 201
 
 @sales.route('/sales', methods=['PUT'])
@@ -73,14 +78,23 @@ def update_sale():
     email = request.form.get('email')
     phone = request.form.get('phone')
     #active = request.form.get('active', 'true').lower() == 'true'
-    
-    cursor.execute('''UPDATE sales 
-                      SET name = ?, email = ?, phone = ?
-                      WHERE id = ?''', 
-                   (name, email, phone,sale_id,))
-    db.commit()
-    
-    return jsonify({"message": "Updated successfully"}), 201
+
+    cursor.execute('''SELECT id, name,phone FROM sales WHERE id = ? ''', (sale_id,))
+    sale = cursor.fetchone()
+    sale = dict(sale)
+    if sale:
+        cursor.execute('''UPDATE sales 
+                        SET name = ?, email = ?, phone = ?
+                        WHERE id = ?''', 
+                    (name, email, phone,sale_id,))
+        db.commit()
+        log_audit(action=AuditAction.UPDATE,
+            table_name='sales',
+            record_id= sale_id,
+            old_value= sale['name'],
+            new_value=json.dump({'id': id , 'name': name, 'email': email, 'phone': phone}))
+        return jsonify({"message": "Updated successfully"}), 204
+    return jsonify({"message": "Not Found"}), 404
 
 @sales.route('/sale/<id>/leads', methods=['POST'])
 @role_required('Admin')
@@ -97,5 +111,10 @@ def update_sale_leads(id):
                         WHERE id = ?''', 
                     (sales_person_id, lead_id,))
         db.commit()
-    
+
+    log_audit(action=AuditAction.UPDATE,
+            table_name='leads',
+            record_id= json.dumps(lead_ids),
+            old_value= None,
+            new_value=sales_person_id)
     return jsonify({"message": "Lead updated successfully"}), 201
