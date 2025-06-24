@@ -13,6 +13,7 @@ from sales import sales
 from products import products
 from opportunities import opportunities
 from orders import orders
+from tasks import tasks
 from interactions import interactions
 
 from flask import (
@@ -36,6 +37,7 @@ app.register_blueprint(sales)
 app.register_blueprint(opportunities)
 app.register_blueprint(products)
 app.register_blueprint(orders)
+app.register_blueprint(tasks)
 app.register_blueprint(interactions)
 
 app.config["JWT_TOKEN_LOCATION"] = ["cookies"]
@@ -253,6 +255,20 @@ def dashboard():
         'weekly_leads': weekly_leads_data
     }    
     return jsonify(data), 200
+
+
+@app.route('/myTasks', methods=['GET'])
+@jwt_required()
+def myTasks():
+    current_user = get_jwt_identity() 
+    roles = get_jwt()["roles"] 
+    isAdminRole = 'Admin' in roles
+    user = {
+        'name': current_user,
+        'isAdminRole': isAdminRole
+    }
+
+    return  render_template('task.html',current_user = user)
 
 @app.route("/<id>/order/", defaults = { 'orderId' : None} , methods=['GET'])
 @app.route("/<id>/order/<orderId>", methods=['GET'])

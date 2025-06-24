@@ -222,18 +222,32 @@ class Db:
         ''')      
 
         _cursor.execute(''' CREATE TABLE IF NOT EXISTS audit_logs (
-                            id TEXT PRIMARY KEY,
-                            user_id TEXT,
-                            action TEXT NOT NULL, -- 'INSERT', 'UPDATE', 'DELETE'
-                            table_name TEXT NOT NULL,
-                            record_id TEXT NOT NULL,
-                            old_value TEXT,
-                            new_value TEXT,
-                            timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                            FOREIGN KEY (user_id) REFERENCES users(id)
-                        )
-                    ''' )         
+                id TEXT PRIMARY KEY,
+                user_id TEXT,
+                action TEXT NOT NULL, -- 'INSERT', 'UPDATE', 'DELETE'
+                table_name TEXT NOT NULL,
+                record_id TEXT NOT NULL,
+                old_value TEXT,
+                new_value TEXT,
+                timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                FOREIGN KEY (user_id) REFERENCES users(id)
+            )
+        ''' )         
         
+        _cursor.execute('''CREATE TABLE IF NOT EXISTS tasks (
+            id TEXT PRIMARY KEY,
+            title TEXT NOT NULL,
+            description TEXT,
+            assigned_to TEXT,
+            due_date DATE,
+            status TEXT DEFAULT 'Pending',
+            priority TEXT DEFAULT 'Normal',
+            relatedTo_id TEXT, -- could be lead or customer Ids.
+            notified BOOLEAN DEFAULT FALSE,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        )
+         ''')
         # _cursor.execute('DELETE FROM orders')
         # _cursor.execute('DELETE FROM order_items')
         # _cursor.execute('DELETE FROM lead_prods_Interested')
