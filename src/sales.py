@@ -12,14 +12,14 @@ def get_sales():
     cursor = db.cursor()
     cursor.execute('''SELECT 
                     id,
-                    name
+                    name,
                     email,
                     phone,
                     active
                    FROM sales 
                    ''')
     sales_data = cursor.fetchall()
-    sales_data = [sale for sale in sales_data if sale]
+    sales_data = [dict(sale) for sale in sales_data if sale]
     return jsonify(sales_data)
 
 @sales.route('/sale/<id>/leads', methods=['GET'])
@@ -32,16 +32,16 @@ def get_sale_leads(id):
                     s.id AS salesPersonId,
                     l.firstName || ' ' || l.lastName AS name,
                     l.email,
-                    l.mobile,
+                    l.mobile as phone,
                     CASE 
                         WHEN l.salesPersonId IS NULL THEN 0
                         ELSE 1
-                    END AS isMyLead,
+                    END AS isMyLead
                    FROM sales s 
                    LEFT JOIN leads l ON s.id = l.salesPersonId OR l.salesPersonId IS NULL
-                   WHERE s.id = %s''', (id,))
+                   WHERE s.id = ? OR l.salesPersonId IS NULL ''', (id,))
     leads_data = cursor.fetchall()
-    leads_data = [lead for lead in leads_data if lead['id'] is not None]
+    leads_data = [dict(lead) for lead in leads_data if lead]
     return jsonify(leads_data)
 
 @sales.route('/sales', methods=['POST'])
@@ -60,7 +60,7 @@ def add_sale():
                    (id, name, email, phone,))
     db.commit()
     
-    return jsonify({{"message": "Created successfully"}}), 201
+    return jsonify({"message": "Created successfully"}), 201
 
 @sales.route('/sales', methods=['PUT'])
 @role_required('Admin')
@@ -80,7 +80,7 @@ def update_sale():
                    (name, email, phone,sale_id,))
     db.commit()
     
-    return jsonify({{"message": "Updated successfully"}}), 201
+    return jsonify({"message": "Updated successfully"}), 201
 
 @sales.route('/sale/<id>/leads', methods=['POST'])
 @role_required('Admin')
@@ -98,4 +98,4 @@ def update_sale_leads(id):
                     (sales_person_id, lead_id,))
         db.commit()
     
-    return jsonify({{"message": "Lead updated successfully"}}), 201
+    return jsonify({"message": "Lead updated successfully"}), 201
