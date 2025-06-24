@@ -64,7 +64,7 @@ def add_sale():
         table_name='sales',
         record_id= id,
         old_value= None,
-        new_value=json.dump({'id': id , 'name': name, 'email': email, 'phone': phone}))
+        new_value=json.dumps({'id': id , 'name': name, 'email': email, 'phone': phone}))
     return jsonify({"message": "Created successfully"}), 201
 
 @sales.route('/sales', methods=['PUT'])

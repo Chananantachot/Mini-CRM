@@ -2,6 +2,7 @@ import datetime
 from flask import Blueprint, Response, jsonify, make_response, request, url_for
 import xml.etree.ElementTree as ET
 from Db import Db
+from audit import AuditAction, log_audit
 from decorators import role_required
 
 products = Blueprint('products', __name__, template_folder='templates')
@@ -175,6 +176,12 @@ def postPorductsInterested():
     
         for prodId in addIDs:
            id = Db.createLeadProdsInterested(leadId,prodId)
+
+        log_audit(action=AuditAction.INSERT,
+            table_name='leadProdsInterested',
+            record_id= leadId,
+            old_value=jsonify(currents),
+            new_value=jsonify(addIDs))   
         if id:
             return jsonify({ 'error': False, 'message': 'created' }),201
         else:
@@ -196,6 +203,12 @@ def postProduct():
         if skuPord:
             return jsonify({ 'error': True, 'message': f'Product {sku} already exist.' }), 400
         id = Db.createProduct(name,description,price,sku,category,isActive)
+
+        log_audit(action=AuditAction.INSERT,
+            table_name='products',
+            record_id= id,
+            old_value=None,
+            new_value=jsonify({'name': name, 'description': description, 'price': price, 'sku': sku, 'category': category, 'isActive': isActive })) 
         if id:
             return jsonify({ 'error': False, 'message': 'Created' }), 201
         return jsonify({ 'error': True, 'message': 'Falied' }), 400
@@ -213,6 +226,7 @@ def putProduct(id):
 
     if id and name:
         prod = Db.getProduct(id)
+        prod =dict(prod)
         if prod:
             return jsonify({ 'error': True, 'message': f'Not Found' }), 404
         
@@ -221,6 +235,12 @@ def putProduct(id):
             return jsonify({ 'error': True, 'message': f'Product {sku} already exist.' }), 400
         
         id = Db.updateProduct(id,name,description,price,sku,category,isActive)
+        log_audit(action=AuditAction.UPDATE,
+            table_name='products',
+            record_id= id,
+            old_value=jsonify(prod),
+            new_value=jsonify({'name': name, 'description': description, 'price': price, 'sku': sku, 'category': category, 'isActive': isActive }))   
+              
         if id:
             return jsonify({ 'error': False, 'message': 'Updated.' }), 204
         return jsonify({ 'error': True, 'message': 'Failed.' }), 400

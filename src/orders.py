@@ -4,6 +4,7 @@ import time
 import uuid
 from flask import Blueprint, jsonify, request
 from Db import Db
+from audit import AuditAction, log_audit
 from decorators import role_required
 
 orders = Blueprint('orders', __name__, template_folder='templates')
@@ -83,6 +84,12 @@ def postOrder():
             for item in orderItems
         ]
         id = Db.createOrder(order_value,orderItems_value)
+        log_audit(action=AuditAction.INSERT,
+            table_name='orders,order_items',
+            record_id= order['orderId'],
+            old_value=None,
+            new_value=jsonify({'order': order ,'items': orderItems}))
+        
         if id:
             return jsonify({ 'error': False, 'message': 'Created' , 'id': orderId }), 201 
         return jsonify({ 'error': True, 'message': 'Failed' }), 400   
@@ -117,6 +124,12 @@ def putOrder():
         ]
         
         id =  Db.updateOrder(order_value,orderItems_value)
+        log_audit(action=AuditAction.UPDATE,
+            table_name='orders,order_items',
+            record_id= order['orderId'],
+            old_value=jsonify({'order': order ,'items': orderItems}),
+            new_value=jsonify({'order': order ,'items': orderItems}))
+        
         if id:
             return jsonify({ 'error': False, 'message': 'Updated', 'id': id}), 204
         return jsonify({ 'error': True, 'message': 'Failed' }), 400   
@@ -133,6 +146,12 @@ def updateOrderStatus(orderID):
             return jsonify({'error': True, 'message': 'Status is required'}), 400
         
         updated = Db.updateOrderStatus(orderID, status)
+        log_audit(action=AuditAction.UPDATE,
+            table_name='orders',
+            record_id= orderID,
+            old_value= 'Pending',
+            new_value=status)
+        
         if updated:
             return jsonify({'error': False, 'message': 'Order status updated successfully'}), 200
         return jsonify({'error': True, 'message': 'Failed to update order status'}), 400
