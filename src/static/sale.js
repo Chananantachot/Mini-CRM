@@ -64,7 +64,7 @@ function loadSalesGrid()
                 position: "last",
                 onClickButton: function () {
                 var ids = $("#" + subgrid_table_id).jqGrid('getGridParam', 'selarrrow');
-                $.post(`/sales/${row_id}/leads`, {
+                $.post(`/sale/${row_id}/leads`, {
                     ids: ids
                 }, function () {
                     $("#" + subgrid_table_id).trigger("reloadGrid");
