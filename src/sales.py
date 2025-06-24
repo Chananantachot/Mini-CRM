@@ -93,7 +93,7 @@ def update_sale_leads(id):
     
     for lead_id in lead_ids:
         cursor.execute('''UPDATE leads 
-                        SET salesPersonId = %s 
+                        SET salesPersonId = ? 
                         WHERE id = ?''', 
                     (sales_person_id, lead_id,))
         db.commit()

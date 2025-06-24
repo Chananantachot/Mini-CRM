@@ -23,12 +23,13 @@ def get_interactions(custId, prodsId):
                     ORDER BY date_activity DESC
                 ''', (prodsId, custId,))
     rows = cursor.fetchall()
-    interactions_list =  [dict(activity) for activity in rows if activity is not None]
+    interactions_list =  [dict(activity) for activity in rows if activity ]
     return jsonify(interactions_list), 200  
 
 @interactions.route('/<custId>/interactions/<prodsId>', methods=['POST'])
 @role_required('Admin')
 def add_interaction(custId, prodsId):
+    id = str(uuid.uuid4())
     interaction_type = request.form.get('interaction_type')
     note = request.form.get('notes')
     db = Db.get_db()
@@ -36,7 +37,7 @@ def add_interaction(custId, prodsId):
     cursor.execute('''
                     INSERT INTO interactions (id,customer_id, interaction_type, product_id, notes)
                     VALUES (?, ?, ?, ?, ?)
-                ''', (id , custId, interaction_type, prodsId , note))
+                ''', (id , custId, interaction_type, prodsId , note,))
     db.commit()
 
     return jsonify({"message": "Interaction added successfully"}), 201
