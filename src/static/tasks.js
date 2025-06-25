@@ -28,6 +28,7 @@ function fetchCustomers(saleId) {
 }
 
 async function loadMyTasksGrid() {
+  //var tasks = []
   let salePersons = await fetchSalePersons();
   let salesOptions = "";
   if (Array.isArray(salePersons)) {
@@ -41,9 +42,10 @@ async function loadMyTasksGrid() {
     url: `/tasks`,
     editurl: '/tasks',
     datatype: "json",
-    height: 300,
+    height: 400,
     colModel: [
       { name: 'id', index: 'id', key: true, hidden: true },
+      { name: 'isNotify', index: 'isNotify', key: false, hidden: true },
       { label: 'Title', index: 'title', name: 'title', editable: true, width: 120 },
       { label: 'Description', index: 'description', name: 'description', editable: true, width: 150 },
       {
@@ -96,11 +98,7 @@ async function loadMyTasksGrid() {
     loadonce: true,
     pager: "#pager",
     autowidth: true,
-    searching: {
-      searchOnEnter: true,
-      defaultSearch: "bw"
-    },
-    //cellEdit: true,
+    multiselect: true,
     afterSaveCell: function (rowid, name, value, iRow, iCol) {
       // var allData = $("#gridTasks").jqGrid('getRowData');
       // var editedRows = $("#gridTasks").jqGrid('getGridParam', 'savedRow');
@@ -150,17 +148,41 @@ async function loadMyTasksGrid() {
       // }
     },
     onSelectRow: function (id) {
-      // if (id) {
-      // 	jQuery('#gridInvoice').jqGrid('restoreRow', lastsel);
-      // 	jQuery('#gridInvoice').jqGrid('editRow', id, true);
-      // 	lastsel = id;
-      // }
+     var tasks = $("#gridTasks").jqGrid('getRowData');
+      if (tasks){
+        tasks.forEach(function(task) {
+          if(task.id == id && task.isNotify == 1){
+            $.ajax({
+              url: `/task/${id}`,
+              type: 'PUT',
+              contentType: 'application/json',
+              data: JSON.stringify({}),
+              success: function(response) {
+                console.log(response);
+                $("#gridTasks").trigger("reloadGrid")
+              },
+              error: function(error) {
+                console.log(error);
+              }
+            });
+          } 
+        })
+      }
     },
     loadComplete: function (tasks) {
-      //datas = invoiceData;
+      if (Array.isArray(tasks)){
+          tasks.forEach((task, idx) => {
+              if (task.isNotify) {
+                  $("#gridTasks").jqGrid('setSelection', task.id);
+                  $("#gridTasks tr#" + task.id +" input.cbox").prop("disabled", false);
+              }else{
+                  $("#gridTasks tr#" + task.id +" input.cbox").prop("disabled", true);
+              }
+          });
+      }
     },
     gridComplete: function () {
-      // var allData = $("#gridInvoice").jqGrid('getRowData');
+    //  tasks = $("#gridTasks").jqGrid('getRowData');
       // if (allData.length == 0)
       // 	allData = datas;
 

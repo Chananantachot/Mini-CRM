@@ -16,16 +16,19 @@ def get_due_tasks():
     db = Db.get_db()
     cursor = db.cursor()
     cursor.execute("""
-        SELECT id,
-            title,
-            description,        
-            due_date, 
-            assigned_to,
-            due_date,
-            priority,
-            relatedTo_id        
-        FROM tasks 
-        WHERE due_date <= ? AND status = 'Pending' AND notified = 0
+        SELECT t.id,
+            t.title,
+            t.description,        
+            t.due_date, 
+            COALESCE(s.name, '') as assigned_to,
+            t.priority,
+            COALESCE(c.firstName || ' ' || c.lastName, l.firstName || ' ' || l.lastName) as relatedTo_id,
+            CASE WHEN t.due_date <= ? AND t.status = 'Pending' AND t.notified = 0 THEN 1 ELSE 0 END as isNotify
+        FROM tasks t
+        LEFT JOIN leads l ON l.id = t.relatedTo_id
+        LEFT JOIN customers c ON c.id = t.relatedTo_id
+        LEFT JOIN sales s ON s.id = t.assigned_to
+       -- WHERE t.due_date <= ? AND t.status = 'Pending' AND t.notified = 0
     """, (today,))
     tasks = cursor.fetchall()
     tasks = [dict(task) for task in tasks if task]
@@ -40,6 +43,7 @@ def getLeadsOrCustsBySaleId(saleId):
         SELECT l.id,
                l.firstName || ' ' || l.lastName as name
         FROM leads l 
+        LEFT JOIN customers c on c.id = l.id OR c.id IS NOT NULL
         LEFT JOIN sales s on l.salesPersonId = s.id AND l.salesPersonId IS NOT NULL
         WHERE s.id = ? OR ? IS NULL
     ''', (saleId,saleId,))
@@ -66,6 +70,7 @@ def createTask():
                          VALUES (?,?,?,?,?,?,?) ''', 
                         (id,title,description,assigned_to,due_date,priority,relatedTo_id,))
     db.commit()
+    return jsonify({'message': 'Task created successfully.'})
 
 @tasks.route('/task/<task_id>', methods=['PUT'])    
 @jwt_required()  
@@ -74,3 +79,4 @@ def mark_task_as_notified(task_id):
     cursor = db.cursor()
     cursor.execute("UPDATE tasks SET notified = 1 WHERE id = ?", (task_id,))
     db.commit()
+    return jsonify({'message': 'Updated task successfully'}), 204

@@ -45,7 +45,6 @@ function loadSalesGrid()
                 caption: "My Leads",
                 loadComplete: function (data) {
                     let leads = data;
-                    console.log(leads)
                     if (Array.isArray(leads)){
                         leads.forEach((lead, idx) => {
                             if (lead.isMyLead) {

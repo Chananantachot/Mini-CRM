@@ -179,7 +179,6 @@ function cust_subGridRowExpanded(subgrid_id, id) {
         addressId: addressId
       }, function () {
         $("#" + subgrid_table_id).trigger("reloadGrid");
-         console.log('Reloading parent grid....')   
         $("#gridCustomers").trigger("reloadGrid");
       });
     }
