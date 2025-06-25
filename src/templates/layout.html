@@ -38,7 +38,11 @@
           <li><a href="{{ url_for('product') }}">Products</a></li>
           {% if current_user.isAdminRole %}
           <li><a href="{{ url_for('sale') }}">Sales</a></li>
-           <li><a href="{{ url_for('myTasks') }}">My Tasks</a></li>
+           <li><a href="{{ url_for('myTasks') }}">My Tasks 
+            {% if notification_count > 0 %}
+              <span class="badge badge-danger">{{notification_count}}</span>
+            {% endif %}
+          </a></li>
           <li><a href="{{ url_for('user') }}">Users</a></li>
           <li><a href="{{ url_for('roles') }}">Roles</a></li>
           {% endif %}

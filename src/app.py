@@ -1,6 +1,6 @@
 import os
 import random
-
+import datetime
 from dotenv import load_dotenv
 from decorators import role_required
 
@@ -312,6 +312,18 @@ def missing_token_callback(err):
     response = make_response(redirect(request.args.get("next") or url_for("home")))
     unset_jwt_cookies(response)
     return response, 401
+
+@app.context_processor
+def inject_notification_count():
+    today = datetime.date.today()
+    count =0
+    db = Db.get_db()
+    cursor = db.cursor()
+    cursor.execute("SELECT COUNT(id) as notification_count FROM tasks t WHERE t.due_date <= ? AND t.status = 'Pending' AND t.notified = 0",(today,))
+    notification = cursor.fetchone()
+    notification = dict(notification)
+    count = notification['notification_count']
+    return dict(notification_count=count)
 
 if __name__ == '__main__':
    app.run(ssl_context="adhoc", host='0.0.0.0' , port=5000)  # Use SSL context for HTTPS

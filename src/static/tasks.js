@@ -1,3 +1,4 @@
+var previousSelection = [];
 function fetchSalePersons() {
   var sales = fetch('/sales', {
     headers: {
@@ -147,9 +148,11 @@ async function loadMyTasksGrid() {
       // 	});
       // }
     },
-    onSelectRow: function (id) {
+    onSelectRow: function (id, status) {
+    //console.log(status)
+     //var currentSelection = $("#gridTasks").jqGrid("getGridParam", "selarrrow"); 
      var tasks = $("#gridTasks").jqGrid('getRowData');
-      if (tasks){
+      if (!status){
         tasks.forEach(function(task) {
           if(task.id == id && task.isNotify == 1){
             $.ajax({
@@ -168,6 +171,7 @@ async function loadMyTasksGrid() {
           } 
         })
       }
+     // previousSelection = [...currentSelection];
     },
     loadComplete: function (tasks) {
       if (Array.isArray(tasks)){
