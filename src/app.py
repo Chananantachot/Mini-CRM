@@ -319,7 +319,10 @@ def inject_notification_count():
     count =0
     db = Db.get_db()
     cursor = db.cursor()
-    cursor.execute("SELECT COUNT(id) as notification_count FROM tasks t WHERE t.due_date <= ? AND t.status = 'Pending' AND t.notified = 0",(today,))
+    cursor.execute("""SELECT COUNT(id) as notification_count 
+                        FROM tasks t
+                     WHERE t.due_date <= ? AND t.status = 'Pending' AND t.notified = 0"""
+                ,(today,))
     notification = cursor.fetchone()
     notification = dict(notification)
     count = notification['notification_count']

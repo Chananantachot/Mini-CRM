@@ -152,9 +152,14 @@ async function loadMyTasksGrid() {
     //console.log(status)
      //var currentSelection = $("#gridTasks").jqGrid("getGridParam", "selarrrow"); 
      var tasks = $("#gridTasks").jqGrid('getRowData');
-      if (!status){
+    
         tasks.forEach(function(task) {
-          if(task.id == id && task.isNotify == 1){
+          if (task.isNotify == 0 && status){
+            $('#'+id).removeClass('ui-state-highlight');
+            $("#gridTasks tr#" + id +" input.cbox").prop("checked", '');
+          }
+
+          if(!status && task.id == id && task.isNotify == 1){
             $.ajax({
               url: `/task/${id}`,
               type: 'PUT',
@@ -170,7 +175,7 @@ async function loadMyTasksGrid() {
             });
           } 
         })
-      }
+    
      // previousSelection = [...currentSelection];
     },
     loadComplete: function (tasks) {

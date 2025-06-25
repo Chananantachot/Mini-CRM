@@ -28,7 +28,7 @@ def get_due_tasks():
         LEFT JOIN leads l ON l.id = t.relatedTo_id
         LEFT JOIN customers c ON c.id = t.relatedTo_id
         LEFT JOIN sales s ON s.id = t.assigned_to
-       -- WHERE t.due_date <= ? AND t.status = 'Pending' AND t.notified = 0
+       WHERE t.status = 'Pending' AND t.notified = 0
     """, (today,))
     tasks = cursor.fetchall()
     tasks = [dict(task) for task in tasks if task]
