@@ -100,65 +100,11 @@ async function loadMyTasksGrid() {
     pager: "#pager",
     autowidth: true,
     multiselect: true,
-    afterSaveCell: function (rowid, name, value, iRow, iCol) {
-      // var allData = $("#gridTasks").jqGrid('getRowData');
-      // var editedRows = $("#gridTasks").jqGrid('getGridParam', 'savedRow');
-
-      // Merge changes
-      // editedRows.forEach(function(edit) {
-      //     var rowIndex = allData.findIndex(row => row.id === edit.id);
-      //     if (rowIndex !== -1) {
-      //         allData[rowIndex] = {...allData[rowIndex], ...edit};
-      //     }
-      // });
-      // var amount = 0;
-      // var vat = 0;
-      // var total = 0;
-      // allData.forEach(function(product, idx) {
-      // 	amount += (parseInt(product.quantity) * parseFloat(product.unitPrice));
-      // })
-      // vat = amount * 0.07;
-      // total = amount + vat;
-      // $('#amount').val(amount.toFixed(2));
-      // $('#tax').val(vat.toFixed(2));	
-      // $('#total').val(total.toFixed(2));
-
-      // if (orderId){
-      // 	var orderItems = allData;
-      // 	order['amount'] = amount.toFixed(2)
-      // 	order['tax'] = vat.toFixed(2)
-      // 	order['total'] = total.toFixed(2)
-      // 	order['status'] ='Pending'
-      // 	$.ajax({
-      // 		url: '/invoice',
-      // 		type: 'PUT',
-      // 		contentType: 'application/json',
-      // 		data: JSON.stringify({
-      // 			"order": order,
-      // 			"orderItems": orderItems
-      // 		}),
-      // 		success: function(response) {
-      // 			console.log(response);
-      // 			orderId = response.id;
-      // 			order.orderId = orderId
-      // 		},
-      // 		error: function(error) {
-      // 			console.log(error);
-      // 		}
-      // 	});
-      // }
-    },
     onSelectRow: function (id, status) {
-    //console.log(status)
-     //var currentSelection = $("#gridTasks").jqGrid("getGridParam", "selarrrow"); 
-     var tasks = $("#gridTasks").jqGrid('getRowData');
-    
-        tasks.forEach(function(task) {
-          if (task.isNotify == 0 && status){
-            $('#'+id).removeClass('ui-state-highlight');
-            $("#gridTasks tr#" + id +" input.cbox").prop("checked", '');
-          }
+        var currentSelection = $("#gridTasks").jqGrid("getGridParam", "selarrrow"); 
+        var tasks = $("#gridTasks").jqGrid('getRowData');
 
+        tasks.forEach(function(task) {
           if(!status && task.id == id && task.isNotify == 1){
             $.ajax({
               url: `/task/${id}`,
@@ -173,10 +119,15 @@ async function loadMyTasksGrid() {
                 console.log(error);
               }
             });
-          } 
+          }
         })
-    
-     // previousSelection = [...currentSelection];
+        currentSelection.forEach(function(taskId){
+            if (id != taskId){
+                $("#gridTasks tr#" + id +" input.cbox").prop("checked", '');
+                $('#'+ id).removeClass('ui-state-highlight');
+            }
+        })
+        previousSelection = [...currentSelection];
     },
     loadComplete: function (tasks) {
       if (Array.isArray(tasks)){
@@ -191,67 +142,7 @@ async function loadMyTasksGrid() {
       }
     },
     gridComplete: function () {
-    //  tasks = $("#gridTasks").jqGrid('getRowData');
-      // if (allData.length == 0)
-      // 	allData = datas;
-
-      // var editedRows = $("#gridInvoice").jqGrid('getGridParam', 'savedRow');
-
-      // // Merge changes
-      // editedRows.forEach(function(edit) {
-      //     var rowIndex = allData.findIndex(row => row.id === edit.id);
-      //     if (rowIndex !== -1) {
-      //         allData[rowIndex] = {...allData[rowIndex], ...edit};
-      //     }
-      // });
-
-      // var currentDate = new Date();
-      // if (order.orderDate){
-      // 	currentDate = new Date(order.orderDate);
-      // }
-
-      // var formattedDate = currentDate.toISOString().split('T')[0];
-      // $('#orderDate').val(formattedDate)
-
-      // var amount = order.amount;
-      // var vat = order.tax;
-      // var total = order.total;
-      // if (amount == 0 && vat == 0 && total == 0){
-      // 	allData.forEach(function(product, idx) {
-      // 		amount += (parseFloat(product.quantity) * parseFloat(product.unitPrice));
-      // 	})
-      // 	vat = amount * 0.07;
-      // 	total = amount + vat;
-      // }
-
-      // $('#amount').val(amount.toFixed(2));
-      // $('#tax').val(vat.toFixed(2));	
-      // $('#total').val(total.toFixed(2));
-
-      // order['amount'] = amount.toFixed(2)
-      // order['tax'] = vat.toFixed(2)
-      // order['total'] = total.toFixed(2)
-      // order['status'] ='Pending'
-
-      // if (orderId == null){
-      // 	var orderItems = allData;
-      // 	$.ajax({
-      // 		url: '/invoice',
-      // 		type: 'POST',
-      // 		contentType: 'application/json',
-      // 		data: JSON.stringify({
-      // 			"order": order,
-      // 			"orderItems": orderItems
-      // 		}),
-      // 		success: function(response) {
-      // 			orderId =  response.id;
-      // 			window.history.pushState({}, '', `/invoice/${custId}/order/${orderId}`);
-      // 		},
-      // 		error: function(error) {
-      // 			console.log(error);
-      // 		}
-      // 	});
-      // }
+    
     },
     caption: "Tasks"
   }).navGrid('#pager', { add: false, edit: false, del: false, search: false });
@@ -276,17 +167,6 @@ async function loadMyTasksGrid() {
           return [true, '']; // No error
         }
       },
-      //   editParams: {
-      //     url: `/api/${leadId}/opportunities/edit`,
-      //     keys: true,
-      //     mtype: 'POST',
-      //     onSuccess: function (response) {
-      //       var $self = $(this), p = $self.jqGrid("getGridParam");
-      //       p.datatype = "json";
-      //       $self.trigger("reloadGrid", { page: p.page, current: true });
-      //       return [true, '']; // No error
-      //     },
-      //   },
       // This callback fires AFTER the new empty row is inserted and put into edit mode.
       addRowCallback: function (rowid, response) {
         // Find the input field for 'closure_date' in the newly added row
