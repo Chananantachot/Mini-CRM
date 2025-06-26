@@ -228,7 +228,7 @@ async function subscribeUser(userId) {
   }
 
   // Subscribe via PushManager
-  const applicationServerKey = urlBase64ToUint8Array('BB1I_MLItjQJTOaNopEQcF13qzFLhOmK4200L4gzBdxdDjQVC5yQO5vMKeFNY0I6hMQCB1R0hmEx47v0Xtd2BBU');
+  const applicationServerKey = urlBase64ToUint8Array('');
   const subscription = await registration.pushManager.subscribe({
     userVisibleOnly: true,
     applicationServerKey: applicationServerKey // must be a Uint8Array
