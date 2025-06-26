@@ -228,7 +228,9 @@ async function subscribeUser(userId) {
   }
 
   // Subscribe via PushManager
-  const applicationServerKey = urlBase64ToUint8Array('');
+  const response = await fetch('/tasks/publicKey');
+  const publicKey = await response.responseJSON.publicKey;
+  const applicationServerKey = urlBase64ToUint8Array(publicKey);
   const subscription = await registration.pushManager.subscribe({
     userVisibleOnly: true,
     applicationServerKey: applicationServerKey // must be a Uint8Array
@@ -244,5 +246,5 @@ async function subscribeUser(userId) {
     })
   });
 
-  alert('✅ Subscribed to notifications!');
+ // alert('✅ Subscribed to notifications!');
 }

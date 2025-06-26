@@ -1,12 +1,13 @@
 import datetime
+import os
 import uuid
-from flask import Blueprint, jsonify, redirect, request, url_for, json
+from flask import Blueprint, jsonify, request
 from flask_jwt_extended import jwt_required
 
+from dotenv import load_dotenv
+load_dotenv()
 
 from Db import Db
-from audit import AuditAction, log_audit
-from decorators import role_required
 
 tasks = Blueprint('tasks', __name__, template_folder='templates')
 
@@ -52,6 +53,10 @@ def getLeadsOrCustsBySaleId(saleId):
     leads = [dict(lead) for lead in leads if lead ]
     return leads
 
+@tasks.route('/tasks/publicKey', methods=['GET'])
+def getpublicKey():
+    key = os.getenv("VAPID_PUBLIC_KEY")
+    return jsonify({'publicKey': key })
 
 @tasks.route('/tasks', methods=['POST'])
 @jwt_required()
