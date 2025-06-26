@@ -56,7 +56,14 @@ It is perfect for engineers, students, or anyone interested in Customer Relation
    Username: admin@gmail.com
    Password: @dmin!23456
 
-6. Enjoy!
+6. In order to setup Tasks push notifications automatically, you'll need to do the following bash command lines
+   '''bash
+      crontab -e
+
+  then Press i (swich to INSERT mode) and copy & paste this line script below in it 
+     0 9 * * * /usr/bin/python3 <FULL PATH>/scripts/notify_due_tasks.py
+     
+7. Press :wg to save and exit.     
 
 
 
