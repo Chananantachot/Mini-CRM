@@ -1,7 +1,8 @@
 import datetime
 import uuid
-from flask import Blueprint, jsonify, redirect, request, url_for
+from flask import Blueprint, jsonify, redirect, request, url_for, json
 from flask_jwt_extended import jwt_required
+
 
 from Db import Db
 from audit import AuditAction, log_audit
@@ -77,11 +78,13 @@ def task_subscription():
    if request.is_json: 
         subscription = request.get_json()
         user_id = subscription.get('user_id')
-        subscription_json = subscription.get('subscription_json') 
+        subscription_json = subscription.get('subscription_json')
 
         db = Db.get_db()
         cursor = db.cursor()
-        cursor.execute(''' INSERT INTO subscriptions (user_id,subscription_json) VALUES (?,?)''',(user_id,subscription_json,))
+        id = str(uuid.uuid4())
+
+        cursor.execute(''' INSERT INTO subscriptions (id,user_id,subscription_json) VALUES (?,?,?)''',(id,user_id, subscription_json,))
         db.commit()
         return jsonify({'message': 'Task created successfully.'}) , 201
    return jsonify({'message': 'Bad Request.'}) , 400

@@ -1,8 +1,13 @@
 import os
 import random
 import datetime
+import json
+
 from dotenv import load_dotenv
 from decorators import role_required
+
+from datetime import date
+from pywebpush import webpush, WebPushException
 
 load_dotenv()
 from Db import Db
@@ -50,6 +55,11 @@ app.config["JWT_ACCESS_TOKEN_EXPIRES"] = timedelta(minutes=30)
 app.config["JWT_REFRESH_TOKEN_EXPIRES"] = timedelta(minutes=30)
 app.config['JWT_COOKIE_CSRF_PROTECT'] = False 
 jwt = JWTManager(app)
+
+
+# Load push credentials
+VAPID_PRIVATE_KEY = os.getenv("VAPID_PRIVATE_KEY")
+VAPID_CLAIMS = {"sub": "mailto:udth2010@gmail.com"}
 
 @click.command(name='seed')
 @with_appcontext
@@ -333,7 +343,43 @@ def inject_notification_count():
     notification = cursor.fetchone()
     notification = dict(notification)
     count = notification['notification_count']
+
+    cursor.execute('''
+    SELECT id, title, assigned_to 
+    FROM tasks 
+    WHERE due_date <= ? AND status = 'Pending' AND notified = 0
+    ''', (today,))
+    tasks = cursor.fetchall()
+
+    # Group tasks by salesperson
+    from collections import defaultdict
+    user_tasks = defaultdict(list)
+    for task_id, title, user_id in tasks:
+        user_tasks[user_id].append((task_id, title))
+
+    # Fetch subscription info per salesperson
+    for user_id, task_list in user_tasks.items():
+        cursor.execute("SELECT subscription_json FROM subscriptions WHERE user_id = ?", (user_id,))
+        result = cursor.fetchone()
+        if not result:
+            continue
+
+        subscription_info = json.loads(result[0])
+        task_count = len(task_list)
+        message = f"📌 You have {task_count} task(s) due today."
+
+        try:
+            webpush(
+                subscription_info,
+                data=message,
+                vapid_private_key=VAPID_PRIVATE_KEY,
+                vapid_claims=VAPID_CLAIMS
+            )
+        except WebPushException as ex:
+            print(f"Failed to send to {user_id}: {ex}")
+
     return dict(notification_count=count)
+
 @app.route('/sw.js')
 def sw():
     return send_from_directory('.', 'sw.js', mimetype='application/javascript')

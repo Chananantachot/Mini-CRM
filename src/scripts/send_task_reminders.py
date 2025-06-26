@@ -1,6 +1,6 @@
 import sys
 import os
-import sqlite3
+from Db import Db
 
 from datetime import date
 import json
@@ -16,7 +16,7 @@ VAPID_CLAIMS = {"sub": "mailto:udth2010@gmail.com"}
 
 # DB connection
 
-db = sqlite3.connect('/Users/achananantachot/Downloads/Mini-CRM/src/crm.db')
+db = Db.get_db()
 cursor = db.cursor()
 
 # Get tasks due today and not notified
@@ -64,4 +64,3 @@ for user_id, task_list in user_tasks.items():
         print(f"Failed to send to {user_id}: {ex}")
 
 db.commit()
-db.close()
