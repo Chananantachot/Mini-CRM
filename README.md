@@ -60,11 +60,12 @@ It is perfect for engineers, students, or anyone interested in Customer Relation
   ```bash
       crontab -e
 
-  then Press i (swich to INSERT mode) and copy & paste this line script below in it
+
+7. then Press i (swich to INSERT mode) and copy & paste this line script below in it
    ```bash
      0 9 * * * /usr/bin/python3 <FULL PATH>/scripts/notify_due_tasks.py
      
-7. Press :wg to save and exit.     
+8. Press :wg to save and exit.     
 
 
 
