@@ -121,12 +121,12 @@ async function loadMyTasksGrid() {
             });
           }
         })
-        currentSelection.forEach(function(taskId){
-            if (id != taskId){
-                $("#gridTasks tr#" + id +" input.cbox").prop("checked", '');
-                $('#'+ id).removeClass('ui-state-highlight');
-            }
-        })
+        // currentSelection.forEach(function(taskId){
+        //     if (id != taskId){
+        //         $("#gridTasks tr#" + id +" input.cbox").prop("checked", '');
+        //         $('#'+ id).removeClass('ui-state-highlight');
+        //     }
+        // })
         previousSelection = [...currentSelection];
     },
     loadComplete: function (tasks) {
@@ -160,6 +160,10 @@ async function loadMyTasksGrid() {
         keys: true,
         url: `/tasks`,
         mtype: 'POST',
+        aftersavefunc: function (rowid, response) {
+          let userId = response.responseJSON.assigned_to;
+          subscribeUser(userId);
+        },
         onSuccess: function (response) {
           var $self = $(this), p = $self.jqGrid("getGridParam");
           p.datatype = "json";
@@ -198,4 +202,47 @@ function centerInfoDialog() {
   var parentHeight = $parentDiv.height();
   $infoDlg[0].style.top = Math.round((parentHeight - dlgHeight) / 2) + "px";
   $infoDlg[0].style.left = Math.round((parentWidth - dlgWidth) / 2) + "px";
+}
+
+function urlBase64ToUint8Array(base64String) {
+  const padding = '='.repeat((4 - base64String.length % 4) % 4);
+  const base64 = (base64String + padding).replace(/-/g, '+').replace(/_/g, '/');
+
+  // Remove any characters not valid in base64
+  const cleanedBase64 = base64.replace(/[^A-Za-z0-9+/=]/g, '');
+
+  const rawData = atob(cleanedBase64);
+  return Uint8Array.from([...rawData].map(char => char.charCodeAt(0)));
+}
+
+async function subscribeUser(userId) {
+  console.log(`SubscribeUser....${userId}`)
+  // Register Service Worker
+  const registration = await navigator.serviceWorker.register('/sw.js', { scope: '/' });
+
+  // Ask for permission
+  const permission = await Notification.requestPermission();
+  if (permission !== 'granted') {
+    alert('Notifications blocked!');
+    return;
+  }
+
+  // Subscribe via PushManager
+  const applicationServerKey = urlBase64ToUint8Array('BB1I_MLItjQJTOaNopEQcF13qzFLhOmK4200L4gzBdxdDjQVC5yQO5vMKeFNY0I6hMQCB1R0hmEx47v0Xtd2BBU');
+  const subscription = await registration.pushManager.subscribe({
+    userVisibleOnly: true,
+    applicationServerKey: applicationServerKey // must be a Uint8Array
+  });
+
+  // Send subscription to backend
+  await fetch('/tasks/subscription', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      user_id: userId,
+      subscription_json: JSON.stringify(subscription)
+    })
+  });
+
+  alert('✅ Subscribed to notifications!');
 }

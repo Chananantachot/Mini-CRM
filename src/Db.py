@@ -248,7 +248,14 @@ class Db:
             updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         )
          ''')
-        # _cursor.execute('DELETE FROM orders')
+
+        _cursor.execute(''' 
+            CREATE TABLE IF NOT EXISTS subscriptions (
+                user_id INTEGER PRIMARY KEY,
+                subscription_json TEXT NOT NULL
+            )
+        ''') 
+        #_cursor.execute('DELETE FROM tasks')
         # _cursor.execute('DELETE FROM order_items')
         # _cursor.execute('DELETE FROM lead_prods_Interested')
         

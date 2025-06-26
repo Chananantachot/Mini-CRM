@@ -239,3 +239,4 @@ async function checkGrammar(text) {
 
   return []
 }
+

@@ -17,7 +17,7 @@ from tasks import tasks
 from interactions import interactions
 
 from flask import (
-    Flask, jsonify, make_response, url_for, render_template, request, redirect, g
+    Flask, jsonify, make_response, url_for, send_from_directory ,render_template, request, redirect, g
 )
 from flask_jwt_extended import (
     get_jwt, jwt_required, JWTManager,
@@ -73,7 +73,7 @@ def close_connection(exception):
 
 @app.before_request
 def before_request():
-    if request.endpoint in ['interactions' ,'customer', 'lead', 'product' ,'user', 'roles','newUser','users.register', 'users.signin','login','users.activateUser' ,'static']:
+    if request.endpoint in ['sw','interactions' ,'customer', 'lead', 'product' ,'user', 'roles','newUser','users.register', 'users.signin','login','users.activateUser' ,'static']:
         return
     try:
         verify_jwt_in_request()
@@ -189,6 +189,13 @@ def home():
     }
     db = Db.get_db()
     cursor = db.cursor()
+
+    # cursor.execute("SELECT * FROM subscriptions WHERE user_id = 1")
+    # subs = cursor.fetchall()
+    # subs = [dict(s) for s in subs if s]
+    # print(f'subscription: {subs}')
+
+
     cursor.execute("SELECT COUNT(*) FROM leads")
     total_leads = cursor.fetchone()[0]
 
@@ -327,6 +334,9 @@ def inject_notification_count():
     notification = dict(notification)
     count = notification['notification_count']
     return dict(notification_count=count)
+@app.route('/sw.js')
+def sw():
+    return send_from_directory('.', 'sw.js', mimetype='application/javascript')
 
 if __name__ == '__main__':
    app.run(ssl_context="adhoc", host='0.0.0.0' , port=5000)  # Use SSL context for HTTPS

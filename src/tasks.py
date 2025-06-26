@@ -70,7 +70,21 @@ def createTask():
                          VALUES (?,?,?,?,?,?,?) ''', 
                         (id,title,description,assigned_to,due_date,priority,relatedTo_id,))
     db.commit()
-    return jsonify({'message': 'Task created successfully.'})
+    return jsonify({'message': 'Task created successfully.', 'assigned_to': assigned_to})
+
+@tasks.route('/tasks/subscription', methods=['POST'])
+def task_subscription():
+   if request.is_json: 
+        subscription = request.get_json()
+        user_id = subscription.get('user_id')
+        subscription_json = subscription.get('subscription_json') 
+
+        db = Db.get_db()
+        cursor = db.cursor()
+        cursor.execute(''' INSERT INTO subscriptions (user_id,subscription_json) VALUES (?,?)''',(user_id,subscription_json,))
+        db.commit()
+        return jsonify({'message': 'Task created successfully.'}) , 201
+   return jsonify({'message': 'Bad Request.'}) , 400
 
 @tasks.route('/task/<task_id>', methods=['PUT'])    
 @jwt_required()  
