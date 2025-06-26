@@ -6,8 +6,8 @@ self.addEventListener('push', function(event) {
   event.waitUntil(
     self.registration.showNotification('XYZ-MiNi CRM Reminder', {
       body: data,
-      icon: '/static/logo.png', // optional
-      badge: '/static/logo.png', // optional
+      icon: '/static/icon.png', // optional
+      badge: '/static/badge.png', // optional
       data: { url: '/' } // you can customize this
     })
   );

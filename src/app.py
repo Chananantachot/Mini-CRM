@@ -333,22 +333,15 @@ def missing_token_callback(err):
 @app.context_processor
 def inject_notification_count():
     today = datetime.date.today()
-    count =0
+    task_count = 0
     db = Db.get_db()
     cursor = db.cursor()
-    cursor.execute("""SELECT COUNT(id) as notification_count 
-                        FROM tasks t
-                     WHERE t.due_date <= ? AND t.status = 'Pending' AND t.notified = 0"""
-                ,(today,))
-    notification = cursor.fetchone()
-    notification = dict(notification)
-    count = notification['notification_count']
-
+  
     cursor.execute('''
-    SELECT id, title, assigned_to 
-    FROM tasks 
-    WHERE due_date <= ? AND status = 'Pending' AND notified = 0
-    ''', (today,))
+        SELECT id, title, assigned_to 
+        FROM tasks 
+        WHERE due_date <= ? AND status = 'Pending' AND notified = 0
+        ''', (today,))
     tasks = cursor.fetchall()
 
     # Group tasks by salesperson
@@ -378,7 +371,7 @@ def inject_notification_count():
         except WebPushException as ex:
             print(f"Failed to send to {user_id}: {ex}")
 
-    return dict(notification_count=count)
+    return dict(notification_count=task_count)
 
 @app.route('/sw.js')
 def sw():
