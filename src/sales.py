@@ -40,7 +40,7 @@ def get_sale_leads(id):
                     END AS isMyLead
                    FROM sales s 
                    LEFT JOIN leads l ON s.id = l.salesPersonId OR l.salesPersonId IS NULL
-                   WHERE s.id = ? OR l.salesPersonId IS NULL ''', (id,))
+                   WHERE s.id = ?  ''', (id,))
     leads_data = cursor.fetchall()
     leads_data = [dict(lead) for lead in leads_data if lead]
     return jsonify(leads_data)

@@ -5,6 +5,8 @@ from flask import Blueprint, jsonify, request
 from flask_jwt_extended import jwt_required
 
 from dotenv import load_dotenv
+
+from audit import AuditAction, log_audit
 load_dotenv()
 
 from Db import Db
@@ -75,7 +77,14 @@ def createTask():
     cursor.execute(''' INSERT INTO tasks (id,title,description,assigned_to,due_date,priority,relatedTo_id)
                          VALUES (?,?,?,?,?,?,?) ''', 
                         (id,title,description,assigned_to,due_date,priority,relatedTo_id,))
+    
     db.commit()
+    
+    log_audit(action=AuditAction.INSERT,
+            table_name='tasks',
+            record_id= id,
+            old_value=None,
+            new_value=jsonify({'id': id, 'title':title, 'description': description,'assigned_to': assigned_to, 'due_date': due_date, 'priority':priority, 'relatedTo_id':relatedTo_id }))  
     return jsonify({'message': 'Task created successfully.', 'assigned_to': assigned_to})
 
 @tasks.route('/tasks/subscription', methods=['POST'])
@@ -91,6 +100,12 @@ def task_subscription():
 
         cursor.execute(''' INSERT INTO subscriptions (id,user_id,subscription_json) VALUES (?,?,?)''',(id,user_id, subscription_json,))
         db.commit()
+
+        log_audit(action=AuditAction.INSERT,
+            table_name='subscriptions',
+            record_id= id,
+            old_value=None,
+            new_value=jsonify({'id': id, 'user_id': user_id, 'subscription_json': subscription_json }))  
         return jsonify({'message': 'Task created successfully.'}) , 201
    return jsonify({'message': 'Bad Request.'}) , 400
 

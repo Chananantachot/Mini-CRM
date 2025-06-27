@@ -67,6 +67,7 @@ def seed():
     Db.init_db()
     Db.seedAccount()
     Db.seedLeads()
+    Db.seedSales()
     Db.SeedProducts()
     print("Database seeded!")
  
@@ -83,7 +84,7 @@ def close_connection(exception):
 
 @app.before_request
 def before_request():
-    if request.endpoint in ['sw','interactions' ,'customer', 'lead', 'product' ,'user', 'roles','newUser','users.register', 'users.signin','login','users.activateUser' ,'static']:
+    if request.endpoint in ['sw','user', 'roles','newUser','users.register', 'users.signin','login','users.activateUser' ,'static']:
         return
     try:
         verify_jwt_in_request()

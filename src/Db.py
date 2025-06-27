@@ -256,10 +256,6 @@ class Db:
                 subscription_json TEXT NOT NULL
             )
         ''') 
-        #_cursor.execute('DELETE FROM tasks')
-        # _cursor.execute('DELETE FROM order_items')
-        # _cursor.execute('DELETE FROM lead_prods_Interested')
-        
         db.commit()
 
     @staticmethod
@@ -283,7 +279,6 @@ class Db:
                 Db.activeUser(userid)
                 if roleId:
                     Db.addUserInRoles(roleId,userid) 
-
 
     # Seed the database
     @staticmethod
@@ -315,6 +310,30 @@ class Db:
                 leads = json.load(f)
                 for lead in leads:
                     Db.createLead(lead['first_name'], lead['last_name'], lead['email'], lead['mobile'] ,'Unknown','Unknown')
+
+    @staticmethod
+    def seedSales():
+        db = Db.get_db()
+        cursor = db.cursor()
+        cursor.execute('''SELECT 
+                        id,
+                        name,
+                        email,
+                        phone,
+                        active
+                    FROM sales 
+                    ''')
+        sales = cursor.fetchall()
+        if not sales:
+            data_path = os.path.join("static", "data", "MOCK_SALES_DATA.json")
+            with open(data_path, "r") as f:
+                sales = json.load(f)
+                for sale in sales:
+                    id = str(uuid.uuid4())
+                    cursor.execute('''INSERT INTO sales (id, name, email, phone) 
+                      VALUES (?, ?, ?, ?)''', 
+                    (id, sale['name'] , sale['email'] , sale['phone'] ,))
+                    db.commit()
 
     @staticmethod
     def SeedProducts():  

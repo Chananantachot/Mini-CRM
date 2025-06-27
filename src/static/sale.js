@@ -47,12 +47,11 @@ function loadSalesGrid()
                     let leads = data;
                     if (Array.isArray(leads)){
                         leads.forEach((lead, idx) => {
-                            if (lead.isMyLead) {
+                            if (lead.isMyLead == 1) {
                                 $("#" + subgrid_table_id).jqGrid('setSelection', lead.id);
                             }
                         });
                     }
-              
                 }
             });
             $("#" + subgrid_table_id).jqGrid('navGrid', '#' + pager_id, { edit: false, add: false, del: false, search: true, refresh: true });

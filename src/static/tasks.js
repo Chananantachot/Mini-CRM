@@ -120,13 +120,14 @@ async function loadMyTasksGrid() {
               }
             });
           }
+          else{
+            if (task.isNotify == 0) {
+              // Disable the checkbox for tasks where isNotify == 0
+              $("#gridTasks tr#" + task.id + " input.cbox").prop("disabled", true);
+               $('#'+  task.id ).removeClass('ui-state-highlight');
+            }
+          }
         })
-        // currentSelection.forEach(function(taskId){
-        //     if (id != taskId){
-        //         $("#gridTasks tr#" + id +" input.cbox").prop("checked", '');
-        //         $('#'+ id).removeClass('ui-state-highlight');
-        //     }
-        // })
         previousSelection = [...currentSelection];
     },
     loadComplete: function (tasks) {
