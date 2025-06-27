@@ -52,6 +52,11 @@ async function loadMyTasksGrid() {
       {
         label: 'Assigned To', index: 'assigned_to', name: 'assigned_to', width: 150, editable: true, edittype: 'select', editoptions: {
           value: salesOptions,
+          dataInit: function (elem) {
+            setTimeout(() => {
+              $(elem).trigger('change');
+            }, 0);
+          },
           dataEvents: [
             {
               type: 'change',
@@ -70,7 +75,32 @@ async function loadMyTasksGrid() {
                   });
                 });
               }
-            }
+            }//,
+            // {
+            //   // This event fires when the select is first created (before any change)
+            //   type: 'focus',
+            //   fn: function (e) {
+            //     const selected = $(e.target).val();
+            //     console.log(selected)
+            //     // Only fire if this is the first focus and no previous selection
+            //     if (!this._hasFocused) {
+            //       this._hasFocused = true;
+            //     //   
+            //       fetchCustomers(selected).then(custOptions => {
+            //         const $row = $(this).closest('tr');
+            //         $row.find("select[name='relatedTo_id']").empty();
+
+            //         custOptions.split(';').filter(Boolean).forEach(opt => {
+            //           const [val, text] = opt.split(':');
+            //           const $select = $row.find("select[name='relatedTo_id']");
+            //           if ($select.length) {
+            //             $select.append(new Option(text, val));
+            //           }
+            //         });
+            //       });
+            //     }
+            //   }
+            // }
           ]
         }
       },
@@ -120,13 +150,13 @@ async function loadMyTasksGrid() {
               }
             });
           }
-          else{
-            if (task.isNotify == 0) {
-              // Disable the checkbox for tasks where isNotify == 0
-              $("#gridTasks tr#" + task.id + " input.cbox").prop("disabled", true);
-               $('#'+  task.id ).removeClass('ui-state-highlight');
-            }
-          }
+          // else{
+          //   if (task.isNotify == 0) {
+          //     // Disable the checkbox for tasks where isNotify == 0
+          //     $("#gridTasks tr#" + task.id + " input.cbox").prop("disabled", true);
+          //      $('#'+  task.id ).removeClass('ui-state-highlight');
+          //   }
+          // }
         })
         previousSelection = [...currentSelection];
     },
