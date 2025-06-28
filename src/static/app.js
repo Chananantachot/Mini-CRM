@@ -239,4 +239,18 @@ async function checkGrammar(text) {
 
   return []
 }
+document.getElementById("notif-allow-btn").addEventListener("click", () => {
+  Notification.requestPermission().then(permission => {
+    if (permission === "granted") {
+      // Optionally show a welcome notification
+      new Notification("You're in! We’ll keep you posted. ✅");
+      $('#notif-banner').hide();
+      //document.getElementById("notif-banner").style.display = "none";
+    } else {
+      $('#notif-banner').show();
+      // Optional fallback or message
+     // alert("No problem! You can enable notifications anytime.");
+    }
+  });
+});
 

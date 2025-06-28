@@ -188,6 +188,7 @@ async function loadMyTasksGrid() {
         keys: true,
         url: `/tasks`,
         mtype: 'POST',
+      
         aftersavefunc: function (rowid, response) {
           let userId = response.responseJSON.assigned_to;
           subscribeUser(userId);
@@ -249,11 +250,11 @@ async function subscribeUser(userId) {
   const registration = await navigator.serviceWorker.register('/sw.js', { scope: '/' });
 
   // Ask for permission
-  const permission = await Notification.requestPermission();
-  if (permission !== 'granted') {
-    alert('Notifications blocked!');
-    return;
-  }
+  // const permission = await Notification.requestPermission();
+  // if (permission !== 'granted') {
+  //   alert('Notifications blocked!');
+  //   return;
+  // }
 
   // Fetch public key using fetch API and await
   const env = await $.getJSON('/tasks/publicKey');
