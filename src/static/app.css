@@ -375,3 +375,21 @@ border: 1px solid #dad55e;
 background: #fffa90 !important;
 color: #777620;
 }
+
+.badge-danger {
+  color: #fff;
+  background-color: #dc3545;
+}
+.notif-banner{
+  position: fixed; 
+  bottom: 0; 
+  width: 100%; 
+  background: #333; 
+  padding: 1em; 
+  display: flex; 
+  justify-content: space-between;
+}
+
+.notif-banner span{
+    color: #fff;
+}

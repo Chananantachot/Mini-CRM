@@ -1,3 +1,4 @@
+from gevent import monkey; monkey.patch_all()
 import os
 import random
 import datetime
@@ -5,6 +6,8 @@ import json
 
 from dotenv import load_dotenv
 from decorators import role_required
+
+from flask_socketio import SocketIO, emit, join_room
 
 from datetime import date
 from pywebpush import webpush, WebPushException
@@ -56,7 +59,7 @@ app.config["JWT_REFRESH_TOKEN_EXPIRES"] = timedelta(minutes=30)
 app.config['JWT_COOKIE_CSRF_PROTECT'] = False 
 jwt = JWTManager(app)
 
-
+socketio = SocketIO(app, cors_allowed_origins='*')
 # Load push credentials
 VAPID_PRIVATE_KEY = os.getenv("VAPID_PRIVATE_KEY")
 VAPID_CLAIMS = {"sub": "mailto:udth2010@gmail.com"}
@@ -347,6 +350,8 @@ def inject_notification_count():
 
     # Group tasks by salesperson
     from collections import defaultdict
+    from gevent import pywsgi
+
     user_tasks = defaultdict(list)
     for task_id, title, user_id in tasks:
         user_tasks[user_id].append((task_id, title))
@@ -378,5 +383,17 @@ def inject_notification_count():
 def sw():
     return send_from_directory('.', 'sw.js', mimetype='application/javascript')
 
+@socketio.on('join')
+def handle_join(data):
+    room = data['room']
+    join_room(room)
+
+@socketio.on('signal')
+def handle_signal(data):
+    emit('signal', data, room=data['room'], include_self=False)
+
+
 if __name__ == '__main__':
-   app.run(ssl_context="adhoc", host='0.0.0.0' , port=5000)  # Use SSL context for HTTPS
+    # Use gevent's WSGI server with WebSocket support
+    socketio.run(app, host='0.0.0.0', port=5000, server='gevent', ssl_context="adhoc")
+   #app.run(ssl_context="adhoc", host='0.0.0.0' , port=5000)  # Use SSL context for HTTPS

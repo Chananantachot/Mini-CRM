@@ -4,7 +4,9 @@ echo "🔧 Activating virtual environment..."
 . .venv/bin/activate
 
 echo "🛑 Killing processes on ports 5000..."
-kill -9 $(lsof -ti:5000) 2>/dev/null
+#kill -9 $(lsof -ti:5000) 2>/dev/null
+kill -9 $(lsof -iTCP:5000 -sTCP:LISTEN) 2>/dev/null
+
 
 
 echo "🌐 Setting Flask env for auto-reload..."
@@ -16,4 +18,5 @@ echo "🔧 Database initializing..."
 flask seed
 
 echo "🌐 Starting App with auto-reload..."
+#python3 app.py
 flask run --cert=cert.pem --key=key.pem --reload

@@ -13,7 +13,17 @@ function loadLeads(custId) {
     { label: 'Source', name: 'source', width: 100, editable: true },
     { label: 'Status', name: 'status', width: 100, editable: true },
     { label: 'Date created', name: 'created_at', width: 100, editable: false, align: 'center', formatter: 'date' },
-    { label: 'Date updated', name: 'updated_at', width: 100, editable: false, align: 'center', formatter: 'date' }
+    { label: 'Date updated', name: 'updated_at', width: 100, editable: false, align: 'center', formatter: 'date' },
+    {
+      label: 'Call',
+      name: 'actions',
+      width: 120,
+      sortable: false,
+      align: 'center',
+      formatter: function(cellValue, options, rowObject) {
+        return `<a class="btn btn-sm" onclick="startCall('${rowObject.email}')">📞</a>`;
+      }
+    }
   ];
   var caption = custId ? `Customer Pickig Product Interestes` : 'Leads Management';
   var subGrid = custId ? false : true;
@@ -234,3 +244,54 @@ function centerInfoDialog()
     },
   })
 }
+
+const socket = io();
+let peerConnection;
+let localStream;
+
+const config = {
+  iceServers: [{ urls: 'stun:stun.l.google.com:19302' }]
+};
+
+function startCall(room){
+  socket.emit('join', { room });
+  setupCall(room);
+}
+
+function setupCall(room) {
+  navigator.mediaDevices.getUserMedia({ audio: true }).then(stream => {
+    localStream = stream;
+    peerConnection = new RTCPeerConnection(config);
+
+    stream.getTracks().forEach(track => peerConnection.addTrack(track, stream));
+
+    peerConnection.onicecandidate = e => {
+      if (e.candidate) socket.emit('signal', { type: 'ice', data: e.candidate, room });
+    };
+
+    peerConnection.ontrack = e => {
+      const audio = new Audio();
+      audio.srcObject = e.streams[0];
+      audio.play();
+    };
+
+    peerConnection.createOffer().then(offer => {
+      peerConnection.setLocalDescription(offer);
+      socket.emit('signal', { type: 'offer', data: offer, room });
+    });
+  });
+}
+
+socket.on('signal', async ({ type, data }) => {
+  if (!peerConnection) return;
+  if (type === 'offer') {
+    await peerConnection.setRemoteDescription(new RTCSessionDescription(data));
+    const answer = await peerConnection.createAnswer();
+    await peerConnection.setLocalDescription(answer);
+    socket.emit('signal', { type: 'answer', data: answer });
+  } else if (type === 'answer') {
+    await peerConnection.setRemoteDescription(new RTCSessionDescription(data));
+  } else if (type === 'ice') {
+    peerConnection.addIceCandidate(new RTCIceCandidate(data));
+  }
+});
