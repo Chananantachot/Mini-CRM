@@ -2,7 +2,6 @@ from gevent import monkey; monkey.patch_all()
 import os
 import random
 import datetime
-import json
 
 from dotenv import load_dotenv
 from decorators import role_required
@@ -10,7 +9,6 @@ from decorators import role_required
 from flask_socketio import SocketIO, emit, join_room
 
 from datetime import date
-from pywebpush import webpush, WebPushException
 
 load_dotenv()
 from Db import Db
@@ -60,9 +58,6 @@ app.config['JWT_COOKIE_CSRF_PROTECT'] = False
 jwt = JWTManager(app)
 
 socketio = SocketIO(app, cors_allowed_origins='*')
-# Load push credentials
-VAPID_PRIVATE_KEY = os.getenv("VAPID_PRIVATE_KEY")
-VAPID_CLAIMS = {"sub": "mailto:udth2010@gmail.com"}
 
 @click.command(name='seed')
 @with_appcontext
@@ -334,35 +329,6 @@ def missing_token_callback(err):
     unset_jwt_cookies(response)
     return response, 401
 
-app.route('/call/notification/<leadId>')
-def call_notification(leadId):
-    db = Db.get_db()
-    cursor = db.cursor()
-    cursor.execute("SELECT subscription_json FROM subscriptions WHERE user_id = ?", (leadId,))
-    result = cursor.fetchone()
-    if not result:
-        return jsonify({"error": "No subscription found"}), 404
-    
-    data = json.dumps({
-        "title": f"📌 You have 📞 Incoming Call.",
-        "body": "A sales rep is calling you now!",
-        "url": f"https://localhost:5000/leads" # Change this when you are debuging modes (Http)
-    })
-    subscription_info = json.loads(result[0])
-
-    try:
-        webpush(
-            subscription_info,
-            data=data,
-            vapid_private_key=VAPID_PRIVATE_KEY,
-            vapid_claims=VAPID_CLAIMS
-        )
-    except WebPushException as ex:
-        print(f"Failed to send to {leadId}: {ex}")
-
-    return jsonify({"notification_sent": True}), 200
-
-
 @app.context_processor
 def inject_notification_count():
     today = datetime.date.today()
@@ -386,25 +352,8 @@ def inject_notification_count():
         user_tasks[user_id].append((task_id, title))
 
     # Fetch subscription info per salesperson
-    for user_id, task_list in user_tasks.items():
-        cursor.execute("SELECT subscription_json FROM subscriptions WHERE user_id = ?", (user_id,))
-        result = cursor.fetchone()
-        if not result:
-            continue
-
-        subscription_info = json.loads(result[0])
+    for _, task_list in user_tasks.items():
         task_count = len(task_list)
-        message = f"📌 You have {task_count} task(s) due today."
-
-        try:
-            webpush(
-                subscription_info,
-                data=message,
-                vapid_private_key=VAPID_PRIVATE_KEY,
-                vapid_claims=VAPID_CLAIMS
-            )
-        except WebPushException as ex:
-            print(f"Failed to send to {user_id}: {ex}")
 
     return dict(notification_count=task_count)
 

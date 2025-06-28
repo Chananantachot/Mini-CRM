@@ -1,5 +1,8 @@
+import json
+import os
 import uuid
 from flask import Blueprint, jsonify, request
+from pywebpush import webpush, WebPushException
 from Db import Db
 from audit import AuditAction, log_audit
 from decorators import role_required
@@ -13,6 +16,38 @@ def getLeads(custId):
     _leads = Db.getLeads(custId)
     responses =  [dict(lead) for lead in _leads if lead]
     return jsonify(responses)
+
+leads.route('/call/notification/<id>', methods=['GET'])
+def call_notification(id):
+    db = Db.get_db()
+    cursor = db.cursor()
+    cursor.execute("SELECT subscription_json FROM subscriptions WHERE user_id = ?", (id,))
+    result = cursor.fetchone()
+    if not result:
+        return jsonify({"error": "No subscription found"}), 404
+
+    subscription_info = json.loads(result[0])    
+    data = json.dumps({
+        "title": f"📞 You have Incoming Call.",
+        "body": "A sales rep is calling you now!",
+        "url": "/leads"  # Use relative URL for internal navigation
+    })
+
+    # Load push credentials
+    VAPID_PRIVATE_KEY = os.getenv("VAPID_PRIVATE_KEY")
+    VAPID_CLAIMS = {"sub": "mailto:udth2010@gmail.com"}
+
+    try:
+        webpush(
+            subscription_info,
+            data=data,
+            vapid_private_key=VAPID_PRIVATE_KEY,
+            vapid_claims=VAPID_CLAIMS
+        )
+    except WebPushException as ex:
+        print(f"Failed to send to {id}: {ex}")
+
+    return jsonify({"notification_sent": True}), 200
 
 @leads.route('/api/lead/new',methods=['POST'])
 @role_required('Admin')

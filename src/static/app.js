@@ -254,3 +254,39 @@ document.getElementById("notif-allow-btn").addEventListener("click", () => {
   });
 });
 
+async function subscribeUser(userId) {
+  console.log(`SubscribeUser....${userId}`)
+  // Register Service Worker
+  const registration = await navigator.serviceWorker.register('/sw.js', { scope: '/' });
+
+  // Fetch public key using fetch API and await
+  const env = await $.getJSON('/tasks/publicKey');
+  const publicKey = env.publicKey;
+
+  const applicationServerKey = urlBase64ToUint8Array(publicKey);
+  const subscription = await registration.pushManager.subscribe({
+    userVisibleOnly: true,
+    applicationServerKey: applicationServerKey // must be a Uint8Array
+  });
+
+  // Send subscription to backend
+  await fetch('/tasks/subscription', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      user_id: userId,
+      subscription_json: JSON.stringify(subscription)
+    })
+  });
+}
+
+function urlBase64ToUint8Array(base64String) {
+  const padding = '='.repeat((4 - base64String.length % 4) % 4);
+  const base64 = (base64String + padding).replace(/-/g, '+').replace(/_/g, '/');
+
+  // Remove any characters not valid in base64
+  const cleanedBase64 = base64.replace(/[^A-Za-z0-9+/=]/g, '');
+
+  const rawData = atob(cleanedBase64);
+  return Uint8Array.from([...rawData].map(char => char.charCodeAt(0)));
+}
