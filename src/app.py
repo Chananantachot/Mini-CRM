@@ -334,6 +334,35 @@ def missing_token_callback(err):
     unset_jwt_cookies(response)
     return response, 401
 
+app.route('/call/notification/<leadId>')
+def call_notification(leadId):
+    db = Db.get_db()
+    cursor = db.cursor()
+    cursor.execute("SELECT subscription_json FROM subscriptions WHERE user_id = ?", (leadId,))
+    result = cursor.fetchone()
+    if not result:
+        return jsonify({"error": "No subscription found"}), 404
+    
+    data = json.dumps({
+        "title": f"📌 You have 📞 Incoming Call.",
+        "body": "A sales rep is calling you now!",
+        "url": f"https://localhost:5000/leads" # Change this when you are debuging modes (Http)
+    })
+    subscription_info = json.loads(result[0])
+
+    try:
+        webpush(
+            subscription_info,
+            data=data,
+            vapid_private_key=VAPID_PRIVATE_KEY,
+            vapid_claims=VAPID_CLAIMS
+        )
+    except WebPushException as ex:
+        print(f"Failed to send to {leadId}: {ex}")
+
+    return jsonify({"notification_sent": True}), 200
+
+
 @app.context_processor
 def inject_notification_count():
     today = datetime.date.today()

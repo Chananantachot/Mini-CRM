@@ -21,7 +21,7 @@ function loadLeads(custId) {
       sortable: false,
       align: 'center',
       formatter: function(cellValue, options, rowObject) {
-        return `<a class="btn btn-sm" onclick="startCall('${rowObject.email}')">📞</a>`;
+        return `<a class="btn btn-sm" onclick="startCall('${rowObject.id}','${rowObject.email}')">📞</a>`;
       }
     }
   ];
@@ -253,7 +253,9 @@ const config = {
   iceServers: [{ urls: 'stun:stun.l.google.com:19302' }]
 };
 
-function startCall(room){
+async function startCall(id,room){
+  await subscribeUser(id);
+  await fetch(`/call/notification/${id}`);
   socket.emit('join', { room });
   setupCall(room);
 }
@@ -295,3 +297,38 @@ socket.on('signal', async ({ type, data }) => {
     peerConnection.addIceCandidate(new RTCIceCandidate(data));
   }
 });
+
+async function subscribeUser(userId) {
+  console.log(`SubscribeUser....${userId}`)
+  // Register Service Worker
+  const registration = await navigator.serviceWorker.register('/sw.js', { scope: '/' });
+
+  // Ask for permission
+  // const permission = await Notification.requestPermission();
+  // if (permission !== 'granted') {
+  //   alert('Notifications blocked!');
+  //   return;
+  // }
+
+  // Fetch public key using fetch API and await
+  const env = await $.getJSON('/tasks/publicKey');
+  const publicKey = env.publicKey;
+
+  const applicationServerKey = urlBase64ToUint8Array(publicKey);
+  const subscription = await registration.pushManager.subscribe({
+    userVisibleOnly: true,
+    applicationServerKey: applicationServerKey // must be a Uint8Array
+  });
+
+  // Send subscription to backend
+  await fetch('/tasks/subscription', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      user_id: userId,
+      subscription_json: JSON.stringify(subscription)
+    })
+  });
+
+ // alert('✅ Subscribed to notifications!');
+}
