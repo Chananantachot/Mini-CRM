@@ -372,6 +372,4 @@ def handle_signal(data):
 
 
 if __name__ == '__main__':
-    # Use gevent's WSGI server with WebSocket support
     socketio.run(app, host='0.0.0.0', port=5000, server='gevent', ssl_context="adhoc")
-   #app.run(ssl_context="adhoc", host='0.0.0.0' , port=5000)  # Use SSL context for HTTPS
