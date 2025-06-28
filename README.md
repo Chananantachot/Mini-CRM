@@ -11,6 +11,7 @@ The app Mini-CRM environment with:
 
 - **User/Roles track**
 - **Laad/Customers track**
+- **Laad VOIP**
 - **Salepersons track**
 - **Tasks & Push notifications**
 - **Products track**
