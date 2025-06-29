@@ -304,9 +304,16 @@ function teardownCall() {
 }
 
 async function startCall(room){
-  gtag('event', 'call_started', {'method': 'VoIP'});
+  //gtag('event', 'call_started', {'method': 'VoIP'});
   await subscribeUser(room);
+  //await navigator.mediaDevices.getUserMedia({ audio: true });
+
+  // Small pause to let the Safari permission dialog close
+  await new Promise(resolve => setTimeout(resolve, 500));
+
+  // Now reliably wait for the push to complete
   await fetch(`/call/notification/${room}`);
+
   socket.emit('join', { room });
   setupCall(room);
 }
@@ -350,15 +357,20 @@ socket.on('signal', async ({ type, data }) => {
 });
 
 async function subscribeUser(userId) {
-  console.log(`SubscribeUser....${userId}`)
   // Register Service Worker
   const registration = await navigator.serviceWorker.register('/sw.js', { scope: '/' });
-
   // Fetch public key using fetch API and await
   const env = await $.getJSON('/tasks/publicKey');
   const publicKey = env.publicKey;
 
   const applicationServerKey = urlBase64ToUint8Array(publicKey);
+  let subsc = await registration.pushManager.getSubscription();
+  if (subsc) {
+    await subsc.unsubscribe();
+    subsc = null;
+  }
+  console.log(subsc)
+
   const subscription = await registration.pushManager.subscribe({
     userVisibleOnly: true,
     applicationServerKey: applicationServerKey // must be a Uint8Array

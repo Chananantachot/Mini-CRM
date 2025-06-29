@@ -252,7 +252,7 @@ class Db:
         _cursor.execute(''' 
             CREATE TABLE IF NOT EXISTS subscriptions (
                 id TEXT PRIMARY KEY,
-                user_id TEXT,
+                user_id TEXT UNIQUE,
                 subscription_json TEXT NOT NULL
             )
         ''') 

@@ -30,22 +30,31 @@ def call_notification(id):
     data = json.dumps({
         "title": f"📞 You have Incoming Call.",
         "body": "A sales rep is calling you now!",
-        "url": "/lead/call/answer/" + id  # Use relative URL for internal navigation
+        "url": f"/lead/call/answer/{id}"  # Use relative URL for internal navigation
     })
 
     # Load push credentials
     VAPID_PRIVATE_KEY = os.getenv("VAPID_PRIVATE_KEY")
     VAPID_CLAIMS = {"sub": "mailto:udth2010@gmail.com"}
 
+    if not VAPID_PRIVATE_KEY:
+        return jsonify({"error": "VAPID_PRIVATE_KEY is not set in environment variables"}), 500
+
     try:
-        webpush(
+        response = webpush(
             subscription_info,
             data=data,
             vapid_private_key=VAPID_PRIVATE_KEY,
-            vapid_claims=VAPID_CLAIMS
+            vapid_claims=VAPID_CLAIMS,
+            content_encoding="aes128gcm"
         )
+        print("Push response:", response)
     except WebPushException as ex:
         print(f"Failed to send to {id}: {ex}")
+        return jsonify({"error": str(ex)}), 500
+    except Exception as e:
+        print(f"Unexpected error: {e}")
+        return jsonify({"error": str(e)}), 500
 
     return jsonify({"notification_sent": True}), 200
 

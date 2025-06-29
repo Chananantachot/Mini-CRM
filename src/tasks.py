@@ -98,7 +98,13 @@ def task_subscription():
         cursor = db.cursor()
         id = str(uuid.uuid4())
 
-        cursor.execute(''' INSERT INTO subscriptions (id,user_id,subscription_json) VALUES (?,?,?)''',(id,user_id, subscription_json,))
+        #cursor.execute(''' INSERT INTO subscriptions (id,user_id,subscription_json) VALUES (?,?,?)''',(id,user_id, subscription_json,))
+           # Upsert the latest subscription
+        cursor.execute("""
+            INSERT INTO subscriptions (user_id, subscription_json)
+            VALUES (?, ?)
+            ON CONFLICT(user_id) DO UPDATE SET subscription_json = excluded.subscription_json
+        """, (user_id, subscription_json))
         db.commit()
 
         log_audit(action=AuditAction.INSERT,
