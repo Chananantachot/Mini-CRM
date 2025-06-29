@@ -355,7 +355,12 @@ def inject_notification_count():
     for _, task_list in user_tasks.items():
         task_count = len(task_list)
 
-    return dict(notification_count=task_count)
+    return dict(notification_count=task_count, GAID=os.getenv("GA_MEASUREMENT_ID"))
+
+@app.route('/GAMEASUREMENTID')
+def getGA_MEASUREMENT_ID():
+    id= os.getenv("GA_MEASUREMENT_ID")
+    return jsonify({'GAID': id })
 
 @app.route('/sw.js')
 def sw():

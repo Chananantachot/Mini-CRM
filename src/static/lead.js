@@ -254,6 +254,7 @@ const config = {
 };
 
 async function startCall(id,room){
+  gtag('event', 'call_started', {'method': 'VoIP'});
   await subscribeUser(id);
   await fetch(`/call/notification/${id}`);
   socket.emit('join', { room });

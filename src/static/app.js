@@ -17,6 +17,19 @@ $(document).ready(function () {
       }
     }
   })
+
+  window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+
+  fetch('/GAMEASUREMENTID',{
+    headers: {
+      'Accept': 'application/json'
+    }
+  }).then(resp => resp.json()
+  ).then(data => {
+    gtag('config', data.GAID);
+  });
 });
 
 function init_jqGrid(gridId, pageId, getUrl, createUrl, editUrl,

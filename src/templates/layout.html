@@ -111,9 +111,8 @@
   <script src="https://cdn.socket.io/4.3.2/socket.io.min.js"></script>
 
   <script src="{{ url_for('static', filename='app.js') }}"></script>
-  {% block scripts %}
-
-  {% endblock %}
+  <script async src="https://www.googletagmanager.com/gtag/js?id={{ GAID }}"></script>
+{% block scripts %}
+{% endblock %}
 </body>
-
 </html>
