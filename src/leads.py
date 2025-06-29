@@ -17,7 +17,7 @@ def getLeads(custId):
     responses =  [dict(lead) for lead in _leads if lead]
     return jsonify(responses)
 
-leads.route('/call/notification/<id>', methods=['GET'])
+@leads.route('/call/notification/<id>', methods=['GET'])
 def call_notification(id):
     db = Db.get_db()
     cursor = db.cursor()
@@ -30,7 +30,7 @@ def call_notification(id):
     data = json.dumps({
         "title": f"📞 You have Incoming Call.",
         "body": "A sales rep is calling you now!",
-        "url": "/leads"  # Use relative URL for internal navigation
+        "url": "/lead/call/answer/" + id  # Use relative URL for internal navigation
     })
 
     # Load push credentials

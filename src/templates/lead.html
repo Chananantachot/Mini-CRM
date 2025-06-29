@@ -1,7 +1,70 @@
 {% extends "layout.html" %}
 {% block styles %}
- <!-- REQUIRED: jQuery UI CSS for Datepicker styling -->
-   <!-- <link rel="stylesheet" href="https://ajax.googleapis.com/ajax/libs/jqueryui/1.12.1/themes/smoothness/jquery-ui.css"> -->
+ <style>
+.call-panel {
+  position: fixed;
+  bottom: 30px;
+  right: 30px;
+  width: 300px;
+  background: #fff;
+  box-shadow: 0 0 15px rgba(0,0,0,0.2);
+  border-radius: 12px;
+  padding: 16px;
+  font-family: "Segoe UI", sans-serif;
+  z-index: 9999;
+  display: none; /* toggle to 'block' when call comes in */
+}
+
+.call-info {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.caller-avatar {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+}
+
+.caller-name {
+  font-weight: 600;
+  margin: 0;
+}
+
+.call-status {
+  color: gray;
+  font-size: 14px;
+  margin: 4px 0 0;
+}
+
+.call-actions {
+  display: flex;
+  justify-content: space-between;
+}
+
+.btn {
+  flex: 1;
+  margin: 0 4px;
+  padding: 10px;
+  border: none;
+  border-radius: 8px;
+  font-weight: bold;
+  cursor: pointer;
+  font-size: 14px;
+}
+
+.accept {
+  background: #28a745;
+  color: white;
+}
+
+.decline {
+  background: #dc3545;
+  color: white;
+}
+</style>
 {% endblock %}
 {% block content %}
 
@@ -12,7 +75,19 @@
 <table id="gridProdsInterest" class="table table-striped table-bordered">
 </table>
 <div id="_pager"></div>
-
+<div id="incomingCallPanel" class="call-panel">
+  <div class="call-info">
+    <img src="{{ url_for('static', filename='avatar_saleperson.png') }}" />
+    <div>
+      <p class="caller-name">Someone from XYZ-CRM</p>
+      <p class="call-status">📞 Calling you...</p>
+    </div>
+  </div>
+  <div class="call-actions">
+    <button id="acceptBtn" class="btn accept">✅ Answer</button>
+    <button id="declineBtn" class="btn decline">❌ End</button>
+  </div>
+</div>
 {% endblock %}
 {% block scripts %}
 <!-- REQUIRED: jQuery UI JS for Datepicker functionality -->
@@ -23,9 +98,13 @@
   <script src="{{ url_for('static', filename='product.js') }}"></script>
 <script>
   "use strict";
-
+  var calling = false;
   var url = window.location.href;
   const match = url.match(/\/customers\/([0-9a-fA-F-]{36})?/);
+  const matchRoom = url.match(/\/lead\/call\/answer\/([0-9a-fA-F-]{36})?/);
+  const room = matchRoom ? matchRoom[1] : null;
+  if (room)
+    showIncomingCallPanel('Someone')
 
   const custId = match ? match[1] : null;
   if (custId)
@@ -34,5 +113,27 @@
     loadLeads()
 
  //loadProdsInterest()
+// Call this function when the incoming call event is received
+function showIncomingCallPanel(callerName) {
+  document.querySelector('.caller-name').textContent = callerName;
+  $('#incomingCallPanel').show();
+}
+
+// Accept/Decline actions
+document.getElementById('acceptBtn').onclick = () => {
+  calling = true;
+  answerCall(room);
+ 
+  $('#acceptBtn').hide();
+};
+
+document.getElementById('declineBtn').onclick = () => {
+  if (calling)
+    endCall(room)
+  else  
+    declineCall(room)
+
+  $('#incomingCallPanel').hide();
+};
 </script>
 {% endblock %}

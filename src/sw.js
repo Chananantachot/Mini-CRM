@@ -1,16 +1,17 @@
 // sw.js
-
 self.addEventListener('push', function(event) {
-  const data = event.data?.text() || '🔔 You have a new notification!';
-
-  event.waitUntil(
-    self.registration.showNotification('XYZ-MiNi CRM Reminder', {
-      body: data,
-      icon: '/static/icon.png', // optional
-      badge: '/static/badge.png', // optional
-      data: { url: '/' } // you can customize this
-    })
-  );
+   let data = {};
+   if (event.data) {
+     data = event.data.json();
+   }
+   const title = data.title || "Default Title";
+   const options = {
+     body: data.body || "Default body",
+     data: data.url || "/"
+   };
+   event.waitUntil(
+     self.registration.showNotification(title, options)
+   );
 });
 
 self.addEventListener('notificationclick', function(event) {

@@ -103,6 +103,7 @@ def customer():
     return render_template('customer.html',current_user = user)
 
 @app.route("/leads", defaults = {'custId' : None},  methods=['GET'])
+@app.route("/lead/call/answer/<custId>" , methods=['GET'])
 @app.route("/customers/<custId>" , methods=['GET'])
 @jwt_required()
 def lead(custId):

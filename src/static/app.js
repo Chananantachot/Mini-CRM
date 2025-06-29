@@ -17,19 +17,6 @@ $(document).ready(function () {
       }
     }
   })
-
-  window.dataLayer = window.dataLayer || [];
-    function gtag(){dataLayer.push(arguments);}
-    gtag('js', new Date());
-
-  fetch('/GAMEASUREMENTID',{
-    headers: {
-      'Accept': 'application/json'
-    }
-  }).then(resp => resp.json()
-  ).then(data => {
-    gtag('config', data.GAID);
-  });
 });
 
 function init_jqGrid(gridId, pageId, getUrl, createUrl, editUrl,
@@ -265,6 +252,101 @@ document.getElementById("notif-allow-btn").addEventListener("click", () => {
      // alert("No problem! You can enable notifications anytime.");
     }
   });
+});
+
+const socket = io();
+let peerConnection;
+let localStream;
+
+window.dataLayer = window.dataLayer || [];
+
+function gtag(){dataLayer.push(arguments);}
+gtag('js', new Date());
+
+fetch('/GAMEASUREMENTID',{
+  headers: {
+    'Accept': 'application/json'
+  }
+}).then(resp => resp.json()
+).then(data => {
+  gtag('config', data.GAID);
+});
+
+const config = {
+  iceServers: [{ urls: 'stun:stun.l.google.com:19302' }]
+};
+
+function answerCall(room){
+  socket.emit('join', { room });
+  setupCall(room);
+}
+
+function endCall(room) {
+  socket.emit('leave', { room });      // Notify others you've left the room
+  teardownCall();                  // Clean up media streams, UI changes
+}
+
+function declineCall(room) {
+  socket.emit('decline', { room });    // Custom event to notify caller
+  teardownCall();                  // Optional cleanup if needed
+}
+
+function teardownCall() {
+  if (peerConnection) {
+    peerConnection.close();
+    peerConnection = null;
+  }
+
+  if (localStream) {
+    localStream.getTracks().forEach(track => track.stop());
+    localStream = null;
+  }
+}
+
+async function startCall(room){
+  gtag('event', 'call_started', {'method': 'VoIP'});
+  await subscribeUser(room);
+  await fetch(`/call/notification/${room}`);
+  socket.emit('join', { room });
+  setupCall(room);
+}
+
+function setupCall(room) {
+  navigator.mediaDevices.getUserMedia({ audio: true }).then(stream => {
+    localStream = stream;
+    peerConnection = new RTCPeerConnection(config);
+
+    stream.getTracks().forEach(track => peerConnection.addTrack(track, stream));
+
+    peerConnection.onicecandidate = e => {
+      if (e.candidate) socket.emit('signal', { type: 'ice', data: e.candidate, room });
+    };
+
+    peerConnection.ontrack = e => {
+      const audio = new Audio();
+      audio.srcObject = e.streams[0];
+      audio.play();
+    };
+
+    peerConnection.createOffer().then(offer => {
+      peerConnection.setLocalDescription(offer);
+      socket.emit('signal', { type: 'offer', data: offer, room });
+    });
+  });
+}
+
+socket.on('signal', async ({ type, data }) => {
+  if (!peerConnection) return;
+  if (type === 'offer') {
+    await peerConnection.setRemoteDescription(new RTCSessionDescription(data));
+    const answer = await peerConnection.createAnswer();
+    await peerConnection.setLocalDescription(answer);
+    socket.emit('signal', { type: 'answer', data: answer });
+  } else if (type === 'answer') {
+    await peerConnection.setRemoteDescription(new RTCSessionDescription(data));
+  } else if (type === 'ice') {
+    peerConnection.addIceCandidate(new RTCIceCandidate(data));
+  }
 });
 
 async function subscribeUser(userId) {

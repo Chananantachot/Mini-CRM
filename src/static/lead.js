@@ -1,3 +1,8 @@
+var calling = false;
+function makeACall(room){
+  calling = !calling;
+  startCall(room); 
+}
 
 function loadLeads(custId) {
   const colModel = [
@@ -21,7 +26,12 @@ function loadLeads(custId) {
       sortable: false,
       align: 'center',
       formatter: function(cellValue, options, rowObject) {
-        return `<a class="btn btn-sm" onclick="startCall('${rowObject.id}','${rowObject.email}')">📞</a>`;
+        if (!calling){
+          return `<a class="btn btn-sm" onclick="makeACall('${rowObject.id}');">📞 Call</a>`;
+        }
+        else{
+          return `<a class="btn btn-sm" onclick="endCall('${rowObject.id}')">📞 End call</a>`;
+        }
       }
     }
   ];
@@ -244,57 +254,3 @@ function centerInfoDialog()
     },
   })
 }
-
-const socket = io();
-let peerConnection;
-let localStream;
-
-const config = {
-  iceServers: [{ urls: 'stun:stun.l.google.com:19302' }]
-};
-
-async function startCall(id,room){
-  gtag('event', 'call_started', {'method': 'VoIP'});
-  await subscribeUser(id);
-  await fetch(`/call/notification/${id}`);
-  socket.emit('join', { room });
-  setupCall(room);
-}
-
-function setupCall(room) {
-  navigator.mediaDevices.getUserMedia({ audio: true }).then(stream => {
-    localStream = stream;
-    peerConnection = new RTCPeerConnection(config);
-
-    stream.getTracks().forEach(track => peerConnection.addTrack(track, stream));
-
-    peerConnection.onicecandidate = e => {
-      if (e.candidate) socket.emit('signal', { type: 'ice', data: e.candidate, room });
-    };
-
-    peerConnection.ontrack = e => {
-      const audio = new Audio();
-      audio.srcObject = e.streams[0];
-      audio.play();
-    };
-
-    peerConnection.createOffer().then(offer => {
-      peerConnection.setLocalDescription(offer);
-      socket.emit('signal', { type: 'offer', data: offer, room });
-    });
-  });
-}
-
-socket.on('signal', async ({ type, data }) => {
-  if (!peerConnection) return;
-  if (type === 'offer') {
-    await peerConnection.setRemoteDescription(new RTCSessionDescription(data));
-    const answer = await peerConnection.createAnswer();
-    await peerConnection.setLocalDescription(answer);
-    socket.emit('signal', { type: 'answer', data: answer });
-  } else if (type === 'answer') {
-    await peerConnection.setRemoteDescription(new RTCSessionDescription(data));
-  } else if (type === 'ice') {
-    peerConnection.addIceCandidate(new RTCIceCandidate(data));
-  }
-});
