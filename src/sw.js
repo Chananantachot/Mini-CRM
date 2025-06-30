@@ -13,29 +13,18 @@ self.addEventListener('push', function(event) {
   );
 });
 
-//self.addEventListener('notificationclick', function(event) {
-//   const url = `https://localhost:5000${event.notification.data?.url}`;  //event.notification.data?.url || '/';
-//   event.notification.close();
-
-//   event.waitUntil(
-//     clients.openWindow(url)
-//   );
-// });
-
 self.addEventListener('notificationclick', function(event) {
- // event.notification.close(); // Close the notification
+    console.log('Notification clicked! (inside service worker)'); // This should be the first thing
+    event.notification.close(); // Good practice
 
-  event.waitUntil(
-    clients.matchAll({ type: 'window' }).then(function(clientList) {
-      for (var i = 0; i < clientList.length; i++) {
-        var client = clientList[i];
-        if (client.url === '/' && 'focus' in client) {
-          return client.focus(); // Bring existing window to focus
-        }
-      }
-      if (clients.openWindow) {
-        return clients.openWindow('/'); // Open a new window
-      }
-    })
-  );
+    event.waitUntil(
+      clients.openWindow(event.notification.data?.url)
+    );
+    clients.openWindow(event.notification.data?.url)
 });
+
+self.addEventListener("notificationclose", function(event) {
+  console.log('notification close');
+  // log send to server
+});
+

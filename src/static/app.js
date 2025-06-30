@@ -17,6 +17,7 @@ $(document).ready(function () {
       }
     }
   })
+
 });
 
 function init_jqGrid(gridId, pageId, getUrl, createUrl, editUrl,
@@ -239,20 +240,20 @@ async function checkGrammar(text) {
 
   return []
 }
-document.getElementById("notif-allow-btn").addEventListener("click", () => {
-  Notification.requestPermission().then(permission => {
-    if (permission === "granted") {
-      // Optionally show a welcome notification
-      new Notification("You're in! We’ll keep you posted. ✅");
-      $('#notif-banner').hide();
-      //document.getElementById("notif-banner").style.display = "none";
-    } else {
-      $('#notif-banner').show();
-      // Optional fallback or message
-     // alert("No problem! You can enable notifications anytime.");
-    }
-  });
-});
+// document.getElementById("notif-allow-btn").addEventListener("click", () => {
+//   Notification.requestPermission().then(permission => {
+//     if (permission === "granted") {
+//       // Optionally show a welcome notification
+//       new Notification("You're in! We’ll keep you posted. ✅");
+//       $('#notif-banner').hide();
+//       //document.getElementById("notif-banner").style.display = "none";
+//     } else {
+//       $('#notif-banner').show();
+//       // Optional fallback or message
+//      // alert("No problem! You can enable notifications anytime.");
+//     }
+//   });
+// });
 
 const socket = io();
 let peerConnection;
@@ -305,17 +306,24 @@ function teardownCall() {
 
 async function startCall(room){
   //gtag('event', 'call_started', {'method': 'VoIP'});
-  await subscribeUser(room);
-  //await navigator.mediaDevices.getUserMedia({ audio: true });
 
-  // Small pause to let the Safari permission dialog close
-  await new Promise(resolve => setTimeout(resolve, 500));
+  if (isSafari()) {
+      const notification = new Notification("📞 You have Incoming Call.", {
+        body: "A sales rep is calling you now!"
+      });
 
-  // Now reliably wait for the push to complete
-  await fetch(`/call/notification/${room}`);
+      notification.onclick = (event) => {
+        notification.close(); 
+        window.open(`/lead/call/answer/${room}`);
+      };
+  }else {
+    await subscribeUser(room);
+    // Now reliably wait for the push to complete
+     await fetch(`/call/notification/${room}`);
+  }
 
-  socket.emit('join', { room });
-  setupCall(room);
+   socket.emit('join', { room });
+   setupCall(room);
 }
 
 function setupCall(room) {
@@ -364,12 +372,11 @@ async function subscribeUser(userId) {
   const publicKey = env.publicKey;
 
   const applicationServerKey = urlBase64ToUint8Array(publicKey);
-  let subsc = await registration.pushManager.getSubscription();
-  if (subsc) {
-    await subsc.unsubscribe();
-    subsc = null;
+  let s = await registration.pushManager.getSubscription();
+  if (s) {
+    await s.unsubscribe();
+    s = null;
   }
-  console.log(subsc)
 
   const subscription = await registration.pushManager.subscribe({
     userVisibleOnly: true,
@@ -396,4 +403,8 @@ function urlBase64ToUint8Array(base64String) {
 
   const rawData = atob(cleanedBase64);
   return Uint8Array.from([...rawData].map(char => char.charCodeAt(0)));
+}
+
+function isSafari() {
+  return /^((?!chrome|android).)*safari/i.test(navigator.userAgent);
 }
