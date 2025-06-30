@@ -305,25 +305,25 @@ function teardownCall() {
 }
 
 async function startCall(room){
-  //gtag('event', 'call_started', {'method': 'VoIP'});
+  gtag('event', 'call_started', {'method': 'VoIP'});
+  
+  //if (isSafari()) {
+      // const notification = new Notification("📞 You have Incoming Call.", {
+      //   body: "A sales rep is calling you now!"
+      // });
 
-  if (isSafari()) {
-      const notification = new Notification("📞 You have Incoming Call.", {
-        body: "A sales rep is calling you now!"
-      });
+      // notification.onclick = (event) => {
+      //   notification.close(); 
+      //   window.open(`/lead/call/answer/${room}`);
+      // };
+  //}else {
+      await subscribeUser(room);
+  //   // Now reliably wait for the push to complete
+      await fetch(`/call/notification/${room}`);
+  // }
 
-      notification.onclick = (event) => {
-        notification.close(); 
-        window.open(`/lead/call/answer/${room}`);
-      };
-  }else {
-    await subscribeUser(room);
-    // Now reliably wait for the push to complete
-     await fetch(`/call/notification/${room}`);
-  }
-
-   socket.emit('join', { room });
-   setupCall(room);
+    socket.emit('join', { room });
+    setupCall(room);
 }
 
 function setupCall(room) {

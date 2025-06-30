@@ -13,18 +13,18 @@ self.addEventListener('push', function(event) {
   );
 });
 
-self.addEventListener('notificationclick', function(event) {
+self.onnotificationclick = (event) =>
+{
     console.log('Notification clicked! (inside service worker)'); // This should be the first thing
     event.notification.close(); // Good practice
 
     event.waitUntil(
       clients.openWindow(event.notification.data?.url)
     );
-    clients.openWindow(event.notification.data?.url)
-});
+}
 
 self.addEventListener("notificationclose", function(event) {
   console.log('notification close');
   // log send to server
-});
+})
 
