@@ -6,14 +6,14 @@ from decorators import role_required
 opportunities = Blueprint('opportunities', __name__, template_folder='templates')
 
 @opportunities.route('/api/opportunities/<leadId>', methods=['GET'])
-@role_required('Admin')
+@role_required(['Admin'])
 def getOpportunities(leadId):
     opportunities = Db.getOpportunities(leadId)
     responses =  [dict(opportunity) for opportunity in opportunities if opportunity]
     return jsonify(responses)
 
 @opportunities.route('/api/<lead_id>/opportunities/new', methods=['POST'])
-@role_required('Admin')
+@role_required(['Admin'])
 def create(lead_id):
     leadId = lead_id
     current_stage = request.form.get('current_stage')
@@ -46,7 +46,7 @@ def create(lead_id):
     return jsonify({ 'error': True, 'message': 'Bad Request' }), 400   
 
 @opportunities.route('/api/<lead_id>/opportunities/edit', methods=['POST'])
-@role_required('Admin')
+@role_required(['Admin'])
 def edit(lead_id):
     leadId = lead_id
     opportunityId  = request.form.get('id')

@@ -11,7 +11,7 @@ orders = Blueprint('orders', __name__, template_folder='templates')
 
 @orders.route('/invoice/<custId>/orderItems', defaults ={'orderId': None } , methods=['GET'])
 @orders.route('/invoice/<custId>/orderItems/<orderId>', methods=['GET'])
-@role_required('Admin')
+@role_required(['Admin'])
 def getOrderItems(custId, orderId):
     if custId:
         items = Db.getCustProdsOrders(custId, orderId)
@@ -21,7 +21,7 @@ def getOrderItems(custId, orderId):
 
 
 @orders.route('/invoice/<custId>/orderDetails', methods=['GET'])
-@role_required('Admin')
+@role_required(['Admin'])
 def getOrderDetails(custId):
     orderDetails =  Db.getCustomerInvoiceDetail(custId)
     orderDetails = [dict(order) for order in orderDetails if order]
@@ -29,7 +29,7 @@ def getOrderDetails(custId):
 
 @orders.route('/invoice/<custId>/order', defaults = {'orderId' : None} , methods=['GET'])
 @orders.route('/invoice/<custId>/order/<orderId>', methods=['GET'])
-@role_required('Admin')
+@role_required(['Admin'])
 def getOrder(custId,orderId):
     if custId:
         address = Db.getCustomerPrimaryAddress(custId)
@@ -45,7 +45,7 @@ def getOrder(custId,orderId):
     return jsonify({ 'error': True, 'message': 'Bad Request' }), 400
 
 @orders.route('/check/<custId>/orderLeft', methods=['GET'])
-@role_required('Admin')
+@role_required(['Admin'])
 def getOrderLeft(custId):
     if not custId:
         return jsonify({ 'error': True, 'message': 'Bad Request' }), 400
@@ -56,7 +56,7 @@ def getOrderLeft(custId):
 
 
 @orders.route('/invoice', methods = ['POST'])
-@role_required('Admin')
+@role_required(['Admin'])
 def postOrder():
     if request.is_json: 
         invoice = request.get_json() 
@@ -97,7 +97,7 @@ def postOrder():
         return jsonify({ 'error': True, 'message': 'Bad Request' }), 400    
 
 @orders.route('/invoice', methods = ['PUT'])
-@role_required('Admin')
+@role_required(['Admin'])
 def putOrder():
     if request.is_json: 
         invoice = request.get_json() 
@@ -137,7 +137,7 @@ def putOrder():
         return jsonify({ 'error': True, 'message': 'Bad Request' }), 400    
 
 @orders.route('/invoice/<orderID>/updateOrderStatus', methods=['PUT'])
-@role_required('Admin')
+@role_required(['Admin'])
 def updateOrderStatus(orderID):
     if request.is_json:
         data = request.get_json()

@@ -8,7 +8,7 @@ from decorators import role_required
 interactions = Blueprint('interactions', __name__, template_folder='templates')
 
 @interactions.route('/<custId>/interactions/<prodsId>', methods=['GET'])
-@role_required('Admin')
+@role_required(['Admin'])
 def get_interactions(custId, prodsId):
     db = Db.get_db()
     cursor = db.cursor()
@@ -28,7 +28,7 @@ def get_interactions(custId, prodsId):
     return jsonify(interactions_list), 200  
 
 @interactions.route('/<custId>/interactions/<prodsId>', methods=['POST'])
-@role_required('Admin')
+@role_required(['Admin'])
 def add_interaction(custId, prodsId):
     id = str(uuid.uuid4())
     interaction_type = request.form.get('interaction_type')

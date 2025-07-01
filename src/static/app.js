@@ -295,30 +295,41 @@ function declineCall(room) {
 }
 
 function teardownCall() {
-  if (peerConnection) {
-    peerConnection.close();
-    peerConnection = null;
-  }
+    if (peerConnection) {
+      peerConnection.close();
+      peerConnection = null;
+    }
 
-  if (localStream) {
-    localStream.getTracks().forEach(track => track.stop());
-    localStream = null;
-  }
+    if (localStream) {
+      localStream.getTracks().forEach(track => track.stop());
+      localStream = null;
+    }
 
-  // Stop and remove any dynamically created audio elements
-  document.querySelectorAll('audio').forEach(audio => {
-    audio.pause();
-    audio.srcObject = null;
-    audio.remove();
-  });
+    // Stop and remove any dynamically created audio elements
+    document.querySelectorAll('audio').forEach(audio => {
+      audio.pause();
+      audio.srcObject = null;
+      audio.remove();
+    });
+     
 }
 
 async function startCall(room){
   gtag('event', 'call_started', {'method': 'VoIP'});
   await subscribeUser(room);
   await fetch(`/call/notification/${room}`);
-  socket.emit('join', { room });
-  setupCall(room);
+  fetch('/start_call', {
+      method: "POST",
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({ lead_id: room })
+    }).then(res => {
+      if (res.ok) {
+        socket.emit('join', { room });
+        setupCall(room);
+      } else {
+       // alert("Someone is already calling this lead.");
+      }
+  });
 }
 
 function setupCall(room) {
@@ -346,7 +357,6 @@ function setupCall(room) {
     });
   });
 }
-
 
 socket.on('signal', async ({ type, data, room }) => {
   if (type === 'offer') {
@@ -387,6 +397,13 @@ socket.on('signal', async ({ type, data, room }) => {
   }
 });
 
+socket.on('lead:locked', () => {
+  $('#btnCall').hide()
+});
+
+socket.on('lead:released', () => {
+    $('#btnCall').show()
+});
 
 async function subscribeUser(userId) {
   // Register Service Worker

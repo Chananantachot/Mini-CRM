@@ -11,7 +11,7 @@ leads = Blueprint('leads', __name__, template_folder='templates')
 
 @leads.route('/api/leads', defaults={'custId': None} ,methods=['GET'])
 @leads.route('/api/leads/<custId>',methods=['GET'])
-@role_required('Admin')
+@role_required(['Admin'])
 def getLeads(custId):
     _leads = Db.getLeads(custId)
     responses =  [dict(lead) for lead in _leads if lead]
@@ -58,7 +58,7 @@ def call_notification(id):
     return jsonify({"notification_sent": True}), 200
 
 @leads.route('/api/lead/new',methods=['POST'])
-@role_required('Admin')
+@role_required(['Admin'])
 def createLead():
     id = str(uuid.uuid4())
     firstName = request.form.get('firstName')
@@ -86,7 +86,7 @@ def createLead():
 
 
 @leads.route('/api/lead/edit',methods=['POST'])
-@role_required('Admin')
+@role_required(['Admin'])
 def updateLead():
     leadId = request.form.get('id')
     firstName = request.form.get('firstName')

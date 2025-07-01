@@ -2,7 +2,7 @@ from gevent import monkey; monkey.patch_all()
 import os
 import random
 import datetime
-
+import threading
 from dotenv import load_dotenv
 from decorators import role_required
 
@@ -58,6 +58,9 @@ app.config['JWT_COOKIE_CSRF_PROTECT'] = False
 jwt = JWTManager(app)
 
 socketio = SocketIO(app, cors_allowed_origins='*')
+# Dictionary to keep track of locked leads
+lead_lock = {}
+lock = threading.Lock()
 
 @click.command(name='seed')
 @with_appcontext
@@ -119,7 +122,7 @@ def lead(custId):
 
 
 @app.route("/sale", methods=['GET'])
-@role_required('Admin')
+@role_required(['Admin'])
 def sale():
     current_user = get_jwt_identity() 
     roles = get_jwt()["roles"] or [] 
@@ -129,7 +132,7 @@ def sale():
         'isAdminRole': isAdminRole
     }
     
-    return render_template('sale.html',current_user = user)
+    return render_template('sale.html', current_user=user)
 
 
 @app.route("/products", methods=['GET'])
@@ -146,7 +149,7 @@ def product():
     return render_template('product.html',current_user = user) 
 
 @app.route('/users', methods=['GET'])
-@role_required('Admin')
+@role_required(['Admin'])
 def user():
     current_user = get_jwt_identity() 
     roles = get_jwt()["roles"]  
@@ -160,7 +163,7 @@ def user():
     return render_template('user.html',current_user = user) 
 
 @app.route('/roles', methods=['GET'])
-@role_required('Admin')
+@role_required(['Admin'])
 def roles():
     current_user = get_jwt_identity() 
     roles = get_jwt()["roles"]  
@@ -376,6 +379,30 @@ def handle_join(data):
 def handle_signal(data):
     emit('signal', data, room=data['room'], include_self=False)
 
+@app.route('/start_call', methods=['POST'])
+@jwt_required()
+def start_call():
+    current_user = get_jwt_identity() 
+    lead_id = request.json['lead_id']
+    rep_name = current_user
+
+    with lock:
+        if lead_lock.get(lead_id):
+            return {"status": "busy"}, 409  # Conflict: lead already in call
+        lead_lock[lead_id] = rep_name
+        socketio.emit('lead:locked', {"lead_id": lead_id, "rep_name": rep_name})
+        return {"status": "locked"}
+
+@app.route('/end_call', methods=['POST'])
+@jwt_required()
+def end_call():
+    lead_id = request.json['lead_id']
+
+    with lock:
+        if lead_lock.pop(lead_id, None):
+            socketio.emit('lead:released', {"lead_id": lead_id})
+            return {"status": "released"}
+        return {"status": "not_found"}, 404
 
 if __name__ == '__main__':
     socketio.run(app, host='0.0.0.0', port=443, server='gevent', ssl_context=('cert.pem', 'key.pem'))

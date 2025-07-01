@@ -1,7 +1,7 @@
 var calling = false;
 function makeCall(room){
   calling = !calling;
-  let row = $("#gridId").jqGrid("getRowData", room);
+  let row = $("#gridLeads").jqGrid("getRowData", room);
   $("#gridLeads").jqGrid('setCell', room, 'actions', row);
   if (!calling)
     endCall(room);
@@ -32,10 +32,10 @@ function loadLeads(custId) {
       align: 'center',
       formatter: function(cellValue, options, rowObject) {
         if (!calling){
-          return `<a class="btn btn-sm" onclick="makeCall('${rowObject.id}')">📞</a>`;
+          return `<a id="btnCall" class="btn btn-sm" onclick="makeCall('${rowObject.id}')">📞</a>`;
         }
         else{
-          return `<a class="btn btn-sm" onclick="makeCall('${rowObject.id}')">📞❌</a>`;
+          return `<a id="btnEndCall" class="btn btn-sm" onclick="makeCall('${rowObject.id}')">📞❌</a>`;
         }
       }
     }

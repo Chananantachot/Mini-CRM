@@ -96,14 +96,14 @@ def productsFeed():
     return response
 
 @products.route('/api/products', methods=['GET'])
-@role_required('Admin')
+@role_required(['Admin'])
 def getProducts():
     prods = Db.getProducts()
     products = [dict(p) for p in prods if p]
     return jsonify(products)
 
 @products.route('/api/xml/products', methods=['GET'])
-@role_required('Admin')
+@role_required(['Admin'])
 def getXMLProducts():
     prods = Db.getProducts()
     products = [dict(p) for p in prods if p]
@@ -123,7 +123,7 @@ def getXMLProducts():
 
 @products.route('/api/products/lead/interested', defaults={'id': None} , methods=['GET'])
 @products.route('/api/products/lead/<id>/interested', methods=['GET'])
-@role_required('Admin')
+@role_required(['Admin'])
 def getProductsLeadInterested(id):
     searchField = request.args.get('searchField')
     searchString = request.args.get('searchString')
@@ -161,7 +161,7 @@ def getProductsLeadInterested(id):
     return jsonify(results)
 
 @products.route('/api/product/interested', methods=['POST'])
-@role_required('Admin')
+@role_required(['Admin'])
 def postPorductsInterested():
     ids = request.form.getlist('ids[]')
     leadId = request.form.get('leadId')
@@ -190,7 +190,7 @@ def postPorductsInterested():
     return jsonify({ 'error': True, 'message': 'Bad Request' }),400
         
 @products.route('/api/product/new', methods=['POST'])
-@role_required('Admin')
+@role_required(['Admin'])
 def postProduct():
     name  = request.form.get('name')
     description = request.form.get('description')
@@ -216,7 +216,7 @@ def postProduct():
     return jsonify({ 'error': True, 'message': 'Bad Request' }), 400
 
 @products.route('/api/product/<id>/edit', methods=['POST'])
-@role_required('Admin')
+@role_required(['Admin'])
 def putProduct(id):
     name  = request.form.get('name')
     description = request.form.get('description')

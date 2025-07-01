@@ -22,7 +22,7 @@ def getCustomer(id):
     return jsonify(customer),200
             
 @customers.route('/api/customer/new', methods=['POST'])
-@role_required('Admin')
+@role_required(['Admin'])
 def postCustomer():
     firstName = request.form.get('firstName')
     lastName = request.form.get('lastName')
@@ -41,7 +41,7 @@ def postCustomer():
     return jsonify({'error': True, 'message': 'Failed.'}), 400
 
 @customers.route('/api/customer/edit', methods=['POST'])
-@role_required('Admin')
+@role_required(['Admin'])
 def putCustomer():
     id = request.form.get('id')
     firstName = request.form.get('firstName')

@@ -89,7 +89,7 @@ def activateUser():
 
 @users.route('/api/user', methods=['GET'])
 @users.route('/api/user/edit', methods=['POST'])
-@role_required('Admin')
+@role_required(['Admin'])
 def getUser():
     if request.method == 'GET':
         users = Db.getCurrentUsers()
@@ -115,7 +115,7 @@ def getUser():
 @users.route('/api/roles', methods=['GET'])
 @users.route('/api/roles/create', methods=['POST'])
 @users.route('/api/roles/edit', methods=['POST'])
-@role_required('Admin')
+@role_required(['Admin'])
 def getRoles():
     if request.method == 'GET':
             roles = Db.getRoles()
@@ -149,7 +149,7 @@ def getRoles():
                         return jsonify({'id': id}) ,404
                     
 @users.route('/api/roles/<roleId>/assignment', methods=['GET','POST'])
-@role_required('Admin')
+@role_required(['Admin'])
 @jwt_required()
 def rolesAssignment(roleId):
     users = []

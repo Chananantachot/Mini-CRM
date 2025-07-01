@@ -7,7 +7,7 @@ from decorators import role_required
 sales = Blueprint('sales', __name__, template_folder='templates')
 
 @sales.route('/sales', methods=['GET'])
-@role_required('Admin')
+@role_required(['Admin'])
 def get_sales():
     db = Db.get_db()
     cursor = db.cursor()
@@ -24,7 +24,7 @@ def get_sales():
     return jsonify(sales_data)
 
 @sales.route('/sale/<id>/leads', methods=['GET'])
-@role_required('Admin')
+@role_required(['Admin'])
 def get_sale_leads(id):
     db = Db.get_db()
     cursor = db.cursor()
@@ -46,7 +46,7 @@ def get_sale_leads(id):
     return jsonify(leads_data)
 
 @sales.route('/sales', methods=['POST'])
-@role_required('Admin')
+@role_required(['Admin'])
 def add_sale():
     db = Db.get_db()
     cursor = db.cursor()
@@ -68,7 +68,7 @@ def add_sale():
     return jsonify({"message": "Created successfully"}), 201
 
 @sales.route('/sales', methods=['PUT'])
-@role_required('Admin')
+@role_required(['Admin'])
 def update_sale():
     db = Db.get_db()
     cursor = db.cursor()
@@ -97,7 +97,7 @@ def update_sale():
     return jsonify({"message": "Not Found"}), 404
 
 @sales.route('/sale/<id>/leads', methods=['POST'])
-@role_required('Admin')
+@role_required(['Admin'])
 def update_sale_leads(id):
     db = Db.get_db()
     cursor = db.cursor()

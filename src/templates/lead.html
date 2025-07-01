@@ -64,6 +64,26 @@
   background: #dc3545;
   color: white;
 }
+
+div.transbox {
+  background-color: rgba(255, 255, 255, 0.4);
+  -webkit-backdrop-filter: blur(5px);
+  backdrop-filter: blur(5px);
+  height: 100%;	
+  width: 100%;
+  font-weight: bold;
+}
+
+.btn {
+  flex: 1;
+  margin: 0 4px;
+  padding: 7px;
+  border: none;
+  border-radius: 8px;
+  font-weight: bold;
+  cursor: pointer;
+  font-size: 12px;
+}
 </style>
 {% endblock %}
 {% block content %}
@@ -75,6 +95,7 @@
 <table id="gridProdsInterest" class="table table-striped table-bordered">
 </table>
 <div id="_pager"></div>
+<div id="callBackdrop" class="transbox"></div>
 <div id="incomingCallPanel" class="call-panel">
   <div class="call-info">
     <img src="{{ url_for('static', filename='avatar_saleperson.png') }}" style="height:50px;max-width: 100%;" />
