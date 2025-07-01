@@ -302,31 +302,26 @@ function teardownCall() {
     localStream.getTracks().forEach(track => track.stop());
     localStream = null;
   }
+
+  // Stop and remove any dynamically created audio elements
+  document.querySelectorAll('audio').forEach(audio => {
+    audio.pause();
+    audio.srcObject = null;
+    audio.remove();
+  });
 }
 
 async function startCall(room){
   gtag('event', 'call_started', {'method': 'VoIP'});
-  
-  //if (isSafari()) {
-      // const notification = new Notification("📞 You have Incoming Call.", {
-      //   body: "A sales rep is calling you now!"
-      // });
-
-      // notification.onclick = (event) => {
-      //   notification.close(); 
-      //   window.open(`/lead/call/answer/${room}`);
-      // };
-  //}else {
-      await subscribeUser(room);
-  //   // Now reliably wait for the push to complete
-      await fetch(`/call/notification/${room}`);
-  // }
-
-    socket.emit('join', { room });
-    setupCall(room);
+  await subscribeUser(room);
+  await fetch(`/call/notification/${room}`);
+  socket.emit('join', { room });
+  setupCall(room);
 }
 
 function setupCall(room) {
+  teardownCall(); // 💥 Clean up previous call
+
   navigator.mediaDevices.getUserMedia({ audio: true }).then(stream => {
     localStream = stream;
     peerConnection = new RTCPeerConnection(config);
@@ -350,19 +345,46 @@ function setupCall(room) {
   });
 }
 
-socket.on('signal', async ({ type, data }) => {
-  if (!peerConnection) return;
+
+socket.on('signal', async ({ type, data, room }) => {
   if (type === 'offer') {
+    const accept = confirm('Incoming call. Accept and end current call?');
+    if (!accept) {
+      socket.emit('decline', { room });
+      return;
+    }
+
+    teardownCall(); // 📞 Accepting a new call, so teardown any current call
+
+    peerConnection = new RTCPeerConnection(config);
+    peerConnection.onicecandidate = e => {
+      if (e.candidate) socket.emit('signal', { type: 'ice', data: e.candidate, room });
+    };
+    peerConnection.ontrack = e => {
+      const audio = new Audio();
+      audio.srcObject = e.streams[0];
+      audio.play();
+    };
+
     await peerConnection.setRemoteDescription(new RTCSessionDescription(data));
+    localStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+    localStream.getTracks().forEach(track => peerConnection.addTrack(track, localStream));
+
     const answer = await peerConnection.createAnswer();
     await peerConnection.setLocalDescription(answer);
-    socket.emit('signal', { type: 'answer', data: answer });
+    socket.emit('signal', { type: 'answer', data: answer, room });
+
   } else if (type === 'answer') {
-    await peerConnection.setRemoteDescription(new RTCSessionDescription(data));
+    if (peerConnection) {
+      await peerConnection.setRemoteDescription(new RTCSessionDescription(data));
+    }
   } else if (type === 'ice') {
-    peerConnection.addIceCandidate(new RTCIceCandidate(data));
+    if (peerConnection) {
+      peerConnection.addIceCandidate(new RTCIceCandidate(data));
+    }
   }
 });
+
 
 async function subscribeUser(userId) {
   // Register Service Worker

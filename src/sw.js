@@ -1,30 +1,25 @@
 // sw.js
-
 self.addEventListener('push', function(event) {
-  const data = JSON.parse(event.data?.text()); //|| '🔔 You have a new notification!';
+  const data = JSON.parse(event.data?.text()); 
 
   event.waitUntil(
     self.registration.showNotification(data.title, {
       body: data.body,
-      icon: '/static/icon.png', // optional
-      badge: '/static/badge.png', // optional
-      data: { url: data.url } // you can customize this
+      icon: '/static/icon.png', 
+      badge: '/static/badge.png', 
+      data: { url: data.url } 
     })
   );
 });
 
-self.onnotificationclick = (event) =>
-{
-    console.log('Notification clicked! (inside service worker)'); // This should be the first thing
-    event.notification.close(); // Good practice
-
-    event.waitUntil(
-      clients.openWindow(event.notification.data?.url)
-    );
-}
+self.addEventListener('notificationclick', function(event) {
+  event.notification.close();
+  event.waitUntil(
+    clients.openWindow(event.notification.data?.url)
+  );
+});
 
 self.addEventListener("notificationclose", function(event) {
   console.log('notification close');
-  // log send to server
 })
 
