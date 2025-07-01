@@ -18,6 +18,10 @@ The app Mini-CRM environment with:
 - **Order invoice**
 - **Authentication system with login/register**
 
+**** Note: Safari on macOS does not currently support the 'notificationclick' event in service workers.
+This event works in Chrome and Firefox, but not in Safari as of 2024.
+There is no workaround to make 'notificationclick' work in Safari on macOS at this time.**** (THAT'S LIES)
+
 It is perfect for engineers, students, or anyone interested in Customer Relationsip systems.
 
 ## ✨ Features
