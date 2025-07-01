@@ -97,9 +97,7 @@ def task_subscription():
         db = Db.get_db()
         cursor = db.cursor()
         id = str(uuid.uuid4())
-
-        #cursor.execute(''' INSERT INTO subscriptions (id,user_id,subscription_json) VALUES (?,?,?)''',(id,user_id, subscription_json,))
-           # Upsert the latest subscription
+        
         cursor.execute("""
             INSERT INTO subscriptions (user_id, subscription_json)
             VALUES (?, ?)

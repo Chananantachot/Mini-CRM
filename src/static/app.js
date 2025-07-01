@@ -283,11 +283,13 @@ function answerCall(room){
 }
 
 function endCall(room) {
+  gtag('event', 'call_ended', {'method': 'VoIP'});
   socket.emit('leave', { room });      // Notify others you've left the room
   teardownCall();                  // Clean up media streams, UI changes
 }
 
 function declineCall(room) {
+  gtag('event', 'call_decline', {'method': 'VoIP'});
   socket.emit('decline', { room });    // Custom event to notify caller
   teardownCall();                  // Optional cleanup if needed
 }

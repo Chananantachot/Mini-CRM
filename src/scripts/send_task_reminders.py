@@ -45,16 +45,21 @@ for user_id, task_list in user_tasks.items():
 
     subscription_info = json.loads(result[0])
     task_count = len(task_list)
-    message = f"📌 You have {task_count} task(s) due today."
+    data = json.dumps({
+        "title": f"📌 You have {task_count} task(s) due today.",
+        "body": "Someone creaeted new task!",
+        "url": f"/myTasks"
+    })
 
     try:
         webpush(
             subscription_info,
-            data=message,
+            data=data,
             vapid_private_key=VAPID_PRIVATE_KEY,
             vapid_claims=VAPID_CLAIMS
         )
     except WebPushException as ex:
-        print(f"Failed to send to {user_id}: {ex}")
-
-#db.commit()
+        print(f"Failed to send to {id}: {ex}")
+    except Exception as e:
+        print(f"Unexpected error: {e}")
+       

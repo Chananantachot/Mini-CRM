@@ -48,7 +48,6 @@ def call_notification(id):
             vapid_claims=VAPID_CLAIMS,
             content_encoding="aes128gcm"
         )
-        print("Push response:", response)
     except WebPushException as ex:
         print(f"Failed to send to {id}: {ex}")
         return jsonify({"error": str(ex)}), 500
