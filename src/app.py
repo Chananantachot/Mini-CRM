@@ -65,14 +65,16 @@ lead_lock = {}
 lock = threading.Lock()
 
 @click.command(name='seed')
-@with_appcontext
 def seed():
-    Db.init_db()
     Db.seedAccount()
     Db.seedLeads()
     Db.seedSales()
     Db.SeedProducts()
     print("Database seeded!")
+
+# Automatically seed the database when Flask starts
+with app.app_context():
+    Db.init_db()
  
 def register_commands(app):
     app.cli.add_command(seed)
@@ -417,4 +419,4 @@ if __name__ == '__main__':
     app,
     handler_class=WebSocketHandler
     )
-http_server.serve_forever()
+   http_server.serve_forever()
