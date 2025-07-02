@@ -20,7 +20,19 @@ The app Mini-CRM environment with:
 
 **** Note: Safari on macOS does not currently support the 'notificationclick' event in service workers.
 This event works in Chrome and Firefox, but not in Safari as of 2024.
-There is no workaround to make 'notificationclick' work in Safari on macOS at this time.**** (THAT'S LIES)
+There is no workaround to make 'notificationclick' work in Safari on macOS at this time.****
+
+In order to make 'notificationclick' event works in Safari on macOS, You have to changed your hosts files
+by following intructions 
+
+1. Open your Terminal and
+   ```bash
+      sudo nano /etc/hosts
+
+2. comments or change localhost to be something like this
+   ```bash
+      127.0.0.1   xyz.com
+
 
 It is perfect for engineers, students, or anyone interested in Customer Relationsip systems.
 
@@ -62,12 +74,11 @@ It is perfect for engineers, students, or anyone interested in Customer Relation
    Password: @dmin!23456
 
 6. In order to setup Tasks push notifications automatically, you'll need to do the following bash command lines
-  ```bash
+   ```bash
       crontab -e
 
-
 7. then Press i (swich to INSERT mode) and copy & paste this line script below in it
-   ```bash
+    ```bash  
      0 9 * * * /usr/bin/python3 <FULL PATH>/scripts/notify_due_tasks.py
      
 8. Press :wg to save and exit.     
