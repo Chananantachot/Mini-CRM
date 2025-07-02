@@ -5,7 +5,7 @@ import datetime
 import threading
 from dotenv import load_dotenv
 from decorators import role_required
-from flask_socketio import SocketIO, emit, join_room
+from flask_socketio import SocketIO, emit, join_room, leave_room
 from datetime import date
 
 import ssl
@@ -382,6 +382,16 @@ def handle_join(data):
 @socketio.on('signal')
 def handle_signal(data):
     emit('signal', data, room=data['room'], include_self=False)
+
+@socketio.on('decline')
+def handle_decline(data):
+    room = data['room']
+    emit('call-declined', room=room)
+
+@socketio.on('leave')
+def handle_leave(data):
+    room = data['room']
+    leave_room(room)    
 
 @app.route('/start_call', methods=['POST'])
 @jwt_required()

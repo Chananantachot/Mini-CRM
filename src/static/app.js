@@ -289,6 +289,7 @@ function endCall(room) {
 }
 
 function declineCall(room) {
+  console.log('declineCall() is fired!!');
   gtag('event', 'call_decline', {'method': 'VoIP'});
   socket.emit('decline', { room });    // Custom event to notify caller
   teardownCall();                  // Optional cleanup if needed
@@ -306,7 +307,7 @@ function teardownCall() {
     }
 
     // Stop and remove any dynamically created audio elements
-    document.querySelectorAll('audio').forEach(audio => {
+    document.querySelectorAll('audio.call-audio').forEach(audio => {
       audio.pause();
       audio.srcObject = null;
       audio.remove();
@@ -347,6 +348,7 @@ function setupCall(room) {
 
     peerConnection.ontrack = e => {
       const audio = new Audio();
+      audio.classList.add('call-audio');
       audio.srcObject = e.streams[0];
       audio.play();
     };
@@ -403,6 +405,16 @@ socket.on('lead:locked', ({ lead_id, rep_name }) => {
 
 socket.on('lead:released', ({ lead_id }) => {
     $('#btnCall').show()
+});
+
+socket.on('decline', ({ room }) => {
+  // Notify the caller (A) that the callee (B) declined
+  socket.to(room).emit('call-declined');
+});
+
+socket.on('call-declined', () => {
+  alert('Due, It looks like he/her do not want to talk to you!');
+  teardownCall(); // optional: clean up UI, stop ringing, etc.
 });
 
 async function subscribeUser(userId) {
