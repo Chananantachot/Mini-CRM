@@ -284,12 +284,14 @@ function answerCall(room){
 
 function endCall(room) {
   gtag('event', 'call_ended', {'method': 'VoIP'});
+   callingStatus[room] = false;
+    // Force the grid to reload the row to update the button icon
+  $("#gridLeads").jqGrid('setRowData', room, $("#gridLeads").jqGrid('getRowData', room));
   socket.emit('leave', { room });      // Notify others you've left the room
   teardownCall();                  // Clean up media streams, UI changes
 }
 
 function declineCall(room) {
-  console.log('declineCall() is fired!!');
   gtag('event', 'call_decline', {'method': 'VoIP'});
   socket.emit('decline', { room });    // Custom event to notify caller
   teardownCall();                  // Optional cleanup if needed
@@ -412,8 +414,17 @@ socket.on('decline', ({ room }) => {
   socket.to(room).emit('call-declined');
 });
 
-socket.on('call-declined', () => {
-  alert('Due, It looks like he/her do not want to talk to you!');
+socket.on('call-declined', ({ room }) => {
+  console.log(room);
+  //const room = data && data.room;
+  if (room) {
+    callingStatus[room] = false;
+     // Force the grid to reload the row to update the button icon
+    $("#gridLeads").jqGrid('setRowData', room, $("#gridLeads").jqGrid('getRowData', room));
+  } else {
+    $("#gridLeads").trigger("reloadGrid");
+  }
+   alert('Due, It looks like he/her do not want to talk to you!');
   teardownCall(); // optional: clean up UI, stop ringing, etc.
 });
 

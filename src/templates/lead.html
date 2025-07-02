@@ -154,7 +154,22 @@ document.getElementById('declineBtn').onclick = () => {
   else  
     declineCall(room)
 
-  $('#incomingCallPanel').hide();
+   fetch('/end_call', {
+      method: "POST",
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({ lead_id: room })
+    }).then(res => {
+      if (res.ok || res.status == 404) {
+         $('#incomingCallPanel').hide();
+        setTimeout(() => {
+          window.close();
+        }, 4000); // Closes after 3 seconds
+      } 
+  });  
+};
+
+window.onunload = function(){
+  window.opener.location.reload();
 };
 </script>
 {% endblock %}

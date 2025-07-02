@@ -1,12 +1,15 @@
-var calling = false;
-function makeCall(room){
-  calling = !calling;
-  let row = $("#gridLeads").jqGrid("getRowData", room);
-  $("#gridLeads").jqGrid('setCell', room, 'actions', row);
-  if (!calling)
+const callingStatus = {};
+function makeCall(room) {
+  const isCalling = callingStatus[room] === true;
+  if (isCalling) {
     endCall(room);
-  else
+    callingStatus[room] = false;
+  } else {
     startCall(room);
+    callingStatus[room] = true;
+  }
+  // Force the grid to reload the row to update the button icon
+  $("#gridLeads").jqGrid('setRowData', room, $("#gridLeads").jqGrid('getRowData', room));
 }
 
 function loadLeads(custId) {
@@ -31,12 +34,11 @@ function loadLeads(custId) {
       sortable: false,
       align: 'center',
       formatter: function(cellValue, options, rowObject) {
-        if (!calling){
-          return `<a id="btnCall" class="btn btn-sm" onclick="makeCall('${rowObject.id}')">📞</a>`;
-        }
-        else{
-          return `<a id="btnEndCall" class="btn btn-sm" onclick="makeCall('${rowObject.id}')">📞❌</a>`;
-        }
+        const isCalling = callingStatus[rowObject.id] === true;
+        const btnClass = 'btn btn-sm';
+        const btnText = isCalling ? '📞❌' : '📞';
+
+        return `<a href="javascript:void(0);" class="${btnClass}" onclick="makeCall('${rowObject.id}')">${btnText}</a>`;
       }
     }
   ];

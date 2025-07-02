@@ -386,7 +386,7 @@ def handle_signal(data):
 @socketio.on('decline')
 def handle_decline(data):
     room = data['room']
-    emit('call-declined', room=room)
+    emit('call-declined', {'room': room}, room=room)
 
 @socketio.on('leave')
 def handle_leave(data):
@@ -415,7 +415,7 @@ def end_call():
     with lock:
         if lead_lock.pop(lead_id, None):
             socketio.emit('lead:released', {"lead_id": lead_id})
-            return {"status": "released"}
+            return {"status": "released"},200
         return {"status": "not_found"}, 404
     
 
