@@ -51,7 +51,7 @@ def productsFeed():
     for prodcut in products:
         feed.add_item(
             title=prodcut['name'],
-            link=f'https://mini-crm.xyz/{prodcut['sku']}',
+            link=f"https://mini-crm.xyz/{prodcut['sku']}",
             description=prodcut['description'],
             pubdate=datetime.date.today(),
             author_email='atip.cha22@gmail.com',

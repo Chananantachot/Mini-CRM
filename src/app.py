@@ -5,10 +5,12 @@ import datetime
 import threading
 from dotenv import load_dotenv
 from decorators import role_required
-
 from flask_socketio import SocketIO, emit, join_room
-
 from datetime import date
+
+import ssl
+from gevent.pywsgi import WSGIServer
+from geventwebsocket.handler import WebSocketHandler
 
 load_dotenv()
 from Db import Db
@@ -403,6 +405,16 @@ def end_call():
             socketio.emit('lead:released', {"lead_id": lead_id})
             return {"status": "released"}
         return {"status": "not_found"}, 404
+    
+
+context = ssl.SSLContext(ssl.PROTOCOL_TLS_SERVER)
+context.load_cert_chain('cert.pem', 'key.pem')
 
 if __name__ == '__main__':
-    socketio.run(app, host='0.0.0.0', port=443, server='gevent', ssl_context=('cert.pem', 'key.pem'))
+   # Directly use Gevent's WSGIServer with SSL and WebSocket
+   http_server = WSGIServer(
+    ('0.0.0.0', 5000),  # ✅ Use port 5000
+    app,
+    handler_class=WebSocketHandler
+    )
+http_server.serve_forever()
