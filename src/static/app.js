@@ -397,11 +397,11 @@ socket.on('signal', async ({ type, data, room }) => {
   }
 });
 
-socket.on('lead:locked', () => {
+socket.on('lead:locked', ({ lead_id, rep_name }) => {
   $('#btnCall').hide()
 });
 
-socket.on('lead:released', () => {
+socket.on('lead:released', ({ lead_id }) => {
     $('#btnCall').show()
 });
 
