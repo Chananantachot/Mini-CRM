@@ -110,7 +110,6 @@ def customer():
     return render_template('customer.html',current_user = user)
 
 @app.route("/leads", defaults = {'custId' : None},  methods=['GET'])
-@app.route("/lead/call/answer/<custId>" , methods=['GET'])
 @app.route("/customers/<custId>" , methods=['GET'])
 @jwt_required()
 def lead(custId):
@@ -121,9 +120,12 @@ def lead(custId):
         'name': current_user,
         'isAdminRole': isAdminRole
     }
-    
     return render_template('lead.html',current_user = user)
 
+@app.route("/lead/call/answer/<room>" , methods=['GET'])
+def calling_handler(room):
+    contact = Db.getLead(room)
+    return render_template('handlerCall.html',room = room,contact=contact, GAID=os.getenv("GA_MEASUREMENT_ID"))
 
 @app.route("/sale", methods=['GET'])
 @role_required(['Admin'])
