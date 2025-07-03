@@ -7,7 +7,7 @@ from dotenv import load_dotenv
 from decorators import role_required
 from flask_socketio import SocketIO, emit, join_room, leave_room
 from datetime import date
-
+import requests
 import ssl
 from gevent.pywsgi import WSGIServer
 from geventwebsocket.handler import WebSocketHandler
@@ -124,7 +124,22 @@ def lead(custId):
 
 @app.route("/lead/call/answer/<room>" , methods=['GET'])
 def calling_handler(room):
-    contact = Db.getLead(room)
+    response = requests.get('https://randomuser.me/api/')
+    data = response.json()
+    contacts = data['results']
+    if len(contacts) > 1:
+        c = random.choice(contacts)
+    else:
+        c = contacts[0]
+
+    random_latitude = round(float(random.uniform(-90.0, 90.0)), 1)
+    random_longitude = round(float(random.uniform(-180.0, 180.0)),1)     
+    contact ={
+        'fullName': f"{c['name']['first']} {c['name']['last']}",
+        'picture' : c['picture']['thumbnail'],
+        'latitude': c['location']['coordinates']['latitude'],
+        'longitude': c['location']['coordinates']['longitude']
+    }
     return render_template('handlerCall.html',room = room,contact=contact, GAID=os.getenv("GA_MEASUREMENT_ID"))
 
 @app.route("/sale", methods=['GET'])
