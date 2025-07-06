@@ -319,7 +319,7 @@ function teardownCall() {
 
 async function startCall(room){
   gtag('event', 'call_started', {'method': 'VoIP'});
-  await subscribeUser(room);
+ // await subscribeUser(room);
   await fetch(`/call/notification/${room}`);
   fetch('/start_call', {
       method: "POST",
@@ -448,7 +448,7 @@ async function subscribeUser(userId) {
   });
 
   // Send subscription to backend
-  await fetch('/tasks/subscription', {
+  await fetch('/users/subscription', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
@@ -467,8 +467,4 @@ function urlBase64ToUint8Array(base64String) {
 
   const rawData = atob(cleanedBase64);
   return Uint8Array.from([...rawData].map(char => char.charCodeAt(0)));
-}
-
-function isSafari() {
-  return /^((?!chrome|android).)*safari/i.test(navigator.userAgent);
 }

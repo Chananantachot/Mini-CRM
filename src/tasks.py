@@ -87,31 +87,6 @@ def createTask():
             new_value=jsonify({'id': id, 'title':title, 'description': description,'assigned_to': assigned_to, 'due_date': due_date, 'priority':priority, 'relatedTo_id':relatedTo_id }))  
     return jsonify({'message': 'Task created successfully.', 'assigned_to': assigned_to})
 
-@tasks.route('/tasks/subscription', methods=['POST'])
-def task_subscription():
-   if request.is_json: 
-        subscription = request.get_json()
-        user_id = subscription.get('user_id')
-        subscription_json = subscription.get('subscription_json')
-
-        db = Db.get_db()
-        cursor = db.cursor()
-        id = str(uuid.uuid4())
-        
-        cursor.execute("""
-            INSERT INTO subscriptions (user_id, subscription_json)
-            VALUES (?, ?)
-            ON CONFLICT(user_id) DO UPDATE SET subscription_json = excluded.subscription_json
-        """, (user_id, subscription_json))
-        db.commit()
-
-        log_audit(action=AuditAction.INSERT,
-            table_name='subscriptions',
-            record_id= id,
-            old_value=None,
-            new_value=jsonify({'id': id, 'user_id': user_id, 'subscription_json': subscription_json }))  
-        return jsonify({'message': 'Task created successfully.'}) , 201
-   return jsonify({'message': 'Bad Request.'}) , 400
 
 @tasks.route('/task/<task_id>', methods=['PUT'])    
 @jwt_required()  

@@ -189,9 +189,10 @@ async function loadMyTasksGrid() {
         url: `/tasks`,
         mtype: 'POST',
       
-        aftersavefunc: function (rowid, response) {
-          let userId = response.responseJSON.assigned_to;
-          subscribeUser(userId);
+        aftersavefunc: async function (rowid, response) {
+           let userId = response.responseJSON.assigned_to;
+           await fetch(`/call/notification/${userId}`);
+          // subscribeUser(userId);
         },
         onSuccess: function (response) {
           var $self = $(this), p = $self.jqGrid("getGridParam");

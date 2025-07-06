@@ -120,6 +120,19 @@
             cursor: pointer;
             font-size: 12px;
         }
+
+        .btn-drak {
+            border: none;
+            outline: 0;
+            display: inline-block;
+            padding: 8px;
+            color: white;
+            background-color: #000;
+            text-align: center;
+            cursor: pointer;
+            width: 100%;
+            font-size: 18px;
+        }
     </style>
 </head>
 
@@ -139,8 +152,9 @@
                 <a href="#"><i class="fa fa-facebook"></i></a>
             </div>
             <div id="map" style="width: 100%; height: 300px"></div>
-            <div class="button-container">
-            </div>
+            {% if subscriberId %}
+            <button class="btn-drak" onclick="subscribeHandler('{{subscriberId}}')">Subscribe</button>
+            {% endif %}
         </div>
 
         <div id="callBackdrop" class="transbox"></div>
@@ -175,6 +189,10 @@
     const room = matchRoom ? matchRoom[1] : null;
     if (room)
         showIncomingCallPanel('Someone')
+
+    async function subscribeHandler(userId){
+        await subscribeUser(userId);
+    }
 
     // Call this function when the incoming call event is received
     function showIncomingCallPanel(callerName) {

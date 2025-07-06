@@ -37,8 +37,20 @@ function loadLeads(custId) {
         const isCalling = callingStatus[rowObject.id] === true;
         const btnClass = 'btn btn-sm';
         const btnText = isCalling ? '📞❌' : '📞';
-
-        return `<a href="javascript:void(0);" class="${btnClass}" onclick="makeCall('${rowObject.id}')">${btnText}</a>`;
+        
+        var data = fetch(`/subscriber/${rowObject.id}`, {
+          headers: {
+            'Accept': 'application/json'
+          }
+        }).then(resp => resp.json()
+        ).then(data => { 
+          return data
+        });
+        if (data.Subscriber != null)
+            return `<a href="javascript:void(0);" class="${btnClass}" onclick="makeCall('${rowObject.id}')">${btnText}</a>`;
+      
+        //  return `<a href="/user/subscribe/${rowObject.id}">Subscribe link</a>`;
+         return`<a href="javascript:void(0);" class="${btnClass}" disabled="disabled">${btnText}</a>`;
       }
     }
   ];

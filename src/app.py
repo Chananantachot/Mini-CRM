@@ -122,8 +122,9 @@ def lead(custId):
     }
     return render_template('lead.html',current_user = user)
 
-@app.route("/lead/call/answer/<room>" , methods=['GET'])
-def calling_handler(room):
+@app.route("/lead/call/answer/<room>", defaults={ id: None } , methods=['GET'])
+@app.route("/user/subscribe/<id>", defaults={'room': None}, methods=['GET'])
+def calling_handler(room,id):
     response = requests.get('https://randomuser.me/api/')
     data = response.json()
     contacts = data['results']
@@ -140,7 +141,18 @@ def calling_handler(room):
         'latitude': c['location']['coordinates']['latitude'],
         'longitude': c['location']['coordinates']['longitude']
     }
-    return render_template('handlerCall.html',room = room,contact=contact, GAID=os.getenv("GA_MEASUREMENT_ID"))
+    return render_template('handlerCall.html',subscriberId = id ,room = room,contact=contact, GAID=os.getenv("GA_MEASUREMENT_ID"))
+
+@app.route("/subscriber/<id>" , methods=['GET'])
+def getUserSubscriber(id):
+    db = Db.get_db()
+    cursor = db.cursor()
+    cursor.execute("SELECT user_id FROM subscriptions WHERE user_id = ?", (id,))
+    Subscriber = cursor.fetchone()
+
+    if Subscriber:
+        return jsonify({'Subscriber': id }), 200
+    return jsonify({'Subscriber': None}), 200
 
 @app.route("/sale", methods=['GET'])
 @role_required(['Admin'])

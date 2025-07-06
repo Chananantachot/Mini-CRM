@@ -14,6 +14,7 @@ from werkzeug.security import generate_password_hash, check_password_hash
 
 from TokenUsedError import TokenUsedError
 from Db import Db
+from audit import AuditAction, log_audit
 from decorators import role_required
 users = Blueprint('users', __name__, template_folder='templates')
 
@@ -208,3 +209,29 @@ def _set_jwt_cookies(response, key ,token):
         secure=False,  # set to True if using HTTPS
         samesite='Strict'
     )
+
+@users.route('/users/subscription', methods=['POST'])
+def users_subscription():
+   if request.is_json: 
+        subscription = request.get_json()
+        user_id = subscription.get('user_id')
+        subscription_json = subscription.get('subscription_json')
+
+        db = Db.get_db()
+        cursor = db.cursor()
+        id = str(uuid.uuid4())
+        
+        cursor.execute("""
+            INSERT INTO subscriptions (user_id, subscription_json)
+            VALUES (?, ?)
+            ON CONFLICT(user_id) DO UPDATE SET subscription_json = excluded.subscription_json
+        """, (user_id, subscription_json))
+        db.commit()
+
+        log_audit(action=AuditAction.INSERT,
+            table_name='subscriptions',
+            record_id= id,
+            old_value=None,
+            new_value=jsonify({'id': id, 'user_id': user_id, 'subscription_json': subscription_json }))  
+        return jsonify({'message': 'Subscription created successfully.'}) , 201
+   return jsonify({'message': 'Bad Request.'}) , 400
